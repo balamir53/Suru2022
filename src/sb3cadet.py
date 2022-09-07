@@ -4,7 +4,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common import logger
 from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback
 import argparse
-from agents.Golkenari import MultiRayEnv
+from agents.GolKenari import MultiRayEnv
 
 
 def read_hypers():

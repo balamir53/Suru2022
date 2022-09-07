@@ -29,16 +29,6 @@ agents = [args.agentBlue, args.agentRed]
 
 g = Game(args, agents)
 
-
-
-
-
-
-
-
-
-
-
 for i in range(args.numOfMatch):
     g.reset()
     terminate, blue_score, red_score = g.sim()
