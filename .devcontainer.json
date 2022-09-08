@@ -1,4 +1,4 @@
 {
     "image":"suru1.1",
-    "runArgs": ["--add-host=host.docker.internal:172.28.160.1","--net=host"]
+    "runArgs": ["--add-host=host.docker.internal:172.28.160.1","--net=host","--shm-size=2gb"]
 }
