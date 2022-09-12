@@ -9,10 +9,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "src/agentsofglory.py",
+            "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["DemoMap", "SimpleAgent", "RandomAgent","--render"]
+            "args": ["DemoMap","RandomAgent","SimpleAgent","--mode=Train"]
         }
     ]
 }

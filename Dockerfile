@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     git \
     bzip2 \
     libx11-6 \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /vasr/lib/apt/lists/*
 
 RUN mkdir /app
 # Create a non-root user and switch to it
