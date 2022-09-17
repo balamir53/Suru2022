@@ -7,9 +7,6 @@ import yaml
 from game import Game
 from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance
 
-
-
-
 class RiskyValley(BaseLearningAgentGym):
 
     tagToString = {
@@ -40,8 +37,6 @@ class RiskyValley(BaseLearningAgentGym):
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
 
-
-
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
         self.action_space = action_spec
@@ -56,7 +51,6 @@ class RiskyValley(BaseLearningAgentGym):
         self.nec_obs = state
         return self.decode_state(state)
         
-
     @staticmethod
     def _decode_state(obs, team, enemy_team):
         turn = obs['turn'] # 1
@@ -110,7 +104,6 @@ class RiskyValley(BaseLearningAgentGym):
         
         state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
 
-
         return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
 
     @staticmethod
@@ -122,7 +115,6 @@ class RiskyValley(BaseLearningAgentGym):
         state, info = self._decode_state(obs, self.team, self.enemy_team)
         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
         return state
-
     
     def take_action(self, action):
         return self.just_take_action(action, self.nec_obs, self.team) 
@@ -137,7 +129,6 @@ class RiskyValley(BaseLearningAgentGym):
 
         allies = ally_locs(raw_state, team)
         enemies = enemy_locs(raw_state, team)
-
 
         if 0 > len(allies):
             print("why do you have negative allies ?")
@@ -203,12 +194,8 @@ class RiskyValley(BaseLearningAgentGym):
                     movement[i] = 0
                     enemy_order[i] = enemy_order[k]
 
-
         locations = list(map(tuple, locations))
         return [locations, movement, enemy_order, train]
-
-
-
 
     def step(self, action):
         harvest_reward = 0
@@ -223,7 +210,6 @@ class RiskyValley(BaseLearningAgentGym):
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         reward = harvest_reward + kill_reward - martyr_reward
-
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count

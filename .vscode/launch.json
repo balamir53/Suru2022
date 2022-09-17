@@ -9,10 +9,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "src/traincadet.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["DemoMap","RandomAgent","SimpleAgent","--mode=Train"]
+            "args": ["RiskyValley","SimpleAgent"]
         }
     ]
 }

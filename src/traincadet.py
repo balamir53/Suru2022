@@ -5,13 +5,13 @@ from ray.tune import run_experiments, register_env
 from agents.GolKenari import GolKenari
 from agents.RiskyValley import RiskyValley
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+#os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 
 parser = argparse.ArgumentParser(description='Cadet Agents')
 parser.add_argument('map', metavar='map', type=str,
                     help='Select Map to Train')
-parser.add_argument('--mode', metavar='mode', type=str, default="Sim",
+parser.add_argument('--mode', metavar='mode', type=str, default="Train",
                     help='Select Mode[Train,Sim]')
 parser.add_argument('--agentBlue', metavar='agentBlue', type=str,
                     help='Class name of Blue Agent')
@@ -33,8 +33,8 @@ def main():
     ray.init(num_gpus=1, log_to_driver=True)
     register_env("ray", lambda config: RiskyValley(args, agents))
     config= {"use_critic": True,
-            "log_level": "WARN",
-             "num_workers": 20,
+            #"log_level": "WARN",
+             "num_workers": 8,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
@@ -64,7 +64,7 @@ def main():
             },
             "config": config,
             "checkpoint_freq": 100,
-            # "restore": "./Models/checkpoint_300/checkpoint-300.tune_metadata",
+            #"restore": "./Models/checkpoint_300/checkpoint-300.tune_metadata",
         },
      })
 if __name__ == "__main__":
