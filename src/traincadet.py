@@ -2,7 +2,7 @@ import argparse
 import ray
 import os
 from ray.tune import run_experiments, register_env
-from agents.GolKenari import GolKenari
+# from agents.GolKenari import GolKenari
 from agents.RiskyValley import RiskyValley
 
 os.environ['CUDA_VISIBLE_DEVICES'] = "1"
@@ -31,10 +31,11 @@ agents = [None, args.agentRed]
 
 def main():
     ray.init(num_gpus=1, log_to_driver=True)
+    # ray.init()
     register_env("ray", lambda config: RiskyValley(args, agents))
     config= {"use_critic": True,
-            #"log_level": "WARN",
-             "num_workers": 8,
+            "log_level": "WARN",
+             "num_workers": 10,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
@@ -60,13 +61,13 @@ def main():
             "run": "PPO",
             "env": "ray",
             "stop": {
-                "training_iteration": 5e7,
+                "training_iteration": 7e7,
             },
             "config": config,
             "checkpoint_freq": 100,
-            #"restore": "./Models/checkpoint_300/checkpoint-300.tune_metadata",
+            # "restore": "models/checkpoint_100/checkpoint-200",
         },
-     },resume=True)
-
-    if __name__ == "__main__":
+    #  },resume=True)
+    })
+if __name__ == "__main__":
         main()
