@@ -79,7 +79,8 @@ def main():
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
     # this line works but the saved data doesnt match with current one
-    # algo.restore(checkpoint_path="./models/checkpoint_000100/checkpoint-100")
+    # it finally worked on desktop
+    algo.restore(checkpoint_path="./models/checkpoint_000100/checkpoint-200")
 
     for _ in range(3):
         print(algo.train())
