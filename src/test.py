@@ -11,6 +11,7 @@ import sys
 inputDirectory = '/data/inputs'
 outputDirectory = '/data/outputs'
 sys.path.append(inputDirectory)
+sys.path.append('/workspaces/Suru2022')
 
 from data.inputs.agent import EvaluationAgent
 
@@ -66,7 +67,8 @@ data = {
 scores = []
 
 
-for index, (map, agent) in enumerate([("RiskyValley", "RiskyValleyBot"),("RiskyValleyNoDesert", "RiskyValleyNoDesert"),("RiskyWaters", "RiskyWaters")]):
+# for index, (map, agent) in enumerate([("RiskyValley", "RandomAgent"),("RiskyValleyNoDesert", "RiskyValleyNoDesert"),("RiskyWaters", "RiskyWaters")]):
+for index, (map, agent) in enumerate([("RiskyValley", "RandomAgent")]):
     
     agents = [None, agent]
     args.map = map

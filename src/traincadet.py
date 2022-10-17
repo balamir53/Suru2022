@@ -5,7 +5,7 @@ from ray.tune import run_experiments, register_env
 from agents.GolKenari import GolKenari
 from agents.RiskyValley import RiskyValley
 
-#os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 
 parser = argparse.ArgumentParser(description='Cadet Agents')
@@ -66,6 +66,7 @@ def main():
             "checkpoint_freq": 100,
             #"restore": "./Models/checkpoint_300/checkpoint-300.tune_metadata",
         },
-     })
-if __name__ == "__main__":
-    main()
+     },resume=True)
+
+    if __name__ == "__main__":
+        main()

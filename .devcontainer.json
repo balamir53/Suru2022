@@ -1,4 +1,4 @@
 {
-    "image":"suru1.1",
-    "runArgs": ["--add-host=host.docker.internal:172.28.160.1","--net=host","--shm-size=2gb","--gpus=all"]
+    "image":"suru1.2",
+    "runArgs": ["--add-host=host.docker.internal:172.23.32.1","--net=host","--shm-size=2gb","--gpus=all"]
 }
