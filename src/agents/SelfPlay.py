@@ -6,6 +6,7 @@ import ray
 from ray.rllib.agents.ppo import PPOTrainer
 from ray.tune import run_experiments, register_env
 from agents.GolKenari import GolKenari
+from agents.RiskyValley import RiskyValley
 from argparse import Namespace
 
 
@@ -13,7 +14,7 @@ from argparse import Namespace
 class SelfPlay:
     def __init__(self, team, action_lenght):
         args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-
+        agents = [None, "SimpleAgent"]
     
         # ray.init()
         config= {"use_critic": True,
@@ -38,9 +39,9 @@ class SelfPlay:
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter"}
-        register_env("ray", lambda config: GolKenari(args, agents))
+        register_env("ray", lambda config: RiskyValley(args, agents))
         ppo_agent = PPOTrainer(config=config, env="ray")
-        ppo_agent.restore(checkpoint_path="MODELIN BULUNDUGU YER") # Modelin Bulunduğu yeri girmeyi unutmayın!
+        ppo_agent.restore(checkpoint_path="models/checkpoint_000100/checkpoint-200") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
     def action(self, raw_state):
@@ -50,7 +51,7 @@ class SelfPlay:
         astar(pos,target,state)
         return
         '''
-        state = GolKenari.just_decode_state(raw_state, self.team, self.enemy_team)
+        state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
         actions, _, _ = self.policy.compute_single_action(state.astype(np.float32))
-        location, movement, target, train = GolKenari.just_take_action(actions, raw_state, self.team)
+        location, movement, target, train = RiskyValley.just_take_action(actions, raw_state, self.team)
         return (location, movement, target, train)
