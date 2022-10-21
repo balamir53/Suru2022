@@ -6,16 +6,19 @@
     //ResourceRiver SimpleAgent RandomAgent
     //"ResourceRiver", "HumanAgent", "RandomAgent"
     // ${file}
+    // "RiskyValley","SelfPlay","SimpleAgent","--numOfMatch=20","--render"
+    // "RiskyValley","SelfPlay","SimpleAgent"
+    // "RiskyValley","SimpleAgent"
     "version": "0.2.0",
     "configurations": [
         {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "src/train.py",
+            "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["RiskyValley","SimpleAgent"]
+            "args": ["TrainSingleTruckSmall","SimpleAgent"]
         }
     ]
 }

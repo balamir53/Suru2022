@@ -17,6 +17,10 @@ from agents.GolKenari import GolKenari
 # from ray.rllib.algorithms.ppo import PPO
 import ray.rllib.agents.ppo as ppo
 
+import pickle
+
+from agents.TruckMini import TruckMini
+
 parser = argparse.ArgumentParser(description='Cadet Agents')
 parser.add_argument('map', metavar='map', type=str,
                     help='Select Map to Train')
@@ -38,13 +42,33 @@ parser.add_argument('--img', action='store_true',
 args = parser.parse_args()
 agents = [None, args.agentRed]
 
+class PatchedPPOTrainer(ppo.PPOTrainer):
+
+    #@override(Trainable)
+    def load_checkpoint(self, checkpoint_path: str) -> None:
+        extra_data = pickle.load(open(checkpoint_path, "rb"))
+        worker = pickle.loads(extra_data["worker"])
+        worker = PatchedPPOTrainer.__fix_recursively(worker)
+        extra_data["worker"] = pickle.dumps(worker)
+        self.__setstate__(extra_data)
+
+    def __fix_recursively(data):
+        if isinstance(data, dict):
+            return {key: PatchedPPOTrainer.__fix_recursively(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [PatchedPPOTrainer.__fix_recursively(value) for value in data]
+        elif data is None:
+            return 0
+        else:
+            return data
+
 def main():
     #multiple agents multiple policies
     #since there are different kind of agents they have to learn different policies
     #because they have different observation and action spaces (inspect this)
     # ray.init(num_gpus=1, log_to_driver=True, local_mode=True)
     ray.init(local_mode=True)
-    register_env("ray", lambda config: RiskyValley(args,agents))
+    register_env("ray", lambda config: TruckMini(args,agents))
 
     #misconfiguration
     #check the documentation
@@ -73,7 +97,7 @@ def main():
                 "observation_filter": "NoFilter"}
 
     # Create our RLlib Trainer.
-    algo = ppo.PPOTrainer(config=config, env="ray")
+    algo = PatchedPPOTrainer(config=config, env="ray")
     # algo = ppo.PPOTrainer(config=config, env="CartPole-v0")
     import os 
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -81,6 +105,8 @@ def main():
     # this line works but the saved data doesnt match with current one
     # it finally worked on desktop
     # algo.restore(checkpoint_path="models/checkpoint_000100/checkpoint-200")
+    # algo.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5")
+    # algo.restore(checkpoint_path="data/inputs/model/checkpoint_001900/checkpoint-1900")
 
     for _ in range(3):
         print(algo.train())
