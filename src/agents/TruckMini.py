@@ -228,7 +228,9 @@ class TruckMini(BaseLearningAgentGym):
 
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
-        reward = harvest_reward + kill_reward - martyr_reward
+        # only reward goes for collecting gold
+        # reward = harvest_reward + kill_reward - martyr_reward
+        reward = harvest_reward
 
 
         self.previous_enemy_count = enemy_count
