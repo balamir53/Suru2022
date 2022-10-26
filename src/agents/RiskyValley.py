@@ -188,11 +188,11 @@ class RiskyValley(BaseLearningAgentGym):
 
         #locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
 
-        for i in range(len(locations)):
-            for k in range(len(enemy_order)):
-                if getDistance(locations[i], enemy_order[k]) <= 3:
-                    movement[i] = 0
-                    enemy_order[i] = enemy_order[k]
+        # for i in range(len(locations)):
+        #     for k in range(len(enemy_order)):
+        #         if getDistance(locations[i], enemy_order[k]) <= 3:
+        #             movement[i] = 0
+        #             enemy_order[i] = enemy_order[k]
 
         locations = list(map(tuple, locations))
         return [locations, movement, enemy_order, train]
