@@ -5,7 +5,7 @@ from gym import spaces
 import numpy as np
 import yaml
 from game import Game
-from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance
+from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, truck_num
 
 
 
@@ -206,11 +206,11 @@ class GolKenari(BaseLearningAgentGym):
 
         #locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
 
-        for i in range(len(locations)):
-            for k in range(len(enemy_order)):
-                if getDistance(locations[i], enemy_order[k]) <= 3:
-                    movement[i] = 0
-                    enemy_order[i] = enemy_order[k]
+        # for i in range(len(locations)):
+        #     for k in range(len(enemy_order)):
+        #         if getDistance(locations[i], enemy_order[k]) <= 3:
+        #             movement[i] = 0
+        #             enemy_order[i] = enemy_order[k]
 
         locations = list(map(tuple, locations))
         return [locations, movement, enemy_order, train]
@@ -231,12 +231,18 @@ class GolKenari(BaseLearningAgentGym):
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         reward = harvest_reward + kill_reward - martyr_reward
-
+        
+        #added to give negative reward if there is no truck left 
+        ally_truck_count, enemy_truck_count = truck_num(self.nec_obs, self.team)   
+        if ally_truck_count <= 0:
+            reward -= 2 
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
         info = {}
         self.steps += 1
+        # if self.steps % 400 == 1:
+        #     print("iteration step passed:400")
         self.reward += reward
 
         self.nec_obs = next_state

@@ -80,7 +80,7 @@ def main():
 
     # this line works but the saved data doesnt match with current one
     # it finally worked on desktop
-    algo.restore(checkpoint_path="./models/checkpoint_000100/checkpoint-200")
+    #algo.restore(checkpoint_path="./models/checkpoint_000100/checkpoint-200")
 
     for _ in range(3):
         print(algo.train())

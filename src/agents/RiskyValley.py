@@ -5,7 +5,7 @@ from gym import spaces
 import numpy as np
 import yaml
 from game import Game
-from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance
+from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, truck_num
 
 class RiskyValley(BaseLearningAgentGym):
 
@@ -211,10 +211,17 @@ class RiskyValley(BaseLearningAgentGym):
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         reward = harvest_reward + kill_reward - martyr_reward
 
+        #added to give negative reward if there is no truck left 
+        ally_truck_count, enemy_truck_count = truck_num(self.nec_obs, self.team)   
+        if ally_truck_count <= 0:
+            reward -= 10 
+
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
         info = {}
         self.steps += 1
+        # if self.steps % 400 == 1:
+        #     print("iteration step passed:400")
         self.reward += reward
 
         self.nec_obs = next_state

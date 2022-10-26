@@ -2,6 +2,7 @@ import argparse
 import ray
 import os
 from ray.tune import run_experiments, register_env
+from agents.GolKenari import GolKenari
 # from agents.GolKenari import GolKenari
 from agents.RiskyValley import RiskyValley
 
@@ -32,10 +33,10 @@ agents = [None, args.agentRed]
 def main():
     ray.init(num_gpus=1, log_to_driver=True)
     # ray.init()
-    register_env("ray", lambda config: RiskyValley(args, agents))
+    register_env("ray", lambda config: GolKenari(args, agents))
     config= {"use_critic": True,
             "log_level": "WARN",
-             "num_workers": 10,
+             "num_workers": 1,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,

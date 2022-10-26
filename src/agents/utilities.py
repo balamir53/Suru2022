@@ -219,7 +219,7 @@ def necessary_obs(obs, team):
     if len(new_obs) == 20:
         print(new_obs)
         time.sleep(1)
-    return new_obsa
+    return new_obs
 
 def reward_shape(obs, team):
     load_reward = 0
@@ -284,6 +284,18 @@ def multi_reward_shape(obs, team): # Birden fazla truck için
                 if loads[truck[0], truck[1]].max() != 0 and (truck == base_loc).all():
                     unload_reward += 20
 
+    
     harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward
     return harvest_reward, len(enemy), len(ally)
 
+#added to return number of alive trucks belonging to a team on map. 
+def truck_num(obs, team):
+   units = obs['units'][team]
+   unit_loc = np.argwhere(units == 1)
+   unit_loc = unit_loc.squeeze() 
+
+
+   enemy_units = obs['units'][(team+1) % 2]
+   enemy_unit_loc = np.argwhere(enemy_units == 1)
+   enemy_unit_loc = enemy_unit_loc.squeeze()
+   return len(unit_loc), len(enemy_unit_loc)
