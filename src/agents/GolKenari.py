@@ -215,9 +215,6 @@ class GolKenari(BaseLearningAgentGym):
         locations = list(map(tuple, locations))
         return [locations, movement, enemy_order, train]
 
-
-
-
     def step(self, action):
         harvest_reward = 0
         kill_reward = 0
@@ -235,13 +232,17 @@ class GolKenari(BaseLearningAgentGym):
         #added to give negative reward if there is no truck left 
         ally_truck_count, enemy_truck_count = truck_num(self.nec_obs, self.team)   
         if ally_truck_count <= 0:
-            reward -= 2 
+            reward -= 2
+            # FALSE: added to stop iteration if agent got a negative reward due to dead truck. 
+            done = True 
+            print("termination step: ", self.steps)
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
         info = {}
         self.steps += 1
-        # if self.steps % 400 == 1:
+        print(self.steps)
+        # if self.steps != 0 & self.steps % 400 == 1:
         #     print("iteration step passed:400")
         self.reward += reward
 
