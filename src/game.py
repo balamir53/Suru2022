@@ -64,7 +64,8 @@ class Game:
         self.gif = args.gif
         self.img = args.img
         try:
-            with open('/workspaces/Suru2022/data/config/'+args.map+'.yaml') as file:
+            # with open('/workspaces/Suru2022/data/config/'+args.map+'.yaml') as file:
+            with open('data/config/'+args.map+'.yaml') as file:
                 self.config = yaml.load(file, Loader=yaml.FullLoader)
         except:
             print('Map Could Not be Found!')
@@ -97,6 +98,7 @@ class Game:
         self.reset()
 
     def step(self, action):
+        # this function is only called in training mode
         #step cadet
         location, movement, target, train = action
         self.__step(location, movement, target, train)
@@ -107,10 +109,9 @@ class Game:
                 self.renderGame()
         self.__endTurn()
         half_state = self.gmap.getState(self.all_ubr)
-        #step ai
-
-        action = self.agents[self.go_team].action(half_state)
         
+        #step ai
+        action = self.agents[self.go_team].action(half_state)
         location, movement, target, train = action
         self.__step(location, movement, target, train)
         while(len(self.move_animations) or len(self.shoot_animations)):

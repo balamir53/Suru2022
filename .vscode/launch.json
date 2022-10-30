@@ -9,16 +9,35 @@
     // "RiskyValley","SelfPlay","SimpleAgent","--numOfMatch=20","--render"
     // "RiskyValley","SelfPlay","SimpleAgent"
     // "RiskyValley","SimpleAgent"
+    // "TrainSingleTruckSmall","SelfPlay","SimpleAgent","--numOfMatch=20","--render"
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "traincadet",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "src/traincadet.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["TrainSingleTruckSmall","SimpleAgent"]
-        }
+        },
+        {
+            "name": "agentsofglory",
+            "type": "python",
+            "request": "launch",
+            "program": "src/agentsofglory.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["TrainSingleTruckSmall","SelfPlay","SimpleAgent"]
+       },
+       {
+           "name": "train",
+           "type": "python",
+           "request": "launch",
+           "program": "src/train.py",
+           "console": "integratedTerminal",
+           "justMyCode": false,
+           "args": ["TrainSingleTruckSmall","SimpleAgent"]
+      }
     ]
 }
