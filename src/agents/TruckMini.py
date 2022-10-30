@@ -202,20 +202,17 @@ class TruckMini(BaseLearningAgentGym):
         movement = multi_forced_anchor(movement, raw_state, team)
         if len(locations) > 0:
             locations = list(map(list, locations))
-
-        #locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
-
-        for i in range(len(locations)):
-            for k in range(len(enemy_order)):
-                if getDistance(locations[i], enemy_order[k]) <= 3:
-                    movement[i] = 0
-                    enemy_order[i] = enemy_order[k]
+        
+        # boyle bisi olabilir mi ya
+        # locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
+        # for i in range(len(locations)):
+        #     for k in range(len(enemy_order)):
+        #         if getDistance(locations[i], enemy_order[k]) <= 3:
+        #             movement[i] = 0
+        #             enemy_order[i] = enemy_order[k]
 
         locations = list(map(tuple, locations))
         return [locations, movement, enemy_order, train]
-
-
-
 
     def step(self, action):
         harvest_reward = 0
