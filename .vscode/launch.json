@@ -9,13 +9,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "RiskyValley",
+            "type": "python",
+            "request": "launch",
+            "program": "src/traincadet.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["RiskyValley","SimpleAgent"]
+        },
+        {
+            "name": "GolKenari",
             "type": "python",
             "request": "launch",
             "program": "src/train.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["RiskyValley","SimpleAgent"]
+            "args": ["GolKenariVadisi","SimpleAgent"]
+        },
+        {
+            "name": "Golnegreward",
+            "type": "python",
+            "request": "launch",
+            "program": "src/traincadet.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["GolKenariVadisi","SimpleAgent"]
         }
     ]
 }

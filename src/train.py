@@ -44,7 +44,7 @@ def main():
     #because they have different observation and action spaces (inspect this)
     # ray.init(num_gpus=1, log_to_driver=True, local_mode=True)
     ray.init(local_mode=True)
-    register_env("ray", lambda config: RiskyValley(args,agents))
+    register_env("ray", lambda config: GolKenari(args,agents))
 
     #misconfiguration
     #check the documentation

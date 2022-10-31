@@ -235,13 +235,13 @@ class GolKenari(BaseLearningAgentGym):
             reward -= 2
             # FALSE: added to stop iteration if agent got a negative reward due to dead truck. 
             done = True 
-            print("termination step: ", self.steps)
+            # print("termination step: ", self.steps)
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
         info = {}
         self.steps += 1
-        print(self.steps)
+        # print(self.steps)
         # if self.steps != 0 & self.steps % 400 == 1:
         #     print("iteration step passed:400")
         self.reward += reward
