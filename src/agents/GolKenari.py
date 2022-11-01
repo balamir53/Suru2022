@@ -229,13 +229,12 @@ class GolKenari(BaseLearningAgentGym):
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         reward = harvest_reward + kill_reward - martyr_reward
         
-        #added to give negative reward if there is no truck left 
+         
         ally_truck_count, enemy_truck_count = truck_num(self.nec_obs, self.team)   
-        if ally_truck_count <= 0:
-            reward -= 10
-            # FALSE: added to stop iteration if agent got a negative reward due to dead truck. 
-            done = True 
-            # print("termination step: ", self.steps)
+        #added: if done flag is true and there is no truck left or trained, give negative reward.
+        if done == True:
+            if ally_truck_count <= 0:
+                reward = self.reward / 2
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count

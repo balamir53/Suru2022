@@ -34,6 +34,15 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["GolKenariVadisi","SimpleAgent"]
+        },
+        {
+            "name": "negrewend",
+            "type": "python",
+            "request": "launch",
+            "program": "src/traincadet.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["GolKenariVadisi","SimpleAgent"]
         }
     ]
 }
