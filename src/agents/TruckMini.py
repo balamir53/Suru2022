@@ -241,6 +241,20 @@ class TruckMini(BaseLearningAgentGym):
             else:
                 reward = -1
 
+        # we have to discourage training action
+        # like in simple agent, our agent has to keep its resources
+        # the number of the entities can be compared. 
+        # We actually need enough trucks to exploit maps resources
+        # at the same time we have to keep military entities for defence        
+        # 
+        
+        entity_train = action[-1] # 0 for none 1 for truck up to 4 for other attack units
+        
+        # if you have 2 or less gold dont train anything other than truck
+        if blue_score < 3 and entity_train > 1:
+            reward = -1
+            done = True
+
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
         info = {}
