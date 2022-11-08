@@ -59,7 +59,10 @@ class RandomAgent:
         for unit in self.my_units:
             location.append(unit['location'])
             movement.append(randint(0,6))
-            unit_target = randint(0,len(self.enemy_units)-1)
+            if len(self.enemy_units) > 0 :
+                unit_target = randint(0,len(self.enemy_units)-1)
+            else:
+                unit_target = 0
             target.append(self.enemy_units[unit_target]['location'])
         train = 0
         if random()<0.05:

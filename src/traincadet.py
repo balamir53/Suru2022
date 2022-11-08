@@ -36,7 +36,7 @@ def main():
     register_env("ray", lambda config: TruckMini(args, agents))
     config= {"use_critic": True,
             "log_level": "WARN",
-             "num_workers": 0,
+             "num_workers": 10,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
