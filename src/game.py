@@ -123,6 +123,7 @@ class Game:
         next_state = self.gmap.getState(self.all_ubr)
         reward = self.bases[self.go_team].getScore() - self.bases[(self.go_team+1)%2].getScore()
         done = True if self.turn>self.max_turn else False
+        # done = True if self.turn>50 else False
         return next_state,reward,done
 
     def __step(self, location, action, target, train):

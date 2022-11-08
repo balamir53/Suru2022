@@ -11,7 +11,8 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 def read_hypers():
     # with open(f"/workspaces/Suru2022/data/config/TrainSingleTruckSmall.yaml", "r") as f:   
-    with open(f"data/config/TrainSingleTruckSmall.yaml", "r") as f:   
+    # with open(f"data/config/TrainSingleTruckSmall.yaml", "r") as f:   
+    with open(f"data/config/TrainSingleMixedSmall.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -116,7 +117,6 @@ class TruckMini(BaseLearningAgentGym):
         terr = [*terrain.reshape(-1).tolist()]
         
         state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
-
 
         return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
 
@@ -227,7 +227,19 @@ class TruckMini(BaseLearningAgentGym):
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         # only reward goes for collecting gold
         # reward = harvest_reward + kill_reward - martyr_reward
-        reward = harvest_reward
+
+        # reward = harvest_reward
+        reward = 0
+
+        # consider givin reward only at episode end
+        blue_score = next_state['score'][0]
+        red_score = next_state['score'][1]
+
+        if done:
+            if blue_score>red_score:
+                reward = 1
+            else:
+                reward = -1
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
