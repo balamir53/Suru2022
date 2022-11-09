@@ -67,6 +67,7 @@ def main():
             "config": config,
             "checkpoint_freq": 50,
             # "restore": "models/checkpoint_000005/checkpoint-5",
+            "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
         },
     #  },resume=True)
     })

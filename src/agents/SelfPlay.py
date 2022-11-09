@@ -35,7 +35,7 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 class SelfPlay:
     def __init__(self, team, action_lenght):
         # args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-        args = Namespace(map="TrainSingleTruckSmall", render=False, gif=False, img=False)
+        args = Namespace(map="TrainSingleMixedSmall", render=False, gif=False, img=False)
         agents = [None, "SimpleAgent"]
 
         self.team = 0
@@ -94,7 +94,7 @@ class SelfPlay:
         ppo_agent = PatchedPPOTrainer(config=config, env="ray")
         # ppo_agent = PPOTrainer(env="ray")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
-        ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_002300/checkpoint-2300")
+        ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
