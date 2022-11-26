@@ -211,6 +211,80 @@ class RiskyValley(BaseLearningAgentGym):
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         reward = harvest_reward + kill_reward - martyr_reward
 
+        # consider givin reward only at episode end
+        blue_score = next_state['score'][0]
+        red_score = next_state['score'][1]
+
+        # if done:
+        #     if blue_score>red_score:
+        #         reward = 1
+        #     else:
+        #         reward = -1
+
+        # we have to discourage training action
+        # like in simple agent, our agent has to keep its resources
+        # the number of the entities can be compared. 
+        # We actually need enough trucks to exploit maps resources
+        # at the same time we have to keep military entities for defence        
+        # 
+        
+        # entity_train = action[-1] # 0 for none 1 for truck up to 4 for other attack units
+        
+        # if you have 2 or less gold dont train anything other than truck
+        # if blue_score < 3 and entity_train > 1:
+        #     reward = -100
+        #     done = True
+        # this didnt work
+
+        # check unit numbers - make this a seperated function
+        # Train: 0-4 arası tam sayı (integer, kısaca int). 0 ünite yapmamayı, 1-4 ise sırasıyla kamyon, hafif tank,
+        # ağır tank ve İHA yapmayı ifade etmektedir
+        number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
+        for x in self.my_units:
+            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                number_of_tanks+=1
+            elif x["tag"] == "Drone":
+                number_of_uavs+=1
+            elif x["tag"] == "Truck":
+                number_of_trucks+=1
+        for x in self.enemy_units:
+            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                number_of_enemy_tanks+=1
+            elif x["tag"] == "Drone":
+                number_of_enemy_uavs+=1
+            elif x["tag"] == "Truck":
+                number_of_enemy_trucks+=1
+
+        entity_train = action[-1]
+        number_of_our_military = number_of_tanks+number_of_enemy_uavs
+        number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
+
+        early_termination = True
+        # if there are resources to spend
+        if blue_score>0:
+
+            # catch and beat the enemy military numbers
+            if number_of_enemy_military>=number_of_our_military and entity_train>1:
+                reward+=10
+                early_termination = False
+
+            # if there is no truck, train truck
+            # what about reward scale?
+            if number_of_trucks == 0 or number_of_enemy_trucks>=number_of_trucks:
+                if entity_train == 1:
+                    reward+=10
+                    early_termination = False
+            # TODO :fix it
+            # reason about the resources that we already have
+            # make it hard for the model to train anything but necessary
+            # this actually isnt working as desired
+            # the model still trains unnecessary units with -10 reward
+            # just make it -100 and try
+            if entity_train > 0:
+                reward-=10
+                if early_termination and blue_score<3:
+                    done = True
+        
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
         info = {}
