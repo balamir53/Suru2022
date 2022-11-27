@@ -5,3 +5,5 @@ data/inputs/model/truckmini/checkpoint_000850/checkpoint-850.tune_metadata
 **/__pycache__/
 *.py[cod]
 data/inputs/model
+models
+*.gif
