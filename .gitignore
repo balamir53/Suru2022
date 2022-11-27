@@ -2,6 +2,7 @@ data/inputs/model/truckmini/checkpoint_000850/.is_checkpoint
 data/inputs/model/truckmini/checkpoint_000850/checkpoint-850
 data/inputs/model/truckmini/checkpoint_000850/checkpoint-850.tune_metadata
 src/.gitignore
-.gitignore
 .vscode/launch.json
 **/__pycache__/
+*.py[cod]
+data/inputs/model
