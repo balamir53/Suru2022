@@ -283,7 +283,8 @@ class RiskyValley(BaseLearningAgentGym):
             if entity_train > 0:
                 reward-=10
                 if early_termination and blue_score<3:
-                    done = True
+                    # done = True
+                    pass # stay like this for a while, let's see
         
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
