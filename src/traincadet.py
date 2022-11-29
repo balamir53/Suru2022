@@ -42,6 +42,7 @@ agents = [None, args.agentRed]
 def main():
     ray.init(num_gpus=1, log_to_driver=True)
     # ray.init()
+    # register_env("ray", lambda config: TruckMini(args, agents))
     register_env("ray", lambda config: GolKenari(args, agents))
     config= {"use_critic": True,
             "log_level": "WARN",

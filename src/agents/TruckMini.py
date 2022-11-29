@@ -6,7 +6,7 @@ import numpy as np
 import yaml
 from game import Game
 from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance
-
+from maps import pad_terrain
 
 
 def read_hypers():
@@ -29,6 +29,8 @@ class TruckMini(BaseLearningAgentGym):
     def __init__(self, args, agents, team=0):
         super().__init__() 
         configs = read_hypers()
+        if args.pad == True:
+            configs = pad_terrain(args.map_x, args.map_y, configs)
         self.game = Game(args, agents)
         self.team = team
         self.enemy_team = 1
@@ -42,7 +44,7 @@ class TruckMini(BaseLearningAgentGym):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(6*4*10+4,),
+            shape=(configs['map']['x']*configs['map']['y']*10+4,),
             dtype=np.int16
         )
         self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])

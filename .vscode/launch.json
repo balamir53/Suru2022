@@ -40,15 +40,16 @@
             "args": ["GolKenariVadisi","SimpleAgent"]
         },
         {
-            "name": "GolKenariPad",
+            "name": "Pad",
             "type": "python",
             "request": "launch",
-            // "program": "src/train.py",
-            "program": "src/traincadet.py",
+            "program": "src/train.py",
+            // "program": "src/traincadet.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             // "args": ["GolKenariVadisi","SimpleAgent"]
-            "args": ["GolKenariVadisi","SimpleAgent", "20", "20", "--pad"]
+            // "args": ["GolKenariVadisi","SimpleAgent", "20", "20", "--pad"]
+            "args": ["TruckMini","SimpleAgent", "20", "20", "--pad"]
         },
         {
             "name": "Golnegreward",
