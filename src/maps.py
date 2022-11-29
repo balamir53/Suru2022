@@ -6,6 +6,89 @@ from math import cos,sin,sqrt
 from random import randint
 from HumanInterface import HumanInterface
 
+
+def pad_terrain(x, y, configs):
+    #get rid of out of height auxilary line
+    configs['map']['terrain'] = configs['map']['terrain'][:configs['map']['y']]
+    
+    if x < configs['map']['x'] and y >= configs['map']['y']:
+        diff = (y - configs['map']['y'])
+        offset = diff // 2  
+        #centers by inserting number of offset lines 
+        add_g = ['g' for i in range(configs['map']['x'])]
+        [configs['map']['terrain'].insert(0, add_g) for x in range(0, offset)]
+        [configs['map']['terrain'].append(add_g) for x in range(0, diff - offset)]
+        #adds offset to y values of bases and resources y values 
+        for k in ['red', 'blue']:
+            configs[k]['base']['y'] += offset
+            for unit in configs[k]['units']:
+                unit['y'] += offset
+        for res in configs['resources']:    
+            res['y'] += offset
+        
+        configs['map']['y'] = y
+                
+    elif y < configs['map']['y'] and x >= configs['map']['x']:
+        diff = (x - configs['map']['x'])
+        offset = diff // 2  
+        #centers by inserting offset times 'g'
+        for line in configs['map']['terrain']:
+            if line is None:
+                continue
+            # print(line)
+            [line.insert(0, 'g') for x in range(0, offset)]
+            [line.append('g') for x in range(0, diff - offset)]
+            # print(line)
+        #adds offset to y values of bases and resources y values 
+        for k in ['red', 'blue']:
+            configs[k]['base']['x'] += offset
+            for unit in configs[k]['units']:
+                unit['x'] += offset
+        for res in configs['resources']:    
+            res['x'] += offset
+        
+        configs['map']['x'] = x
+        
+    elif y < configs['map']['y'] and x < configs['map']['x']:
+        pass
+    else:
+        diff_x= (x - configs['map']['x'])
+        offset_x = diff_x // 2  
+        #centers by inserting offset times 'g'
+        for line in configs['map']['terrain']:
+            if line is None:
+                continue
+            # print(line)
+            [line.insert(0, 'g') for _ in range(0, offset_x)]
+            [line.append('g') for _ in range(0, diff_x - offset_x)]
+            # print(line)
+        #adds offset to y values of bases and resources y values 
+        for k in ['red', 'blue']:
+            configs[k]['base']['x'] += offset_x
+            for unit in configs[k]['units']:
+                unit['x'] += offset_x
+        for res in configs['resources']:    
+            res['x'] += offset_x
+            
+        diff_y = (y - configs['map']['y'])
+        offset_y = diff_y // 2  
+        #centers by inserting number of offset lines 
+        add_g = ['g' for i in range(x)]
+        [configs['map']['terrain'].insert(0, add_g) for x in range(0, offset_y)]
+        [configs['map']['terrain'].append(add_g) for x in range(0, diff_y - offset_y)]
+        #adds offset to y values of bases and resources y values 
+        for k in ['red', 'blue']:
+            configs[k]['base']['y'] += offset_y
+            for unit in configs[k]['units']:
+                unit['y'] += offset_y
+        for res in configs['resources']:    
+            res['y'] += offset_y
+        
+        configs['map']['x'] = x
+        configs['map']['y'] = y    
+    
+    return configs
+
 terrain_images = ["data/images/terrain_grass.png",
 "data/images/terrain_mud.png",
 "data/images/terrain_mountain.png",
@@ -96,7 +179,9 @@ class GameMap:
     def __init__(self, gm):
         self.game = gm
         self.tiles = []
+        # Default 30
         self.r = 30
+        # self.r = 10
         self.x = self.r
         self.y = 2*self.r
         self.x_step = 3*self.r/2
