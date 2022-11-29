@@ -6,7 +6,7 @@ from ray.tune import run_experiments, register_env
 from agents.RiskyValley import RiskyValley
 from agents.TruckMini import TruckMini
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 
 parser = argparse.ArgumentParser(description='Cadet Agents')
@@ -31,9 +31,10 @@ args = parser.parse_args()
 agents = [None, args.agentRed]
 
 def main():
-    # ray.init(num_gpus=1, log_to_driver=True)
-    ray.init()
-    register_env("ray", lambda config: TruckMini(args, agents))
+    ray.init(num_gpus=1, log_to_driver=True)
+    # ray.init()
+    # register_env("ray", lambda config: TruckMini(args, agents))
+    register_env("ray", lambda config: RiskyValley(args, agents))
     config= {"use_critic": True,
             "log_level": "WARN",
              "num_workers": 10,
@@ -65,9 +66,10 @@ def main():
                 "training_iteration": 7e7,
             },
             "config": config,
-            "checkpoint_freq": 50,
+            "checkpoint_freq": 100,
             # "restore": "models/checkpoint_000005/checkpoint-5",
-            "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
+            # "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
+            "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_001100/checkpoint-1100",
         },
     #  },resume=True)
     })
