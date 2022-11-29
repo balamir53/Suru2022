@@ -59,8 +59,16 @@ class RandomAgent:
         for unit in self.my_units:
             location.append(unit['location'])
             movement.append(randint(0,6))
-            unit_target = randint(0,len(self.enemy_units)-1)
-            target.append(self.enemy_units[unit_target]['location'])
+            if len(self.enemy_units) > 0 :
+                unit_target = randint(0,len(self.enemy_units)-1)
+                target.append(self.enemy_units[unit_target]['location'])
+            else:
+                # this also doesnt make any sense
+                unit_target = 0
+                # this is speficially manually added for a map size of 6,4
+                # karavana aq
+                target.append((3,0))
+            # target.append(self.enemy_units[unit_target]['location'])
         train = 0
         if random()<0.05:
             train = 1

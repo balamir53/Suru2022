@@ -44,7 +44,7 @@ for i in range(args.numOfMatch):
     else : draws+=1
     # print("Blue WinRate: ", (blue_wins)/(args.numOfMatch) * 100)
     if terminate: break
-    if i % 100 == 0 and i != 0:
+    if i % 4 == 0 and i != 0:
         print("Number of match: " + str(i+1) + "/" + str(args.numOfMatch))
         print("Blue " + "(" + str(args.agentBlue) + ") " + "won " + str(blue_wins) +" games out of "+ str(i+1))
         print("Red " + "(" + str(args.agentRed) + ") " + "won " + str(red_wins) +" games out of "+ str(i+1))

@@ -5,9 +5,19 @@ from gym import spaces
 import numpy as np
 import yaml
 from game import Game
-from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, truck_num
+from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance
 
-class RiskyValley(BaseLearningAgentGym):
+
+
+def read_hypers():
+    # with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+    # with open(f"data/config/TrainSingleTruckSmall.yaml", "r") as f:   
+    with open(f"data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+        hyperparams_dict = yaml.safe_load(f)
+        return hyperparams_dict
+
+
+class TruckMini(BaseLearningAgentGym):
 
     tagToString = {
             1: "Truck",
@@ -16,13 +26,15 @@ class RiskyValley(BaseLearningAgentGym):
             4: "Drone",
         }
 
-    def __init__(self, args, agents):
+    def __init__(self, args, agents, team=0):
         super().__init__() 
-        print(args, agents, "args")
+        configs = read_hypers()
         self.game = Game(args, agents)
-        self.team = 0
+        self.team = team
         self.enemy_team = 1
         
+        self.height = configs['map']['y']
+        self.width = configs['map']['x']
         self.reward = 0
         self.episodes = 0
         self.steps = 0
@@ -30,17 +42,17 @@ class RiskyValley(BaseLearningAgentGym):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(24*18*10+4,),
+            shape=(6*4*10+4,),
             dtype=np.int16
         )
-        self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
+        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
 
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
         self.action_space = action_spec
-        print("setup")
+        # print("setup")
 
     def reset(self):
         self.previous_enemy_count = 4
@@ -51,17 +63,18 @@ class RiskyValley(BaseLearningAgentGym):
         self.nec_obs = state
         return self.decode_state(state)
         
+
     @staticmethod
-    def _decode_state(obs, team, enemy_team):
+    def  _decode_state(obs, team, enemy_team):
         turn = obs['turn'] # 1
         max_turn = obs['max_turn'] # 1
-        units = obs['units'] 
-        hps = obs['hps'] 
-        bases = obs['bases'] 
+        units = obs['units'] # 2x7x15
+        hps = obs['hps'] # 2x7x15
+        bases = obs['bases'] # 2x7x15
         score = obs['score'] # 2
-        res = obs['resources'] 
-        load = obs['loads']
-        terrain = obs["terrain"] 
+        res = obs['resources'] # 7x15
+        load = obs['loads'] # 2x7x15
+        terrain = obs["terrain"] # 7x15 
         y_max, x_max = res.shape
         my_units = []
         enemy_units = []
@@ -72,7 +85,7 @@ class RiskyValley(BaseLearningAgentGym):
                     my_units.append(
                     {   
                         'unit': units[team][i][j],
-                        'tag': RiskyValley.tagToString[units[team][i][j]],
+                        'tag': TruckMini.tagToString[units[team][i][j]],
                         'hp': hps[team][i][j],
                         'location': (i,j),
                         'load': load[team][i][j]
@@ -82,7 +95,7 @@ class RiskyValley(BaseLearningAgentGym):
                     enemy_units.append(
                     {   
                         'unit': units[enemy_team][i][j],
-                        'tag': RiskyValley.tagToString[units[enemy_team][i][j]],
+                        'tag': TruckMini.tagToString[units[enemy_team][i][j]],
                         'hp': hps[enemy_team][i][j],
                         'location': (i,j),
                         'load': load[enemy_team][i][j]
@@ -95,6 +108,7 @@ class RiskyValley(BaseLearningAgentGym):
                 if bases[enemy_team][i][j]:
                     enemy_base = (i,j)
         
+        # print(my_units)
         unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
         hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
         basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
@@ -108,19 +122,21 @@ class RiskyValley(BaseLearningAgentGym):
 
     @staticmethod
     def just_decode_state(obs, team, enemy_team):
-        state, _ = RiskyValley._decode_state(obs, team, enemy_team)
+        state, _ = TruckMini._decode_state(obs, team, enemy_team)
         return state
 
     def decode_state(self, obs):
         state, info = self._decode_state(obs, self.team, self.enemy_team)
         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
         return state
+
     
     def take_action(self, action):
         return self.just_take_action(action, self.nec_obs, self.team) 
 
     @staticmethod
     def just_take_action(action, raw_state, team):
+        
         movement = action[0:7]
         movement = movement.tolist()
         target = action[7:14]
@@ -131,7 +147,7 @@ class RiskyValley(BaseLearningAgentGym):
         enemies = enemy_locs(raw_state, team)
 
         if 0 > len(allies):
-            print("why do you have negative allies ?")
+            print("Neden negatif adamların var ?")
             raise ValueError
         elif 0 == len(allies):
             locations = []
@@ -145,7 +161,8 @@ class RiskyValley(BaseLearningAgentGym):
             counter = 0
             for j in target:
                 if len(enemies) == 0:
-                    enemy_order = [[6, 0] for i in range(ally_count)]
+                    # yok artik alum
+                    enemy_order = [[3, 0] for i in range(ally_count)]
                     continue
                 k = j % len(enemies)
                 if counter == ally_count:
@@ -167,7 +184,8 @@ class RiskyValley(BaseLearningAgentGym):
             counter = 0
             for j in target:
                 if len(enemies) == 0:
-                    enemy_order = [[6, 0] for i in range(ally_count)]
+                    # bu ne oluyor press tv
+                    enemy_order = [[3, 0] for i in range(ally_count)]
                     continue
                 k = j % len(enemies)
                 if counter == ally_count:
@@ -178,16 +196,15 @@ class RiskyValley(BaseLearningAgentGym):
                 counter += 1
 
             while len(locations) > 7:
-                locations.pop(-1)
+                locations = list(locations)[:7]
 
 
         movement = multi_forced_anchor(movement, raw_state, team)
-
         if len(locations) > 0:
             locations = list(map(list, locations))
-
-        #locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
-
+        
+        # boyle bisi olabilir mi ya
+        # locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
         # for i in range(len(locations)):
         #     for k in range(len(enemy_order)):
         #         if getDistance(locations[i], enemy_order[k]) <= 3:
@@ -206,10 +223,13 @@ class RiskyValley(BaseLearningAgentGym):
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team)
         if enemy_count < self.previous_enemy_count:
             kill_reward = (self.previous_enemy_count - enemy_count) * 5
-
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
+        # only reward goes for collecting gold
         reward = harvest_reward + kill_reward - martyr_reward
+
+        # reward = harvest_reward
+        # reward = 0
 
         # consider givin reward only at episode end
         blue_score = next_state['score'][0]
@@ -274,28 +294,19 @@ class RiskyValley(BaseLearningAgentGym):
                 if entity_train == 1:
                     reward+=10
                     early_termination = False
-            # TODO :fix it
+
             # reason about the resources that we already have
             # make it hard for the model to train anything but necessary
-            # this actually isnt working as desired
-            # the model still trains unnecessary units with -10 reward
-            # just make it -100 and try
             if entity_train > 0:
                 reward-=10
                 if early_termination and blue_score<3:
                     done = True
-        
-        #added to give negative reward if there is no truck left 
-        # ally_truck_count, enemy_truck_count = truck_num(self.nec_obs, self.team)   
-        # if ally_truck_count <= 0:
-        #     reward -= 10 
+
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count
         info = {}
         self.steps += 1
-        # if self.steps % 400 == 1:
-        #     print("iteration step passed:400")
         self.reward += reward
 
         self.nec_obs = next_state

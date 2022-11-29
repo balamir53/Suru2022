@@ -5,8 +5,9 @@ from ray.tune import run_experiments, register_env
 from agents.GolKenari import GolKenari
 # from agents.GolKenari import GolKenari
 from agents.RiskyValley import RiskyValley
+from agents.TruckMini import TruckMini
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+# os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 
 parser = argparse.ArgumentParser(description='Cadet Agents')
@@ -72,8 +73,9 @@ def main():
                 "training_iteration": 7e7,
             },
             "config": config,
-            "checkpoint_freq": 100,
-            # "restore": "models/checkpoint_100/checkpoint-200",
+            "checkpoint_freq": 50,
+            # "restore": "models/checkpoint_000005/checkpoint-5",
+            "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
         },
     #  },resume=True)
     })
