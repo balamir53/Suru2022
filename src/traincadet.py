@@ -36,6 +36,7 @@ parser.add_argument('--pad', action='store_true',
                     help='Padding the map')
 
 args = parser.parse_args()
+# args.pad = False
 agents = [None, args.agentRed]
 
 def main():
@@ -44,7 +45,7 @@ def main():
     register_env("ray", lambda config: GolKenari(args, agents))
     config= {"use_critic": True,
             "log_level": "WARN",
-             "num_workers": 14,
+             "num_workers": 13,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
@@ -75,7 +76,7 @@ def main():
             "config": config,
             "checkpoint_freq": 50,
             # "restore": "models/checkpoint_000005/checkpoint-5",
-            "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
+            # "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
         },
     #  },resume=True)
     })

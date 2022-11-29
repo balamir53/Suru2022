@@ -47,6 +47,7 @@ parser.add_argument('--pad', action='store_true',
                     help='Padding the map')
 
 args = parser.parse_args()
+# args.pad = False
 agents = [None, args.agentRed]
 
 class PatchedPPOTrainer(ppo.PPOTrainer):
@@ -74,13 +75,14 @@ def main():
     #since there are different kind of agents they have to learn different policies
     #because they have different observation and action spaces (inspect this)
     # ray.init(num_gpus=1, log_to_driver=True, local_mode=True)
-    ray.init(local_mode=True)
+    # ray.init(local_mode=True)
+    ray.init()
     register_env("ray", lambda config: GolKenari(args,agents))
 
     #misconfiguration
     #check the documentation
     config= {"use_critic": True,
-                #"log_level": "WARN",
+                "log_level": "WARN",
                 "num_workers": 5,
                 "use_gae": True,
                 "lambda": 1.0,
@@ -104,7 +106,8 @@ def main():
                 "observation_filter": "NoFilter"}
 
     # Create our RLlib Trainer.
-    algo = PatchedPPOTrainer(config=config, env="ray")
+    # algo = PatchedPPOTrainer(config=config, env="ray")
+    algo = ppo.PPOTrainer(config=config, env="ray")
     # algo = ppo.PPOTrainer(config=config, env="CartPole-v0")
     import os 
     dir_path = os.path.dirname(os.path.realpath(__file__))

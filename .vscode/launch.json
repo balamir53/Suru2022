@@ -48,7 +48,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             // "args": ["GolKenariVadisi","SimpleAgent"]
-            "args": ["GolKenariVadisi","SimpleAgent", "30", "30", "--pad"]
+            "args": ["GolKenariVadisi","SimpleAgent", "20", "20", "--pad"]
         },
         {
             "name": "Golnegreward",

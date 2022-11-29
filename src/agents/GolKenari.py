@@ -44,7 +44,7 @@ class GolKenari(BaseLearningAgentGym):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(7*15*10+4,),
+            shape=(configs['map']['x']*configs['map']['y']*10+4,),
             dtype=np.int16
         )
         self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
