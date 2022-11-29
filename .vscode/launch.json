@@ -27,6 +27,17 @@
             "args": ["GolKenariVadisi","SimpleAgent"]
         },
         {
+            "name": "GolKenariPad",
+            "type": "python",
+            "request": "launch",
+            // "program": "src/train.py",
+            "program": "src/traincadet.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            // "args": ["GolKenariVadisi","SimpleAgent"]
+            "args": ["GolKenariVadisi","SimpleAgent", "30", "30", "--pad"]
+        },
+        {
             "name": "Golnegreward",
             "type": "python",
             "request": "launch",
@@ -43,6 +54,15 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["GolKenariVadisi","SimpleAgent"]
+        },
+        {
+            "name": "agentsofglory",
+            "type": "python",
+            "request": "launch",
+            "program": "src/agentsofglory.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["GolKenariVadisi","SimpleAgent","SimpleAgent", "--render",  "20", "20", "--pad"]
         }
     ]
 }

@@ -6,7 +6,7 @@ import numpy as np
 import yaml
 from game import Game
 from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, truck_num
-
+from maps import pad_terrain
 
 
 def read_hypers():
@@ -29,6 +29,8 @@ class GolKenari(BaseLearningAgentGym):
     def __init__(self, args, agents, team=0):
         super().__init__() 
         configs = read_hypers()
+        if args.pad == True:
+            configs = pad_terrain(args.map_x, args.map_y, configs)
         self.game = Game(args, agents)
         self.team = team
         self.enemy_team = 1
@@ -230,11 +232,11 @@ class GolKenari(BaseLearningAgentGym):
         reward = harvest_reward + kill_reward - martyr_reward
         
          
-        ally_truck_count, enemy_truck_count = truck_num(self.nec_obs, self.team)   
-        #added: if done flag is true and there is no truck left or trained, give negative reward.
-        if done == True:
-            if ally_truck_count <= 0:
-                reward = self.reward / 2
+        # ally_truck_count, enemy_truck_count = truck_num(self.nec_obs, self.team)   
+        # #added: if done flag is true and there is no truck left or trained, give negative reward.
+        # if done == True:
+        #     if ally_truck_count <= 0:
+        #         reward = self.reward / 2
 
         self.previous_enemy_count = enemy_count
         self.previous_ally_count = ally_count

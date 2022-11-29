@@ -29,6 +29,8 @@ import importlib
 import copy
 from PIL import Image
 import time
+#added for padding
+from maps import pad_terrain
 
 class Game:
     def __import_agents(self,agents):
@@ -66,6 +68,10 @@ class Game:
         try:
             with open('data/config/'+args.map+'.yaml') as file:
                 self.config = yaml.load(file, Loader=yaml.FullLoader)
+            
+            #added for padding
+            if args.pad == True:
+                self.config = pad_terrain(args.map_x, args.map_y, self.config)
         except:
             print('Map Could Not be Found!')
             exit()

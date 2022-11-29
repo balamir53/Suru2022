@@ -34,6 +34,13 @@ parser.add_argument('--gif', action='store_true',
                     help='Create a gif of the game, also sets render')
 parser.add_argument('--img', action='store_true',
                     help='Save images of each turn, also sets render')
+#added for padding
+parser.add_argument('map_x', metavar='map_x', type=int,
+                    help='desired maps width')
+parser.add_argument('map_y', metavar='map_y', type=int,
+                    help='desired maps height')
+parser.add_argument('--pad', action='store_true',
+                    help='Padding the map')
 
 args = parser.parse_args()
 agents = [None, args.agentRed]
@@ -50,7 +57,7 @@ def main():
     #check the documentation
     config= {"use_critic": True,
                 #"log_level": "WARN",
-                "num_workers": 0,
+                "num_workers": 5,
                 "use_gae": True,
                 "lambda": 1.0,
                 "kl_coeff": 0.2,
