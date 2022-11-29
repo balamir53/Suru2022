@@ -1,4 +1,4 @@
-import argparse
+import argparse, os
 
 from atexit import register
 import ray
@@ -20,6 +20,8 @@ import ray.rllib.agents.ppo as ppo
 import pickle
 
 from agents.TruckMini import TruckMini
+
+os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 parser = argparse.ArgumentParser(description='Cadet Agents')
 parser.add_argument('map', metavar='map', type=str,
@@ -67,7 +69,8 @@ def main():
     #since there are different kind of agents they have to learn different policies
     #because they have different observation and action spaces (inspect this)
     # ray.init(num_gpus=1, log_to_driver=True, local_mode=True)
-    ray.init(local_mode=True)
+    ray.init(num_gpus=1)
+    # ray.init(local_mode=True)
     register_env("ray", lambda config: TruckMini(args,agents))
 
     #misconfiguration
@@ -75,6 +78,7 @@ def main():
     config= {"use_critic": True,
                 #"log_level": "WARN",
                 "num_workers": 0,
+                "num_gpus":1,
                 "use_gae": True,
                 "lambda": 1.0,
                 "kl_coeff": 0.2,
