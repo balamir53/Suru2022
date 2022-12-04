@@ -19,7 +19,7 @@
             "program": "src/traincadet.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["TrainSingleMixedBuyuk","SimpleAgent"]
+            "args": ["RiskyValley","SimpleAgent"]
         },
         {
             "name": "agentsofglory",
@@ -28,7 +28,7 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","10"]
+            "args": ["TrainSingleMixedBuyuk2","SelfPlay","SimpleAgent", "--numOfMatch","10"]
        },
        {
            "name": "train",
