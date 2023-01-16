@@ -42,10 +42,21 @@ class TruckMini(BaseLearningAgentGym):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(6*4*10+4,),
+            shape=(24*18*10+4,),
             dtype=np.int16
         )
         self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
+        # self.observation_space = spaces.Dict (
+        #     {
+        #     "observations": spaces.Box(
+        #     low=-2,
+        #     high=401,
+        #     shape=(24*18*10+4,),
+        #     dtype=np.int16
+        # ),
+        #     "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
+        # )
+        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
 
@@ -61,7 +72,9 @@ class TruckMini(BaseLearningAgentGym):
         self.steps = 0
         state = self.game.reset()
         self.nec_obs = state
+        # return self.observation_space
         return self.decode_state(state)
+        
         
 
     @staticmethod
@@ -251,7 +264,7 @@ class TruckMini(BaseLearningAgentGym):
         # entity_train = action[-1] # 0 for none 1 for truck up to 4 for other attack units
         
         # if you have 2 or less gold dont train anything other than truck
-        # if blue_score < 3 and entity_train > 1:
+        # if blue_scsore < 3 and entity_train > 1:
         #     reward = -100
         #     done = True
         # this didnt work
