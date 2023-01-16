@@ -21,7 +21,7 @@ import pickle
 
 from agents.TruckMini import TruckMini
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 parser = argparse.ArgumentParser(description='Cadet Agents')
 parser.add_argument('map', metavar='map', type=str,
@@ -68,6 +68,7 @@ def main():
     #multiple agents multiple policies
     #since there are different kind of agents they have to learn different policies
     #because they have different observation and action spaces (inspect this)
+    # considering this we can gather actions and create a global model that combines them?
     # ray.init(num_gpus=1, log_to_driver=True, local_mode=True)
     ray.init(num_gpus=1)
     # ray.init(local_mode=True)
@@ -78,7 +79,7 @@ def main():
     config= {"use_critic": True,
                 #"log_level": "WARN",
                 "num_workers": 0,
-                "num_gpus":1,
+                # "num_gpus":1,
                 "use_gae": True,
                 "lambda": 1.0,
                 "kl_coeff": 0.2,
@@ -111,7 +112,7 @@ def main():
     # algo.restore(checkpoint_path="models/checkpoint_000100/checkpoint-200")
     # algo.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5")
     # algo.restore(checkpoint_path="data/inputs/model/checkpoint_001900/checkpoint-1900")
-
+    
     for _ in range(3):
         print(algo.train())
 
