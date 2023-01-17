@@ -46,16 +46,16 @@ class TruckMini(BaseLearningAgentGym):
             dtype=np.int16
         )
         self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
-        # self.observation_space = spaces.Dict (
-        #     {
-        #     "observations": spaces.Box(
-        #     low=-2,
-        #     high=401,
-        #     shape=(24*18*10+4,),
-        #     dtype=np.int16
-        # ),
-        #     "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
-        # )
+        self.observation_space = spaces.Dict (
+            {
+            "observations": spaces.Box(
+            low=-2,
+            high=401,
+            shape=(24*18*10+4,),
+            dtype=np.int16
+        ),
+            "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
+        )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
@@ -72,8 +72,8 @@ class TruckMini(BaseLearningAgentGym):
         self.steps = 0
         state = self.game.reset()
         self.nec_obs = state
-        # return self.observation_space
-        return self.decode_state(state)
+        return self.observation_space.sample()
+        # return { "observations":self.decode_state(state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}
         
         
 
@@ -323,7 +323,8 @@ class TruckMini(BaseLearningAgentGym):
         self.reward += reward
 
         self.nec_obs = next_state
-        return self.decode_state(next_state), reward, done, info
+        # return self.decode_state(next_state), reward, done, info
+        return{ "observations":self.decode_state(next_state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}, reward, done, info
 
     def render(self,):
         return None

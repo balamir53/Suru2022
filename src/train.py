@@ -16,6 +16,7 @@ from agents.GolKenari import GolKenari
 
 # from ray.rllib.algorithms.ppo import PPO
 import ray.rllib.agents.ppo as ppo
+from models.action_mask_model import TorchActionMaskModel
 
 import pickle
 
@@ -99,7 +100,10 @@ def main():
                 "grad_clip": None,
                 "kl_target": 0.01,
                 "batch_mode": "truncate_episodes",
-                "observation_filter": "NoFilter"}
+                "observation_filter": "NoFilter",
+                "model":{
+                    "custom_model": TorchActionMaskModel
+                }}
 
     # Create our RLlib Trainer.
     algo = PatchedPPOTrainer(config=config, env="ray")
