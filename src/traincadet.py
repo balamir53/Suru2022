@@ -6,7 +6,9 @@ from ray.tune import run_experiments, register_env
 from agents.RiskyValley import RiskyValley
 from agents.TruckMini import TruckMini
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+from models.action_mask_model import TorchActionMaskModel
+
+# os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 
 parser = argparse.ArgumentParser(description='Cadet Agents')
@@ -31,14 +33,14 @@ args = parser.parse_args()
 agents = [None, args.agentRed]
 
 def main():
-    ray.init(num_gpus=1, log_to_driver=True)
-    # ray.init()
-    # register_env("ray", lambda config: TruckMini(args, agents))
-    register_env("ray", lambda config: RiskyValley(args, agents))
+    # ray.init(num_gpus=1, log_to_driver=True)
+    ray.init()
+    register_env("ray", lambda config: TruckMini(args, agents))
+    # register_env("ray", lambda config: RiskyValley(args, agents))
     config= {"use_critic": True,
             "log_level": "WARN",
-             "num_workers": 10,
-             "num_gpus":1,
+             "num_workers": 14,
+            #  "num_gpus":1,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
@@ -58,7 +60,10 @@ def main():
              "grad_clip": None,
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
-             "observation_filter": "NoFilter"}
+             "observation_filter": "NoFilter",
+             "model":{
+                    "custom_model": TorchActionMaskModel
+                }}
     run_experiments({
         "risky_ppo_recruit": {
             "run": "PPO",
@@ -73,7 +78,7 @@ def main():
             # "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400",
             # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },
-     },resume=True)
-    # })
+    #  },resume=True)
+    })
 if __name__ == "__main__":
         main()

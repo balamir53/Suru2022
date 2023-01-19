@@ -10,9 +10,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    # with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
-    # with open(f"data/config/TrainSingleTruckSmall.yaml", "r") as f:   
-    with open(f"data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -39,22 +37,27 @@ class TruckMini(BaseLearningAgentGym):
         self.episodes = 0
         self.steps = 0
         self.nec_obs = None
-        self.observation_space = spaces.Box(
-            low=-2,
-            high=401,
-            shape=(24*18*10+4,),
-            dtype=np.int16
-        )
+
+        # define the action mask
+        self.action_mask = np.ones(103,dtype=np.int8)
+
+        # self.observation_space = spaces.Box(
+        #     low=-2,
+        #     high=401,
+        #     shape=(6*4*10+4,),
+        #     dtype=np.int16
+        # )
         self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         self.observation_space = spaces.Dict (
             {
             "observations": spaces.Box(
             low=-2,
             high=401,
-            shape=(24*18*10+4,),
+            shape=(6*4*10+4,),
             dtype=np.int16
         ),
-            "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
+            # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
+            "action_mask" : spaces.Box(0, 1, shape=(103,),dtype=np.int8) }
         )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         self.previous_enemy_count = 4
@@ -228,11 +231,14 @@ class TruckMini(BaseLearningAgentGym):
         return [locations, movement, enemy_order, train]
 
     def step(self, action):
+        self.action_mask = np.ones(103,dtype=np.int8)
+
         harvest_reward = 0
         kill_reward = 0
         martyr_reward = 0
         action = self.take_action(action)
         next_state, _, done =  self.game.step(action)
+        # check this reward function
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team)
         if enemy_count < self.previous_enemy_count:
             kill_reward = (self.previous_enemy_count - enemy_count) * 5
@@ -273,20 +279,21 @@ class TruckMini(BaseLearningAgentGym):
         # Train: 0-4 arası tam sayı (integer, kısaca int). 0 ünite yapmamayı, 1-4 ise sırasıyla kamyon, hafif tank,
         # ağır tank ve İHA yapmayı ifade etmektedir
         number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
-        for x in self.my_units:
-            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
-                number_of_tanks+=1
-            elif x["tag"] == "Drone":
-                number_of_uavs+=1
-            elif x["tag"] == "Truck":
-                number_of_trucks+=1
-        for x in self.enemy_units:
-            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
-                number_of_enemy_tanks+=1
-            elif x["tag"] == "Drone":
-                number_of_enemy_uavs+=1
-            elif x["tag"] == "Truck":
-                number_of_enemy_trucks+=1
+        if hasattr(self, 'my_units'): # it is undefined on the first loop
+            for x in self.my_units:
+                if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                    number_of_tanks+=1
+                elif x["tag"] == "Drone":
+                    number_of_uavs+=1
+                elif x["tag"] == "Truck":
+                    number_of_trucks+=1
+            for x in self.enemy_units:
+                if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                    number_of_enemy_tanks+=1
+                elif x["tag"] == "Drone":
+                    number_of_enemy_uavs+=1
+                elif x["tag"] == "Truck":
+                    number_of_enemy_trucks+=1
 
         entity_train = action[-1]
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
@@ -313,7 +320,10 @@ class TruckMini(BaseLearningAgentGym):
             if entity_train > 0:
                 reward-=10
                 if early_termination and blue_score<3:
-                    done = True
+                    # done = True
+                    # instead of to early terminate mask the train action
+                    # set the last 4 element to zero
+                    self.action_mask[-4:]=0
 
 
         self.previous_enemy_count = enemy_count
@@ -324,7 +334,8 @@ class TruckMini(BaseLearningAgentGym):
 
         self.nec_obs = next_state
         # return self.decode_state(next_state), reward, done, info
-        return{ "observations":self.decode_state(next_state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}, reward, done, info
+        # return{ "observations":self.decode_state(next_state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}, reward, done, info
+        return{ "observations":self.decode_state(next_state),"action_mask":self.action_mask}, reward, done, info
 
     def render(self,):
         return None

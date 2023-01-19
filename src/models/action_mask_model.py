@@ -108,6 +108,7 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
 
         # Convert action_mask into a [0.0 || -inf]-type mask.
         inf_mask = torch.clamp(torch.log(action_mask), min=FLOAT_MIN)
+        # print(logits)
         masked_logits = logits + inf_mask
 
         # Return masked logits.

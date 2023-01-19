@@ -154,8 +154,14 @@ def multi_forced_anchor(movement, obs, team): # birden fazla truck için
             break
         if isinstance(trucks[0], np.int64):
             trucks = np.expand_dims(trucks, axis=0)
+        # ya arkadas sen modeli neden manupile ediyorsun ya
+        # kafayi ye
+        # al kirdin kirdin
+        # burda da action masking yapmak gerekiyor
         for truck in trucks:
             if (ally == truck).all():
+                # hele hele hem de her seferinde tum resourcelar icin check ediliyor
+                # olme essegim olme
                 for reso in resource_loc:
                     if loads[truck[0], truck[1]].max() != 3 and (reso == truck).all():
                         movement[i] = 0
