@@ -191,8 +191,18 @@ class TruckMini(BaseLearningAgentGym):
             while len(enemy_order) > ally_count:
                 enemy_order.pop()
             while len(movement) > ally_count:
+                # extracting the unused movement parameters
+                # there are seven values by default
+                # these actions have to be masked
                 movement.pop()
+        
+        # mask out the unused part of the action space
+        # This have to be set at the beginning
+        # or no
+        # This value changes throughout the sim
+        # self.action_mask[]
 
+        
         elif len(allies) > 7:
             ally_count = 7
             locations = allies
@@ -228,6 +238,7 @@ class TruckMini(BaseLearningAgentGym):
         #             enemy_order[i] = enemy_order[k]
 
         locations = list(map(tuple, locations))
+        # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, train]
 
     def step(self, action):
@@ -294,6 +305,12 @@ class TruckMini(BaseLearningAgentGym):
                     number_of_enemy_uavs+=1
                 elif x["tag"] == "Truck":
                     number_of_enemy_trucks+=1
+
+            # assuming that self.my_units is in the exact order as in locations list
+            # here we can mask out unused action spaces for non existence units
+            self.action_mask[len(self.my_units)*7:49] = 0
+            self.action_mask[49+len(self.my_units)*7:98] =0
+
 
         entity_train = action[-1]
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
