@@ -9,7 +9,7 @@ from agents.GolKenari import GolKenari
 from agents.TruckMini import TruckMini
 from agents.RiskyValley import RiskyValley
 from argparse import Namespace
-
+from models.action_mask_model import TorchActionMaskModel
 import pickle
 
 class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
@@ -35,7 +35,7 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 class SelfPlay:
     def __init__(self, team, action_lenght):
         # args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-        args = Namespace(map="TrainSingleMixedBuyuk3", render=False, gif=False, img=False)
+        args = Namespace(map="TrainSingleMixedSmall", render=False, gif=False, img=False)
         agents = [None, "SimpleAgent"]
 
         self.team = 0
@@ -67,7 +67,7 @@ class SelfPlay:
         #      "observation_filter": "NoFilter"}
         config= {"use_critic": True,
             "log_level": "WARN",
-             "num_workers": 8,
+             "num_workers": 0,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
@@ -87,16 +87,19 @@ class SelfPlay:
              "grad_clip": None,
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
-             "observation_filter": "NoFilter"}
-        register_env("ray", lambda config: RiskyValley(args, agents))
-        # register_env("ray", lambda config: TruckMini(args, agents))
+             "observation_filter": "NoFilter",
+             "model":{
+                    "custom_model": TorchActionMaskModel
+                }}
+        # register_env("ray", lambda config: RiskyValley(args, agents))
+        register_env("ray", lambda config: TruckMini(args, agents))
         # ppo_agent = PPOTrainer(config=config, env="ray")
         ppo_agent = PatchedPPOTrainer(config=config, env="ray")
         # ppo_agent = PPOTrainer(env="ray")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002400/checkpoint-2400")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000700/checkpoint-700")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -107,9 +110,9 @@ class SelfPlay:
         astar(pos,target,state)
         return
         '''
-        state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
-        # state = TruckMini.just_decode_state(raw_state, self.team, self.enemy_team)
-        actions, _, _ = self.policy.compute_single_action(state.astype(np.float32))
-        location, movement, target, train = RiskyValley.just_take_action(actions, raw_state, self.team)
-        # location, movement, target, train = TruckMini.just_take_action(actions, raw_state, self.team)
+        # state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
+        state = TruckMini.just_decode_state(raw_state, self.team, self.enemy_team)
+        actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(103,dtype=np.int8)})
+        # location, movement, target, train = RiskyValley.just_take_action(actions, raw_state, self.team)
+        location, movement, target, train = TruckMini.just_take_action(actions, raw_state, self.team)
         return (location, movement, target, train)

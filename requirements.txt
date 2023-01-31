@@ -4,3 +4,4 @@ pyyaml==6.0
 stable_baselines3==1.1.0a7
 ray[rllib]==1.10.0
 gym==0.21.0
+typing_extensions

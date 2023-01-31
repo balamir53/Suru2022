@@ -308,8 +308,9 @@ class TruckMini(BaseLearningAgentGym):
 
             # assuming that self.my_units is in the exact order as in locations list
             # here we can mask out unused action spaces for non existence units
-            self.action_mask[len(self.my_units)*7:49] = 0
-            self.action_mask[49+len(self.my_units)*7:98] =0
+            # this didnt work
+            # self.action_mask[len(self.my_units)*7:49] = 0
+            # self.action_mask[49+len(self.my_units)*7:98] =0
 
 
         entity_train = action[-1]
@@ -340,6 +341,7 @@ class TruckMini(BaseLearningAgentGym):
                     # done = True
                     # instead of to early terminate mask the train action
                     # set the last 4 element to zero
+                    # how can i be sure about this
                     self.action_mask[-4:]=0
 
 
