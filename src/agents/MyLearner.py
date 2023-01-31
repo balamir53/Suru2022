@@ -36,7 +36,7 @@ class MyLearner(BaseLearningAgentGym):
         # self.game.config['blue']['base']['x'] = 3
         # call this in reset function
         # self.manipulateMap(self.game.config)
-        self.mapChangeFrequency = 1
+        self.mapChangeFrequency = 100
         # original map size
         self.gameAreaX = 12
         self.gameAreaY = 8
