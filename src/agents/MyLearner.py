@@ -1,5 +1,6 @@
+import copy
 from os import kill
-from typing_extensions import Self
+import random
 from agents.BaseLearningGym import BaseLearningAgentGym
 import gym
 from gym import spaces
@@ -10,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk3.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk2.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -26,13 +27,25 @@ class MyLearner(BaseLearningAgentGym):
 
     def __init__(self, args, agents, team=0):
         super().__init__() 
-        configs = read_hypers()
+        self.configs = read_hypers()
+        # self.resetMap =copy.deepcopy(self.configs)
+        # this wont make any difference here
+        # configs['blue']['base']['x'] = 3
         self.game = Game(args, agents)
+        # this works, but find where it is reset
+        # self.game.config['blue']['base']['x'] = 3
+        # call this in reset function
+        # self.manipulateMap(self.game.config)
+        self.mapChangeFrequency = 1
+        # original map size
+        self.gameAreaX = 12
+        self.gameAreaY = 8
+
         self.team = team
         self.enemy_team = 1
         
-        self.height = configs['map']['y']
-        self.width = configs['map']['x']
+        self.height = self.configs['map']['y']
+        self.width = self.configs['map']['x']
         self.reward = 0
         self.episodes = 0
         self.steps = 0
@@ -65,6 +78,69 @@ class MyLearner(BaseLearningAgentGym):
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
 
+    def getCoordinate(self, dict):
+        return dict['y']*self.width+dict['x']
+
+    def addOffSet(self, dict, xOff, yOff):
+        dict['x']+= xOff
+        dict['y']+= yOff
+
+    def resetPosition(self, myDict):
+        myDict['blue']['base']['x'] = self.configs['blue']['base']['x']
+        myDict['blue']['base']['y'] = self.configs['blue']['base']['y']
+
+        myDict['red']['base']['x'] = self.configs['red']['base']['x']
+        myDict['red']['base']['y'] = self.configs['red']['base']['y']
+
+        for i in range(len(myDict['blue']['units'])):
+            myDict['blue']['units'][i]['x'] = self.configs['blue']['units'][i]['x']
+            myDict['blue']['units'][i]['y'] = self.configs['blue']['units'][i]['y']
+
+        for i in range(len(myDict['red']['units'])):
+            myDict['red']['units'][i]['x'] = self.configs['red']['units'][i]['x']
+            myDict['red']['units'][i]['y'] = self.configs['red']['units'][i]['y']
+
+    def manipulateMap(self, mapDict, episode):
+        # here we manipulate actually self.game.config
+        # change resources positions on every episode
+        
+        # mapDict['blue']['base']['x'] = 0 #this works
+        self.resetPosition(mapDict)
+        # mapDict = copy.deepcopy(self.configs)
+        # mapDict = self.configs.copy() #this doesnt work
+        # mapDict['blue']['base']['x'] = 0
+        xOffSet = 0
+        yOffSet = 0
+        # change the base and units' first positions on some frequency
+        if(episode%self.mapChangeFrequency==0):
+        # if(False):
+            xOffSet = random.randint(0,self.width-self.gameAreaX-1)
+            yOffSet = random.randint(0,self.height-self.gameAreaY-1)
+            self.addOffSet(mapDict['blue']['base'],xOffSet, yOffSet)
+            self.addOffSet(mapDict['red']['base'],xOffSet, yOffSet)
+            for x in mapDict['blue']['units']:
+                self.addOffSet(x,xOffSet, yOffSet)
+            for x in mapDict['red']['units']:
+                self.addOffSet(x,xOffSet, yOffSet)
+        
+        # find out already occupied tiles
+        occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
+        for x in mapDict['blue']['units']:
+            occupiedTiles.add(self.getCoordinate(x))
+        for x in mapDict['red']['units']:
+            occupiedTiles.add(self.getCoordinate(x))
+
+        # randomize resource positions
+        for x in mapDict['resources']:
+            a = random.randint(0, self.gameAreaX-1)+xOffSet
+            b = random.randint(0, self.gameAreaY-1)+yOffSet
+            while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
+                a = random.randint(0, self.gameAreaX-1)+xOffSet
+                b = random.randint(0, self.gameAreaY-1)+yOffSet
+            occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
+            x['x'] = a
+            x['y'] = b
+
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
         self.action_space = action_spec
@@ -75,6 +151,8 @@ class MyLearner(BaseLearningAgentGym):
         self.previous_ally_count = 4
         self.episodes += 1
         self.steps = 0
+        # change it on every episode
+        self.manipulateMap(self.game.config, self.episodes)
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
@@ -103,7 +181,7 @@ class MyLearner(BaseLearningAgentGym):
                     my_units.append(
                     {   
                         'unit': units[team][i][j],
-                        'tag': Self.tagToString[units[team][i][j]],
+                        'tag': MyLearner.tagToString[units[team][i][j]],
                         'hp': hps[team][i][j],
                         'location': (i,j),
                         'load': load[team][i][j]
@@ -113,7 +191,7 @@ class MyLearner(BaseLearningAgentGym):
                     enemy_units.append(
                     {   
                         'unit': units[enemy_team][i][j],
-                        'tag': Self.tagToString[units[enemy_team][i][j]],
+                        'tag': MyLearner.tagToString[units[enemy_team][i][j]],
                         'hp': hps[enemy_team][i][j],
                         'location': (i,j),
                         'load': load[enemy_team][i][j]
@@ -140,7 +218,7 @@ class MyLearner(BaseLearningAgentGym):
 
     @staticmethod
     def just_decode_state(obs, team, enemy_team):
-        state, _ = Self._decode_state(obs, team, enemy_team)
+        state, _ = MyLearner._decode_state(obs, team, enemy_team)
         return state
 
     def decode_state(self, obs):
