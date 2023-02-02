@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+    with open(f"/home/yzt/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -396,8 +396,8 @@ class MyLearner(BaseLearningAgentGym):
             # rather than masking the whole remnant action space
             # we can define specific non-playable actions i think
             # check this
-            self.action_mask[len(self.my_units)*7:49] = 0
-            self.action_mask[49+len(self.my_units)*7:98] =0
+            # self.action_mask[len(self.my_units)*7:49] = 0
+            # self.action_mask[49+len(self.my_units)*7:98] =0
 
 
         entity_train = action[-1]
