@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk2.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -38,8 +38,8 @@ class MyLearner(BaseLearningAgentGym):
         # self.manipulateMap(self.game.config)
         self.mapChangeFrequency = 1
         # original map size
-        self.gameAreaX = 12
-        self.gameAreaY = 8
+        self.gameAreaX = 6
+        self.gameAreaY = 4
 
         self.team = team
         self.enemy_team = 1
@@ -66,7 +66,8 @@ class MyLearner(BaseLearningAgentGym):
             "observations": spaces.Box(
             low=-2,
             high=401,
-            shape=(24*18*10+4,),
+            # shape=(24*18*10+4,),
+            shape=(6*4*10+4,),
             dtype=np.int16
         ),
             # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
@@ -105,7 +106,7 @@ class MyLearner(BaseLearningAgentGym):
         # change resources positions on every episode
         
         # mapDict['blue']['base']['x'] = 0 #this works
-        self.resetPosition(mapDict)
+        
         # mapDict = copy.deepcopy(self.configs)
         # mapDict = self.configs.copy() #this doesnt work
         # mapDict['blue']['base']['x'] = 0
@@ -114,8 +115,9 @@ class MyLearner(BaseLearningAgentGym):
         # change the base and units' first positions on some frequency
         if(episode%self.mapChangeFrequency==0):
         # if(False):
-            xOffSet = random.randint(0,self.width-self.gameAreaX-1)
-            yOffSet = random.randint(0,self.height-self.gameAreaY-1)
+            self.resetPosition(mapDict)
+            xOffSet = random.randint(0,self.width-self.gameAreaX)
+            yOffSet = random.randint(0,self.height-self.gameAreaY)
             self.addOffSet(mapDict['blue']['base'],xOffSet, yOffSet)
             self.addOffSet(mapDict['red']['base'],xOffSet, yOffSet)
             for x in mapDict['blue']['units']:
@@ -391,8 +393,11 @@ class MyLearner(BaseLearningAgentGym):
             # assuming that self.my_units is in the exact order as in locations list
             # here we can mask out unused action spaces for non existence units
             # this didnt work
-            # self.action_mask[len(self.my_units)*7:49] = 0
-            # self.action_mask[49+len(self.my_units)*7:98] =0
+            # rather than masking the whole remnant action space
+            # we can define specific non-playable actions i think
+            # check this
+            self.action_mask[len(self.my_units)*7:49] = 0
+            self.action_mask[49+len(self.my_units)*7:98] =0
 
 
         entity_train = action[-1]
@@ -420,7 +425,7 @@ class MyLearner(BaseLearningAgentGym):
             if entity_train > 0:
                 reward-=10
                 if early_termination and blue_score<3:
-                    # done = True
+                    done = True
                     # instead of to early terminate mask the train action
                     # set the last 4 element to zero
                     # how can i be sure about this
