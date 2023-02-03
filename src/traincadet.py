@@ -39,7 +39,8 @@ def main():
     register_env("ray", lambda config: MyLearner(args, agents))
     # register_env("ray", lambda config: TruckMini(args, agents))
     # register_env("ray", lambda config: RiskyValley(args, agents))
-    config= {"use_critic": True,
+    config= {
+            "use_critic": True,
             "log_level": "WARN",
              "num_workers": 10,
             #  "num_gpus":1,
@@ -63,6 +64,14 @@ def main():
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
+            #  "model":{
+            #         "custom_model": TorchActionMaskModel
+            #     }
+            }
+    config_dqn= {
+            "log_level": "WARN",
+             "num_workers": 10,
+            
             #  "model":{
             #         "custom_model": TorchActionMaskModel
             #     }

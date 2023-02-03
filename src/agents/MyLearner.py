@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/home/yzt/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -40,6 +40,7 @@ class MyLearner(BaseLearningAgentGym):
         # original map size
         self.gameAreaX = 6
         self.gameAreaY = 4
+        self.train = 0
 
         self.team = team
         self.enemy_team = 1
@@ -60,7 +61,9 @@ class MyLearner(BaseLearningAgentGym):
             shape=(6*4*10+4,),
             dtype=np.int16
         )
-        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
+        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
+        # exclude the last action and manage it in this script, check simpleagent for it
+        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
         # self.observation_space = spaces.Dict (
         #     {
         #     "observations": spaces.Box(
@@ -230,17 +233,17 @@ class MyLearner(BaseLearningAgentGym):
 
     
     def take_action(self, action):
-        return self.just_take_action(action, self.nec_obs, self.team) 
+        return self.just_take_action(action, self.nec_obs, self.team, self.train) 
 
     @staticmethod
-    def just_take_action(action, raw_state, team):
+    def just_take_action(action, raw_state, team, train):
         # this function takes the output of the model
         # and converts it into a reasonable output for
         # the game to play
         movement = action[0:7]
         movement = movement.tolist()
         target = action[7:14]
-        train = action[14]
+        # train = action[14]
         enemy_order = []
 
         allies = ally_locs(raw_state, team)
@@ -322,6 +325,25 @@ class MyLearner(BaseLearningAgentGym):
         #             enemy_order[i] = enemy_order[k]
 
         locations = list(map(tuple, locations))
+
+        # has been copied from the singleagent
+        # it is better to put this in step function and hand the train parameter here
+        # train = 0
+        # if raw_state["score"][0]>raw_state["score"][1]+2:
+        #     if counter["Truck"]<2:
+        #         train = stringToTag["Truck"]
+        #     elif counter["LightTank"]<1:
+        #         train = stringToTag["LightTank"]
+        #     elif counter["HeavyTank"]<1:
+        #         train = stringToTag["HeavyTank"]
+        #     elif counter["Drone"]<1:
+        #         train = stringToTag["Drone"]
+        #     elif len(self.my_units)<len(self.enemy_units):
+        #         train = randint(2,4)
+        # elif state["score"][self.team]+2<state["score"][self.enemy_team] and len(self.my_units)<len(self.enemy_units)*2:
+        #     train = randint(2,4)
+
+
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, train]
 
@@ -400,36 +422,50 @@ class MyLearner(BaseLearningAgentGym):
             # self.action_mask[49+len(self.my_units)*7:98] =0
 
 
-        entity_train = action[-1]
+        # entity_train = action[-1]
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
 
-        early_termination = True
-        # if there are resources to spend
-        if blue_score>0:
+        # early_termination = True
+        # # if there are resources to spend
+        # if blue_score>0:
 
-            # catch and beat the enemy military numbers
-            if number_of_enemy_military>=number_of_our_military and entity_train>1:
-                reward+=10
-                early_termination = False
+        #     # catch and beat the enemy military numbers
+        #     if number_of_enemy_military>=number_of_our_military and entity_train>1:
+        #         reward+=10
+        #         early_termination = False
 
-            # if there is no truck, train truck
-            # what about reward scale?
-            if number_of_trucks == 0 or number_of_enemy_trucks>=number_of_trucks:
-                if entity_train == 1:
-                    reward+=10
-                    early_termination = False
+        #     # if there is no truck, train truck
+        #     # what about reward scale?
+        #     if number_of_trucks == 0 or number_of_enemy_trucks>=number_of_trucks:
+        #         if entity_train == 1:
+        #             reward+=10
+        #             early_termination = False
 
-            # reason about the resources that we already have
-            # make it hard for the model to train anything but necessary
-            if entity_train > 0:
-                reward-=10
-                if early_termination and blue_score<3:
-                    done = True
-                    # instead of to early terminate mask the train action
-                    # set the last 4 element to zero
-                    # how can i be sure about this
-                    # self.action_mask[-4:]=0
+        #     # reason about the resources that we already have
+        #     # make it hard for the model to train anything but necessary
+        #     if entity_train > 0:
+        #         reward-=10
+        #         if early_termination and blue_score<3:
+        #             done = True
+        #             # instead of to early terminate mask the train action
+        #             # set the last 4 element to zero
+        #             # how can i be sure about this
+        #             # self.action_mask[-4:]=0
+
+        # copied from simple agent
+        # this is rule based unit creation logic
+        if blue_score>red_score+2:
+            if number_of_trucks<2:
+                self.train = 1
+            elif number_of_tanks<1:
+                self.train = random.randint(2,3)
+            elif number_of_uavs<1:
+                self.train = 4
+            elif number_of_our_military<number_of_enemy_military:
+                self.train = random.randint(2,4)
+        elif blue_score+2<red_score and len(self.my_units)<len(self.enemy_units)*2:
+            self.train = random.randint(2,4)
 
 
         self.previous_enemy_count = enemy_count
