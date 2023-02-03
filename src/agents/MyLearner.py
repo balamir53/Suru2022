@@ -54,25 +54,25 @@ class MyLearner(BaseLearningAgentGym):
         # define the action mask
         self.action_mask = np.ones(103,dtype=np.int8)
 
-        # self.observation_space = spaces.Box(
-        #     low=-2,
-        #     high=401,
-        #     shape=(6*4*10+4,),
-        #     dtype=np.int16
-        # )
-        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
-        self.observation_space = spaces.Dict (
-            {
-            "observations": spaces.Box(
+        self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            # shape=(24*18*10+4,),
             shape=(6*4*10+4,),
             dtype=np.int16
-        ),
-            # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
-            "action_mask" : spaces.Box(0, 1, shape=(103,),dtype=np.int8) }
         )
+        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
+        # self.observation_space = spaces.Dict (
+        #     {
+        #     "observations": spaces.Box(
+        #     low=-2,
+        #     high=401,
+        #     # shape=(24*18*10+4,),
+        #     shape=(6*4*10+4,),
+        #     dtype=np.int16
+        # ),
+        #     # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
+        #     "action_mask" : spaces.Box(0, 1, shape=(103,),dtype=np.int8) }
+        # )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         # TODO : check this hele
         # bu neymis? basta gereksiz bir reward eklemez mi bu
@@ -326,7 +326,7 @@ class MyLearner(BaseLearningAgentGym):
         return [locations, movement, enemy_order, train]
 
     def step(self, action):
-        self.action_mask = np.ones(103,dtype=np.int8)
+        # self.action_mask = np.ones(103,dtype=np.int8)
 
         harvest_reward = 0
         kill_reward = 0
@@ -429,7 +429,7 @@ class MyLearner(BaseLearningAgentGym):
                     # instead of to early terminate mask the train action
                     # set the last 4 element to zero
                     # how can i be sure about this
-                    self.action_mask[-4:]=0
+                    # self.action_mask[-4:]=0
 
 
         self.previous_enemy_count = enemy_count
@@ -439,9 +439,9 @@ class MyLearner(BaseLearningAgentGym):
         self.reward += reward
 
         self.nec_obs = next_state
-        # return self.decode_state(next_state), reward, done, info
+        return self.decode_state(next_state), reward, done, info
         # return{ "observations":self.decode_state(next_state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}, reward, done, info
-        return{ "observations":self.decode_state(next_state),"action_mask":self.action_mask}, reward, done, info
+        # return{ "observations":self.decode_state(next_state),"action_mask":self.action_mask}, reward, done, info
 
     def render(self,):
         return None

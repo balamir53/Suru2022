@@ -19,7 +19,7 @@
             "program": "src/traincadet.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["TrainSingleMixedBuyuk","SimpleAgent"]
+            "args": ["TrainSingleMixedSmall","SimpleAgent"]
         },
         {
             "name": "agentsofglory",

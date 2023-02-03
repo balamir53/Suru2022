@@ -103,9 +103,10 @@ def main():
                 "kl_target": 0.01,
                 "batch_mode": "truncate_episodes",
                 "observation_filter": "NoFilter",
-                "model":{
-                    "custom_model": TorchActionMaskModel
-                }}
+                # "model":{
+                #     "custom_model": TorchActionMaskModel
+                # }
+                }
 
     # Create our RLlib Trainer.
     algo = PatchedPPOTrainer(config=config, env="ray")

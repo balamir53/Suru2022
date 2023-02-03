@@ -63,9 +63,10 @@ def main():
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
-             "model":{
-                    "custom_model": TorchActionMaskModel
-                }}
+            #  "model":{
+            #         "custom_model": TorchActionMaskModel
+            #     }
+            }
     run_experiments({
         "risky_ppo_recruit": {
             "run": "PPO",
