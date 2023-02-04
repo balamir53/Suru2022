@@ -8,6 +8,7 @@ from ray.tune import run_experiments, register_env
 from agents.GolKenari import GolKenari
 from agents.TruckMini import TruckMini
 from agents.RiskyValley import RiskyValley
+from agents.MyLearner import MyLearner
 from argparse import Namespace
 from models.action_mask_model import TorchActionMaskModel
 import pickle
@@ -88,18 +89,19 @@ class SelfPlay:
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
-             "model":{
-                    "custom_model": TorchActionMaskModel
-                }}
+            #  "model":{
+            #         "custom_model": TorchActionMaskModel
+            #     }
+            }
         # register_env("ray", lambda config: RiskyValley(args, agents))
-        register_env("ray", lambda config: TruckMini(args, agents))
+        register_env("ray", lambda config: MyLearner(args, agents))
         # ppo_agent = PPOTrainer(config=config, env="ray")
         ppo_agent = PatchedPPOTrainer(config=config, env="ray")
         # ppo_agent = PPOTrainer(env="ray")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000700/checkpoint-700")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_002750/checkpoint-2750")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -111,8 +113,9 @@ class SelfPlay:
         return
         '''
         # state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
-        state = TruckMini.just_decode_state(raw_state, self.team, self.enemy_team)
-        actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(103,dtype=np.int8)})
+        state = MyLearner.just_decode_state(raw_state, self.team, self.enemy_team)
+        # actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(103,dtype=np.int8)})
+        actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32)})
         # location, movement, target, train = RiskyValley.just_take_action(actions, raw_state, self.team)
-        location, movement, target, train = TruckMini.just_take_action(actions, raw_state, self.team)
+        location, movement, target, train = MyLearner.just_take_action(actions, raw_state, self.team)
         return (location, movement, target, train)

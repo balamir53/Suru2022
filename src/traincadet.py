@@ -42,7 +42,7 @@ def main():
     config= {
             "use_critic": True,
             "log_level": "WARN",
-             "num_workers": 10,
+             "num_workers": 14,
             #  "num_gpus":1,
              "use_gae": True,
              "lambda": 1.0,
@@ -90,7 +90,7 @@ def main():
             # "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400",
             # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },
-    #  },resume=True)
-    })
+     },resume=True)
+    # })
 if __name__ == "__main__":
         main()
