@@ -36,7 +36,7 @@ class MyLearner(BaseLearningAgentGym):
         # self.game.config['blue']['base']['x'] = 3
         # call this in reset function
         # self.manipulateMap(self.game.config)
-        self.mapChangeFrequency = 1
+        self.mapChangeFrequency = 500
         # original map size
         self.gameAreaX = 6
         self.gameAreaY = 4
@@ -116,8 +116,9 @@ class MyLearner(BaseLearningAgentGym):
         xOffSet = 0
         yOffSet = 0
         # change the base and units' first positions on some frequency
-        if(episode%self.mapChangeFrequency==0):
-        # if(False):
+        # if(episode%self.mapChangeFrequency==0):
+        if(False):
+            print(episode)
             self.resetPosition(mapDict)
             xOffSet = random.randint(0,self.width-self.gameAreaX)
             yOffSet = random.randint(0,self.height-self.gameAreaY)
@@ -157,7 +158,7 @@ class MyLearner(BaseLearningAgentGym):
         self.episodes += 1
         self.steps = 0
         # change it on every episode
-        self.manipulateMap(self.game.config, self.episodes)
+        # self.manipulateMap(self.game.config, self.episodes)
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
@@ -362,9 +363,9 @@ class MyLearner(BaseLearningAgentGym):
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         # only reward goes for collecting gold
-        reward = harvest_reward + kill_reward - martyr_reward
+        # reward = harvest_reward + kill_reward - martyr_reward
 
-        # reward = harvest_reward
+        reward = harvest_reward
         # reward = 0
 
         # consider givin reward only at episode end

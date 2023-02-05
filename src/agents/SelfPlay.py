@@ -115,7 +115,8 @@ class SelfPlay:
         # state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
         state = MyLearner.just_decode_state(raw_state, self.team, self.enemy_team)
         # actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(103,dtype=np.int8)})
-        actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32)})
+        actions, _, _ = self.policy.compute_single_action(state.astype(np.float32))
         # location, movement, target, train = RiskyValley.just_take_action(actions, raw_state, self.team)
-        location, movement, target, train = MyLearner.just_take_action(actions, raw_state, self.team)
+        train = 1
+        location, movement, target, train = MyLearner.just_take_action(actions, raw_state, self.team, train)        
         return (location, movement, target, train)

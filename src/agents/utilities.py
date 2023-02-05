@@ -119,8 +119,9 @@ def truck_locs(obs, team):
     hps = np.array(obs['hps'][team])
     ally_units = np.array(obs['units'][team])
     ally_units[hps<1] = 0
+    # it is getting units with tag number one = trucks
     ally_list = np.argwhere(ally_units == 1)
-    ally_list = ally_list.squeeze()
+    # ally_list = ally_list.squeeze()
 
     return ally_list
 
