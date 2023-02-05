@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+    with open(f"/home/yzt/Suru2022/data/config/TrainSingleMixedBuyuk2.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -36,10 +36,10 @@ class MyLearner(BaseLearningAgentGym):
         # self.game.config['blue']['base']['x'] = 3
         # call this in reset function
         # self.manipulateMap(self.game.config)
-        self.mapChangeFrequency = 500
+        self.mapChangeFrequency = 200
         # original map size
-        self.gameAreaX = 6
-        self.gameAreaY = 4
+        self.gameAreaX = 12
+        self.gameAreaY = 8
         self.train = 0
 
         self.team = team
@@ -58,7 +58,7 @@ class MyLearner(BaseLearningAgentGym):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(6*4*10+4,),
+            shape=(24*18*10+4,),
             dtype=np.int16
         )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
@@ -116,8 +116,8 @@ class MyLearner(BaseLearningAgentGym):
         xOffSet = 0
         yOffSet = 0
         # change the base and units' first positions on some frequency
-        # if(episode%self.mapChangeFrequency==0):
-        if(False):
+        if(episode%self.mapChangeFrequency==0):
+        # if(False):
             print(episode)
             self.resetPosition(mapDict)
             xOffSet = random.randint(0,self.width-self.gameAreaX)
@@ -158,7 +158,7 @@ class MyLearner(BaseLearningAgentGym):
         self.episodes += 1
         self.steps = 0
         # change it on every episode
-        # self.manipulateMap(self.game.config, self.episodes)
+        self.manipulateMap(self.game.config, self.episodes)
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
