@@ -226,7 +226,7 @@ def necessary_obs(obs, team):
     if len(new_obs) == 20:
         print(new_obs)
         time.sleep(1)
-    return new_obsa
+    return new_obs
 
 def reward_shape(obs, team):
     load_reward = 0

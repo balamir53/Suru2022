@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -36,7 +36,7 @@ class MyLearner(BaseLearningAgentGym):
         # self.game.config['blue']['base']['x'] = 3
         # call this in reset function
         # self.manipulateMap(self.game.config)
-        self.mapChangeFrequency = 500
+        self.mapChangeFrequency = 100
         # original map size
         self.gameAreaX = 6
         self.gameAreaY = 4
@@ -58,7 +58,7 @@ class MyLearner(BaseLearningAgentGym):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(6*4*10+4,),
+            shape=(24*18*10+4,),
             dtype=np.int16
         )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
@@ -116,9 +116,9 @@ class MyLearner(BaseLearningAgentGym):
         xOffSet = 0
         yOffSet = 0
         # change the base and units' first positions on some frequency
-        # if(episode%self.mapChangeFrequency==0):
-        if(False):
-            print(episode)
+        if(episode%self.mapChangeFrequency==0):
+        # if(False):
+            # print(episode)
             self.resetPosition(mapDict)
             xOffSet = random.randint(0,self.width-self.gameAreaX)
             yOffSet = random.randint(0,self.height-self.gameAreaY)
@@ -363,9 +363,9 @@ class MyLearner(BaseLearningAgentGym):
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         # only reward goes for collecting gold
-        # reward = harvest_reward + kill_reward - martyr_reward
+        reward = harvest_reward + kill_reward - martyr_reward
 
-        reward = harvest_reward
+        # reward = harvest_reward
         # reward = 0
 
         # consider givin reward only at episode end

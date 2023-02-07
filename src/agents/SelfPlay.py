@@ -36,7 +36,7 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 class SelfPlay:
     def __init__(self, team, action_lenght):
         # args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-        args = Namespace(map="TrainSingleMixedSmall", render=False, gif=False, img=False)
+        args = Namespace(map="TrainSingleMixedBuyuk2", render=False, gif=False, img=False)
         agents = [None, "SimpleAgent"]
 
         self.team = 0
@@ -95,13 +95,13 @@ class SelfPlay:
             }
         # register_env("ray", lambda config: RiskyValley(args, agents))
         register_env("ray", lambda config: MyLearner(args, agents))
-        # ppo_agent = PPOTrainer(config=config, env="ray")
-        ppo_agent = PatchedPPOTrainer(config=config, env="ray")
+        ppo_agent = PPOTrainer(config=config, env="ray")
+        # ppo_agent = PatchedPPOTrainer(config=config, env="ray")
         # ppo_agent = PPOTrainer(env="ray")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_002750/checkpoint-2750")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000600/checkpoint-600")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
