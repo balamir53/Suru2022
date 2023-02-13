@@ -15,8 +15,10 @@ def read_hypers():
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
-
-class MyLearner(BaseLearningAgentGym):
+# this is independen Truck Learner designed only for trucks to learn
+# but how to combine them together ? 
+# One learner above to manage them all ?
+class TruckLearner(BaseLearningAgentGym):
 
     tagToString = {
             1: "Truck",
@@ -61,22 +63,10 @@ class MyLearner(BaseLearningAgentGym):
             shape=(24*18*10+4,),
             dtype=np.int16
         )
-        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
-        # exclude the last action and manage it in this script, check simpleagent for it
-        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
-        # self.observation_space = spaces.Dict (
-        #     {
-        #     "observations": spaces.Box(
-        #     low=-2,
-        #     high=401,
-        #     # shape=(24*18*10+4,),
-        #     shape=(6*4*10+4,),
-        #     dtype=np.int16
-        # ),
-        #     # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
-        #     "action_mask" : spaces.Box(0, 1, shape=(103,),dtype=np.int8) }
-        # )
-        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
+        
+        # what actions do we have for trucks here
+        self.action_space = self.action_space = spaces.Discrete(7)
+
         # TODO : check this hele
         # bu neymis? basta gereksiz bir reward eklemez mi bu
         self.previous_enemy_count = 4
@@ -187,7 +177,7 @@ class MyLearner(BaseLearningAgentGym):
                     my_units.append(
                     {   
                         'unit': units[team][i][j],
-                        'tag': MyLearner.tagToString[units[team][i][j]],
+                        'tag': TruckLearner.tagToString[units[team][i][j]],
                         'hp': hps[team][i][j],
                         'location': (i,j),
                         'load': load[team][i][j]
@@ -197,7 +187,7 @@ class MyLearner(BaseLearningAgentGym):
                     enemy_units.append(
                     {   
                         'unit': units[enemy_team][i][j],
-                        'tag': MyLearner.tagToString[units[enemy_team][i][j]],
+                        'tag': TruckLearner.tagToString[units[enemy_team][i][j]],
                         'hp': hps[enemy_team][i][j],
                         'location': (i,j),
                         'load': load[enemy_team][i][j]
@@ -210,7 +200,6 @@ class MyLearner(BaseLearningAgentGym):
                 if bases[enemy_team][i][j]:
                     enemy_base = (i,j)
         
-        # print(my_units)
         unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
         hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
         basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
@@ -224,7 +213,7 @@ class MyLearner(BaseLearningAgentGym):
 
     @staticmethod
     def just_decode_state(obs, team, enemy_team):
-        state, _ = MyLearner._decode_state(obs, team, enemy_team)
+        state, _ = TruckLearner._decode_state(obs, team, enemy_team)
         return state
 
     def decode_state(self, obs):
@@ -241,7 +230,11 @@ class MyLearner(BaseLearningAgentGym):
         # this function takes the output of the model
         # and converts it into a reasonable output for
         # the game to play
-        movement = action[0:7]
+        # movement = action[0:7]
+        movement = action
+        # how to create a list here
+        # this script should act as the hierarchical model
+        # which will collect data from other learners and combine them?
         movement = movement.tolist()
         target = action[7:14]
         # train = action[14]
