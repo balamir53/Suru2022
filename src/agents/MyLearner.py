@@ -226,6 +226,11 @@ class MyLearner(BaseLearningAgentGym):
     def just_decode_state(obs, team, enemy_team):
         state, _ = MyLearner._decode_state(obs, team, enemy_team)
         return state
+    
+    @staticmethod
+    def just_decode_state_selfplay(obs, team, enemy_team):
+        state, info = MyLearner._decode_state(obs, team, enemy_team)
+        return state, info
 
     def decode_state(self, obs):
         state, info = self._decode_state(obs, self.team, self.enemy_team)

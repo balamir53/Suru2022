@@ -28,7 +28,8 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["TrainSingleMixedBuyuk2","SelfPlay","SimpleAgent", "--numOfMatch","10","--render"]
+            "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","10"]
+            // "args": ["TrainSingleMixedBuyuk2","SelfPlay","SimpleAgent", "--numOfMatch","10","--render"]
        },
        {
            "name": "train",
@@ -37,7 +38,7 @@
            "program": "src/train.py",
            "console": "integratedTerminal",
            "justMyCode": false,
-           "args": ["TrainSingleMixedBuyuk","SimpleAgent"]
+           "args": ["TrainSingleMixedBuyuk","SelfPlay"]
       }
     ]
 }
