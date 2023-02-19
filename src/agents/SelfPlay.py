@@ -75,7 +75,7 @@ class SelfPlay:
              "lambda": 1.0,
              "kl_coeff": 0.2,
              "rollout_fragment_length": 200,
-             "train_batch_size": 4000,
+             "train_batch_size": 1280,
              "sgd_minibatch_size": 128,
              "shuffle_sequences": True,
              "num_sgd_iter": 30,
@@ -104,7 +104,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000900/checkpoint-900")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000450/checkpoint-450")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -117,7 +117,7 @@ class SelfPlay:
         '''
         #TODO: get the state from already loaded checkpoint
         # state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
-        state, info = MyLearner.just_decode_state_selfplay(raw_state, self.team, self.enemy_team)
+        state, info = MyLearner.just_decode_state_(raw_state, self.team, self.enemy_team)
         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
         # actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(103,dtype=np.int8)})
         
@@ -188,6 +188,8 @@ class SelfPlay:
                 train = stringToTag["Drone"]
             elif len(self.my_units)<len(self.enemy_units):
                 train = randint(2,4)
+        elif counter["Truck"] < 1:
+            train = stringToTag["Truck"]
         elif raw_state["score"][self.team]+2<raw_state["score"][self.enemy_team] and len(self.my_units)<len(self.enemy_units)*2:
             train = randint(2,4)
         

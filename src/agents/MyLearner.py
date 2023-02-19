@@ -63,9 +63,9 @@ class MyLearner(BaseLearningAgentGym):
         )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         # exclude the last action and manage it in this script, check simpleagent for it
-        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
+        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
         ##action space do not have target and train parameter
-        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7])
+        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7])
         # self.observation_space = spaces.Dict (
         #     {
         #     "observations": spaces.Box(
@@ -230,7 +230,7 @@ class MyLearner(BaseLearningAgentGym):
         return state
     
     @staticmethod
-    def just_decode_state_selfplay(obs, team, enemy_team):
+    def just_decode_state_(obs, team, enemy_team):
         state, info = MyLearner._decode_state(obs, team, enemy_team)
         return state, info
 
@@ -391,15 +391,38 @@ class MyLearner(BaseLearningAgentGym):
         harvest_reward = 0
         kill_reward = 0
         martyr_reward = 0
+        trajectory_reward = 0
         action = self.take_action(action)
         next_state, _, done =  self.game.step(action)
         # check this reward function
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team)
+        
+        ##added by luchy:for following counter required
+        _, info = MyLearner.just_decode_state_(self.nec_obs, self.team, self.enemy_team)
+        self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
+        
+        # try:
+        #     if self.resources != []:
+        #         distances = []
+        #         for my_u in self.my_units:
+        #             if my_u["tag"] == "Truck":
+        #                 distance = []
+        #                 for res in self.resources:
+        #                     distance.append(getDistance(my_u["location"], res))
+        #                 nearest_res = distance[np.argmin(distance)]
+        #                 distances.append(nearest_res)
+                    
+        #         for dis in distances:
+        #             trajectory_reward += ((getDistance((self.x_max,self.y_max), (0,0)) - dis) * 0.05)
+        # except Exception as e:
+        #     print(e)   
+        
         if enemy_count < self.previous_enemy_count:
             kill_reward = (self.previous_enemy_count - enemy_count) * 5
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         # only reward goes for collecting gold
+        # reward = harvest_reward + kill_reward - martyr_reward + trajectory_reward
         reward = harvest_reward + kill_reward - martyr_reward
 
         # reward = harvest_reward
@@ -434,6 +457,7 @@ class MyLearner(BaseLearningAgentGym):
         # Train: 0-4 arası tam sayı (integer, kısaca int). 0 ünite yapmamayı, 1-4 ise sırasıyla kamyon, hafif tank,
         # ağır tank ve İHA yapmayı ifade etmektedir
         number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
+        
         if hasattr(self, 'my_units'): # it is undefined on the first loop
             for x in self.my_units:
                 if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
@@ -502,6 +526,8 @@ class MyLearner(BaseLearningAgentGym):
                 self.train = 4
             elif number_of_our_military<number_of_enemy_military:
                 self.train = random.randint(2,4)
+        elif number_of_trucks<1:
+            self.train = 1
         elif blue_score+2<red_score and len(self.my_units)<len(self.enemy_units)*2:
             self.train = random.randint(2,4)
 
