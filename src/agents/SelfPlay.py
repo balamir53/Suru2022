@@ -15,87 +15,6 @@ import pickle
 
 from gym import spaces
 
-# class SelfPlay:
-#     def __init__(self, team, action_lenght):
-#         self.team = team
-#         self.enemy_team = (team+1) % 2
-#         self.action_lenght = action_lenght
-#         self.action_ = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
-        
-#     def action(self, state):
-
-#         self.y_max, self.x_max = state['resources'].shape
-#         decoded = decodeState(state)
-#         self.my_units = decoded[self.team]
-#         self.enemy_units = decoded[self.enemy_team]
-#         self.my_base = decoded[self.team + 2]
-#         self.enemy_base = decoded[self.enemy_team + 2]
-#         self.resources = decoded[4]
-#         movement = []
-#         target = []
-#         location = []
-#         counter = {"Truck":0,"LightTank":0,"HeavyTank":0,"Drone":0}
-#         action = self.action_
-#         # TODO: Write movement
-#         action = MyLearner.take_action(action)
-#         self.action_ = action 
-         
-#         movement = action[0:7]
-#         while len(movement) > self.my_units:
-#             movement.pop()
-        
-#         # TODO: Write location
-#         for unit in self.my_units:
-#             location.append(unit['location'])
-        
-#         # TODO: Write target
-#         nearest_enemy_locs = []
-#         for unit in self.my_units:
-#             counter[unit['tag']]+=1
-#             if len(self.enemy_units) == 0 or len(self.enemy_units) < 0:
-#                 break
-#             nearest_enemy_locs.append(nearest_enemy(unit, self.enemy_units))
-        
-#         if 0 == len(self.my_units):
-#             locations = []
-#             movement = []
-#             target = []
-#             train = randint(1,4)
-#             return (locations, movement, target, train)
-#         elif 0 < len(self.my_units) <= 7:
-#             ally_count = len(self.my_units)
-        
-#             if len(self.enemy_units) == 0:
-#                     # yok artik alum
-#                 enemy_order = [[3, 0] for i in range(ally_count)]
-#             else:
-#                 enemy_order = copy.copy(nearest_enemy_locs)
-            
-#             while len(enemy_order) > ally_count:
-#                 enemy_order.pop()
-        
-#         locations = list(map(tuple, locations))
-#         target = list(map(tuple, enemy_order))
-        
-#         # TODO: Write train logic
-#         train = 0
-
-#         if state["score"][self.team]>state["score"][self.enemy_team]+2:
-#             if counter["Truck"]<2:
-#                 train = stringToTag["Truck"]
-#             elif counter["LightTank"]<1:
-#                 train = stringToTag["LightTank"]
-#             elif counter["HeavyTank"]<1:
-#                 train = stringToTag["HeavyTank"]
-#             elif counter["Drone"]<1:
-#                 train = stringToTag["Drone"]
-#             elif len(self.my_units)<len(self.enemy_units):
-#                 train = randint(2,4)
-#         elif state["score"][self.team]+2<state["score"][self.enemy_team] and len(self.my_units)<len(self.enemy_units)*2:
-#             train = randint(2,4)
-#         return (location, movement, target, train)
-
-
 class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 
     #@override(Trainable)
@@ -185,7 +104,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000550/checkpoint-550")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000900/checkpoint-900")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
