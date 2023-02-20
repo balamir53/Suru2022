@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
+    with open(f"/home/yzt/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -59,12 +59,12 @@ class MyLearner(BaseLearningAgentGym):
             low=-2,
             high=401,
             shape=(24*18*10+4,),
-            shape=(24*18*10+4,),
             dtype=np.int16
         )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         # exclude the last action and manage it in this script, check simpleagent for it
         self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
+        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7 ])
         # self.observation_space = spaces.Dict (
         #     {
         #     "observations": spaces.Box(
@@ -117,8 +117,8 @@ class MyLearner(BaseLearningAgentGym):
         xOffSet = 0
         yOffSet = 0
         # change the base and units' first positions on some frequency
-        if(episode%self.mapChangeFrequency==0):
-        # if(False):
+        # if(episode%self.mapChangeFrequency==0):
+        if(False):
             # print(episode)
             self.resetPosition(mapDict)
             xOffSet = random.randint(0,self.width-self.gameAreaX)
@@ -164,8 +164,6 @@ class MyLearner(BaseLearningAgentGym):
         self.nec_obs = state
         return self.observation_space.sample()
         # return { "observations":self.decode_state(state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}
-        
-        
 
     @staticmethod
     def  _decode_state(obs, team, enemy_team):
@@ -246,6 +244,9 @@ class MyLearner(BaseLearningAgentGym):
         movement = movement.tolist()
         target = action[7:14]
         # train = action[14]
+        
+        # target = []
+
         enemy_order = []
 
         allies = ally_locs(raw_state, team)
@@ -327,24 +328,6 @@ class MyLearner(BaseLearningAgentGym):
         #             enemy_order[i] = enemy_order[k]
 
         locations = list(map(tuple, locations))
-
-        # has been copied from the singleagent
-        # it is better to put this in step function and hand the train parameter here
-        # train = 0
-        # if raw_state["score"][0]>raw_state["score"][1]+2:
-        #     if counter["Truck"]<2:
-        #         train = stringToTag["Truck"]
-        #     elif counter["LightTank"]<1:
-        #         train = stringToTag["LightTank"]
-        #     elif counter["HeavyTank"]<1:
-        #         train = stringToTag["HeavyTank"]
-        #     elif counter["Drone"]<1:
-        #         train = stringToTag["Drone"]
-        #     elif len(self.my_units)<len(self.enemy_units):
-        #         train = randint(2,4)
-        # elif state["score"][self.team]+2<state["score"][self.enemy_team] and len(self.my_units)<len(self.enemy_units)*2:
-        #     train = randint(2,4)
-
 
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, train]
