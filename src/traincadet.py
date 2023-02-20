@@ -48,7 +48,7 @@ def main():
              "lambda": 1.0,
              "kl_coeff": 0.2,
              "rollout_fragment_length": 200,
-             "train_batch_size": 4000,
+             "train_batch_size": 1280,
              "sgd_minibatch_size": 128,
              "shuffle_sequences": True,
              "num_sgd_iter": 30,
@@ -85,12 +85,12 @@ def main():
             },
             "config": config,
             "checkpoint_freq": 50,
-            "restore": "models/checkpoint_000150/checkpoint-150",
+            # "restore": "models/checkpoint_001050/checkpoint-1050",
             # "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
             # "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400",
             # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },
-    #  },resume=True)
-    })
+     },resume=True)
+    # })
 if __name__ == "__main__":
         main()

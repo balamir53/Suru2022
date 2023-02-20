@@ -157,8 +157,10 @@ class MyLearner(BaseLearningAgentGym):
         self.previous_ally_count = 4
         self.episodes += 1
         self.steps = 0
+
         # change it on every episode
         self.manipulateMap(self.game.config, self.episodes)
+
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
@@ -465,6 +467,8 @@ class MyLearner(BaseLearningAgentGym):
                 self.train = 4
             elif number_of_our_military<number_of_enemy_military:
                 self.train = random.randint(2,4)
+        elif number_of_trucks<1:
+            self.train = 1
         elif blue_score+2<red_score and len(self.my_units)<len(self.enemy_units)*2:
             self.train = random.randint(2,4)
 

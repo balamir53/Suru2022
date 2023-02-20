@@ -76,7 +76,7 @@ def main():
     # ray.init(num_gpus=1)
     # ray.init(local_mode=True)
     ray.init()
-    register_env("ray", lambda config: TruckLearner(args,agents))
+    register_env("ray", lambda config: MyLearner(args,agents))
 
     #misconfiguration
     #check the documentation

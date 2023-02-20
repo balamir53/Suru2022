@@ -101,7 +101,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000600/checkpoint-600")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001000/checkpoint-1000")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -117,6 +117,6 @@ class SelfPlay:
         # actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(103,dtype=np.int8)})
         actions, _, _ = self.policy.compute_single_action(state.astype(np.float32))
         # location, movement, target, train = RiskyValley.just_take_action(actions, raw_state, self.team)
-        train = 1
+        train = 0
         location, movement, target, train = MyLearner.just_take_action(actions, raw_state, self.team, train)        
         return (location, movement, target, train)
