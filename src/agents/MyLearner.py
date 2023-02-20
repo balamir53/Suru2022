@@ -345,7 +345,7 @@ class MyLearner(BaseLearningAgentGym):
                 locations = list(locations)[:7]
 
 
-            movement = multi_forced_anchor(movement, raw_state, team)
+        movement = multi_forced_anchor(movement, raw_state, team)
         if len(locations) > 0:
             locations = list(map(list, locations))
         
