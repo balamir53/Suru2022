@@ -159,8 +159,10 @@ class MyLearner(BaseLearningAgentGym):
         self.previous_ally_count = 4
         self.episodes += 1
         self.steps = 0
+
         # change it on every episode
         self.manipulateMap(self.game.config, self.episodes)
+
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
