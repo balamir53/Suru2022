@@ -425,8 +425,8 @@ class MyLearner(BaseLearningAgentGym):
         #     martyr_reward = (self.previous_ally_count - ally_count) * 5
         # only reward goes for collecting gold
         # reward = harvest_reward + kill_reward - martyr_reward + trajectory_reward
-        # reward = harvest_reward + kill_reward - martyr_reward
-        reward = harvest_reward 
+        reward = harvest_reward + kill_reward - martyr_reward
+        # reward = harvest_reward 
         # print(reward)
         # reward = harvest_reward
         # reward = 0
