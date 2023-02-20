@@ -14,7 +14,7 @@ from ray.tune.registry import register_env
 from agents.RiskyValley import RiskyValley
 from agents.GolKenari import GolKenari
 from agents.MyLearner import MyLearner
-from agents.TruckLearner import TruckLearner
+
 
 # from ray.rllib.algorithms.ppo import PPO
 import ray.rllib.agents.ppo as ppo
@@ -73,10 +73,9 @@ def main():
     #because they have different observation and action spaces (inspect this)
     # considering this we can gather actions and create a global model that combines them?
     # ray.init(num_gpus=1, log_to_driver=True, local_mode=True)
-    # ray.init(num_gpus=1)
+    ray.init(num_gpus=1)
     # ray.init(local_mode=True)
-    ray.init()
-    register_env("ray", lambda config: TruckLearner(args,agents))
+    register_env("ray", lambda config: MyLearner(args,agents))
 
     #misconfiguration
     #check the documentation
@@ -112,8 +111,8 @@ def main():
     # Create our RLlib Trainer.
     algo = PatchedPPOTrainer(config=config, env="ray")
     # algo = ppo.PPOTrainer(config=config, env="CartPole-v0")
-    # import os 
-    # dir_path = os.path.dirname(os.path.realpath(__file__))
+    import os 
+    dir_path = os.path.dirname(os.path.realpath(__file__))
 
     # this line works but the saved data doesnt match with current one
     # it finally worked on desktop

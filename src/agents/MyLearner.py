@@ -36,10 +36,10 @@ class MyLearner(BaseLearningAgentGym):
         # self.game.config['blue']['base']['x'] = 3
         # call this in reset function
         # self.manipulateMap(self.game.config)
-        self.mapChangeFrequency = 200
+        self.mapChangeFrequency = 100
         # original map size
-        self.gameAreaX = 6
-        self.gameAreaY = 4
+        self.gameAreaX = 12
+        self.gameAreaY = 8
         self.train = 0
 
         self.team = team
@@ -58,6 +58,7 @@ class MyLearner(BaseLearningAgentGym):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
+            shape=(24*18*10+4,),
             shape=(24*18*10+4,),
             dtype=np.int16
         )
