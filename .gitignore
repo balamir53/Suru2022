@@ -7,3 +7,4 @@ data/inputs/model/truckmini/checkpoint_000850/checkpoint-850.tune_metadata
 data/inputs/model
 models
 *.gif
+notes.txt
