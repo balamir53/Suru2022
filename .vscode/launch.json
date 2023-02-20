@@ -28,7 +28,8 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","10"]
+            // "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","10"]
+            "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","10","--render"]
        },
        {
            "name": "train",

@@ -76,10 +76,11 @@ def decodeState(state):
 
 
 def getDistance(pos_1, pos_2):
-    if pos_1 == None or pos_2 == None:
+    ##changed by luchy: to be able use if statement all enemy and ally locs must be in list format.
+    if pos_1 == None or list(pos_2) == None:
         return 999
-    pos1 = copy.copy(pos_1)
-    pos2 = copy.copy(pos_2)
+    pos1 = copy.copy(list(pos_1))
+    pos2 = copy.copy(list(pos_2))
     shift1 = (pos1[1]+1)//2
     shift2 = (pos2[1]+1)//2
     pos1[0] -= shift1

@@ -88,7 +88,7 @@ def main():
                 "lambda": 1.0,
                 "kl_coeff": 0.2,
                 "rollout_fragment_length": 200,
-                "train_batch_size": 4000,
+                "train_batch_size": 1280,
                 "sgd_minibatch_size": 128,
                 "shuffle_sequences": True,
                 "num_sgd_iter": 30,
@@ -117,7 +117,7 @@ def main():
 
     # this line works but the saved data doesnt match with current one
     # it finally worked on desktop
-    # algo.restore(checkpoint_path="models/checkpoint_000100/checkpoint-200")
+    # algo.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000150/checkpoint-150")
     # algo.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5")
     # algo.restore(checkpoint_path="data/inputs/model/checkpoint_001900/checkpoint-1900")
     
