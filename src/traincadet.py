@@ -86,11 +86,11 @@ def main():
             "config": config,
             "checkpoint_freq": 50,
             # "restore": "models/checkpoint_001050/checkpoint-1050",
-            # "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
+            # "restore": "/workspaces/Suru2022/data/inputs/model/checkpoint_000300/checkpoint-300",
             # "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400",
             # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },
-     },resume=True)
-    # })
+    #  },resume=True)
+    })
 if __name__ == "__main__":
         main()

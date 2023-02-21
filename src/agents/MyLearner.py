@@ -115,6 +115,7 @@ class MyLearner(BaseLearningAgentGym):
         # mapDict = copy.deepcopy(self.configs)
         # mapDict = self.configs.copy() #this doesnt work
         # mapDict['blue']['base']['x'] = 0
+        print("mapManipulation is active!")
         xOffSet = 0
         yOffSet = 0
         # change the base and units' first positions on some frequency
@@ -161,7 +162,7 @@ class MyLearner(BaseLearningAgentGym):
         self.steps = 0
 
         # change it on every episode
-        self.manipulateMap(self.game.config, self.episodes)
+        # self.manipulateMap(self.game.config, self.episodes)
 
         state = self.game.reset()
         self.nec_obs = state
@@ -360,10 +361,10 @@ class MyLearner(BaseLearningAgentGym):
         #             enemy_order[i] = enemy_order[k]
         
         ##added by luchy:by this if the distance between ally and enemy is less than 3 then movement will be 0 as a preparation to shoot.
-        for i in range(len(locations)):
-            if getDistance(locations[i], enemy_order[i]) <= 3:
-                movement[i] = 0
-        
+        # for i in range(len(locations)):
+        #     if getDistance(locations[i], enemy_order[i]) <= 3:
+        #         movement[i] = 0
+
         locations = list(map(tuple, locations))
         enemy_order = list(map(tuple, enemy_order))
         # has been copied from the singleagent
@@ -385,7 +386,7 @@ class MyLearner(BaseLearningAgentGym):
 
 
         # this has to be returned in this order according to challenge rules
-        return [locations, movement, enemy_order, train]
+        return locations, movement, enemy_order, train
 
     def step(self, action):
         # self.action_mask = np.ones(103,dtype=np.int8)
@@ -394,7 +395,20 @@ class MyLearner(BaseLearningAgentGym):
         kill_reward = 0
         martyr_reward = 0
         trajectory_reward = 0
-        action = self.take_action(action)
+        locations, movement, enemy_order, train = self.take_action(action)
+        try:
+            if hasattr(self, 'my_units'):
+                for i in range(len(locations)):
+                        if getDistance(locations[i], enemy_order[i]) <= 3 and self.my_units[i]["tag"] != "Truck":
+                            movement[i] = 0
+            else:
+                for i in range(len(locations)):
+                        if getDistance(locations[i], enemy_order[i]) <= 3:
+                            movement[i] = 0
+        except:
+            print(f"locations:{locations}, my units: {self.my_units}")
+        action = [locations, movement, enemy_order, train]
+        
         next_state, _, done =  self.game.step(action)
         # check this reward function
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team)
@@ -419,14 +433,14 @@ class MyLearner(BaseLearningAgentGym):
         # except Exception as e:
         #     print(e)   
         
-        # if enemy_count < self.previous_enemy_count:
-        #     kill_reward = (self.previous_enemy_count - enemy_count) * 5
-        # if ally_count < self.previous_ally_count:
-        #     martyr_reward = (self.previous_ally_count - ally_count) * 5
+        if enemy_count < self.previous_enemy_count:
+            kill_reward = (self.previous_enemy_count - enemy_count) * 5
+        if ally_count < self.previous_ally_count:
+            martyr_reward = (self.previous_ally_count - ally_count) * 5
         # only reward goes for collecting gold
         # reward = harvest_reward + kill_reward - martyr_reward + trajectory_reward
-        reward = harvest_reward + kill_reward - martyr_reward
-        # reward = harvest_reward 
+        # reward = harvest_reward + kill_reward - martyr_reward
+        reward = harvest_reward 
         # print(reward)
         # reward = harvest_reward
         # reward = 0

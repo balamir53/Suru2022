@@ -104,8 +104,8 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001000/checkpoint-1000")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000450/checkpoint-450")
+        # ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001000/checkpoint-1000")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000300/checkpoint-300")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -129,6 +129,7 @@ class SelfPlay:
         locations = []
         counter = {"Truck":0,"LightTank":0,"HeavyTank":0,"Drone":0}
         movement = actions[0:7]
+        movement = multi_forced_anchor(movement, raw_state, self.team)
         movement = movement.tolist()
         while len(movement) > len(self.my_units):
             movement.pop()
@@ -169,7 +170,7 @@ class SelfPlay:
         
         # if the distance between ally and enemy is less than 3 then movement will be 0 as a preparation to shoot.
         for i in range(len(locations)):
-            if getDistance(locations[i], enemy_order[i]) <= 3:
+            if getDistance(locations[i], enemy_order[i]) <= 3 and self.my_units[i]["tag"] != "Truck":
                 movement[i] = 0
         
         locations = list(map(tuple, locations))
