@@ -37,7 +37,7 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 
 class SelfPlay:
     def __init__(self, team, action_lenght):
-        args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
+        args = Namespace(map="RiskyValleyNoTerrain", render=False, gif=False, img=False)
         # args = Namespace(map="TrainSingleMixedBuyuk", render=False, gif=False, img=False)
         agents = [None, "RandomAgent"]
 

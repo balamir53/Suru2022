@@ -251,7 +251,7 @@ def reward_shape(obs, team):
 
     return load_reward + unload_reward
 
-def multi_reward_shape(obs, team): # Birden fazla truck için
+def multi_reward_shape(obs, team, action): # Birden fazla truck için
     load_reward = 0
     unload_reward = 0
     enemy_load_reward = 0
@@ -277,21 +277,29 @@ def multi_reward_shape(obs, team): # Birden fazla truck için
     trucks = truck_locs(obs, team)
 
     for truck in trucks:
-        for reso in resource_loc:
-            # print(reso,"RESOURCE")
+        my_action = None
+        to_break = False
+        for i,x in enumerate(action[0]):
+            if (x == truck).all():
+                # check for its action
+                my_action = action[1][i]
+                # if is not 0, meaning that if its not loading and unloading dont get any reward
+                if (my_action!=0):
+                    to_break = True
+                    break
+        if (to_break):
+            continue
+        for reso in resource_loc: 
             if not isinstance(truck, np.int64):
-                # print(loads.shape, "load shape")
-                # print(loads[truck[0], truck[1]].shape, "load at truck")
-                # print(truck.shape, "Last Truck")
                 if (reso == truck).all():
-                    if loads[truck[0], truck[1]].max() != 3: 
+                    if loads[truck[0], truck[1]].max() != 3:
                         load_reward += 10
             else:
                 pass
             if not isinstance(truck, np.int64):
                 if loads[truck[0], truck[1]].max() != 0 and (truck == base_loc).all():
                     unload_reward += 20
-
+                    
     harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward
     return harvest_reward, len(enemy), len(ally)
 
