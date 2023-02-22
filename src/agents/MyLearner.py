@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/home/yzt/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -235,6 +235,10 @@ class MyLearner(BaseLearningAgentGym):
         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
         return state
 
+    @staticmethod
+    def just_decode_state_(obs, team, enemy_team):
+        state, info = MyLearner._decode_state(obs, team, enemy_team)
+        return state, info
     
     def take_action(self, action):
         return self.just_take_action(action, self.nec_obs, self.team, self.train) 
@@ -275,7 +279,7 @@ class MyLearner(BaseLearningAgentGym):
             locations = allies
 
             # counter = 0
-            # for j in target:
+            # for j in target: 
             #     if len(enemies) == 0:
             #         # yok artik alum
             #         enemy_order = [[3, 0] for i in range(ally_count)]
@@ -372,13 +376,14 @@ class MyLearner(BaseLearningAgentGym):
         action = self.take_action(action)
         next_state, _, done =  self.game.step(action)
         # check this reward function
-        harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team)
+        harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team, action)
         if enemy_count < self.previous_enemy_count:
             kill_reward = (self.previous_enemy_count - enemy_count) * 5
         if ally_count < self.previous_ally_count:
             martyr_reward = (self.previous_ally_count - ally_count) * 5
         # only reward goes for collecting gold
-        reward = harvest_reward + kill_reward - martyr_reward
+        # reward = harvest_reward + kill_reward - martyr_reward
+        reward = harvest_reward
 
         # reward = harvest_reward
         # reward = 0
