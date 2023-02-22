@@ -37,9 +37,9 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 
 class SelfPlay:
     def __init__(self, team, action_lenght):
-        # args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-        args = Namespace(map="TrainSingleMixedBuyuk", render=False, gif=False, img=False)
-        agents = [None, "SimpleAgent"]
+        args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
+        # args = Namespace(map="TrainSingleMixedBuyuk", render=False, gif=False, img=False)
+        agents = [None, "RandomAgent"]
 
         self.team = 0
         self.enemy_team = 1
@@ -129,7 +129,7 @@ class SelfPlay:
         locations = []
         counter = {"Truck":0,"LightTank":0,"HeavyTank":0,"Drone":0}
         movement = actions[0:7]
-        movement = multi_forced_anchor(movement, raw_state, self.team)
+        # movement = multi_forced_anchor(movement, raw_state, self.team)
         movement = movement.tolist()
         while len(movement) > len(self.my_units):
             movement.pop()
@@ -169,9 +169,10 @@ class SelfPlay:
                 enemy_order.pop()
         
         # if the distance between ally and enemy is less than 3 then movement will be 0 as a preparation to shoot.
-        for i in range(len(locations)):
-            if getDistance(locations[i], enemy_order[i]) <= 3 and self.my_units[i]["tag"] != "Truck":
-                movement[i] = 0
+        # for i in range(len(locations)):
+        #     if getDistance(locations[i], enemy_order[i]) <= [self.x_max, self.y_max][np.argmin([self.x_max, self.y_max])] and self.my_units[i]["tag"] != "Truck":
+        #     # if getDistance(locations[i], enemy_order[i]) <= 3 and self.my_units[i]["tag"] != "Truck":
+        #         movement[i] = 0
         
         locations = list(map(tuple, locations))
         target = list(map(tuple, enemy_order))
