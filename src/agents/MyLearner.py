@@ -64,20 +64,21 @@ class MyLearner(BaseLearningAgentGym):
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         # exclude the last action and manage it in this script, check simpleagent for it
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
-        self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7 ])
-        # self.observation_space = spaces.Dict (
-        #     {
-        #     "observations": spaces.Box(
-        #     low=-2,
-        #     high=401,
-        #     # shape=(24*18*10+4,),
-        #     shape=(6*4*10+4,),
-        #     dtype=np.int16
-        # ),
-        #     # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
-        #     "action_mask" : spaces.Box(0, 1, shape=(103,),dtype=np.int8) }
-        # )
-        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
+        # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7 ])
+        self.observation_space = spaces.Dict (
+            {
+            "observations": spaces.Box(
+            low=-2,
+            high=401,
+            shape=(24*18*10+4,),
+            # shape=(6*4*10+4,),
+            dtype=np.int16
+        ),
+            # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
+            # "action_mask" : spaces.Box(0, 1, shape=(103,),dtype=np.int8) }
+            "action_mask" : spaces.Box(0, 1, shape=(49,),dtype=np.int8) }
+        )
+        self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7])
         # TODO : check this hele
         # bu neymis? basta gereksiz bir reward eklemez mi bu
         self.previous_enemy_count = 4
@@ -167,7 +168,6 @@ class MyLearner(BaseLearningAgentGym):
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
-        # return { "observations":self.decode_state(state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}
 
     @staticmethod
     def  _decode_state(obs, team, enemy_team):
@@ -368,13 +368,17 @@ class MyLearner(BaseLearningAgentGym):
         return [locations, movement, enemy_order, train]
 
     def step(self, action):
-        # self.action_mask = np.ones(103,dtype=np.int8)
+        self.action_mask = np.ones(49,dtype=np.int8)
 
         harvest_reward = 0
         kill_reward = 0
         martyr_reward = 0
         action = self.take_action(action)
         next_state, _, done =  self.game.step(action)
+
+        next_state_obs, next_info = self.just_decode_state_(next_state,self.team,self.enemy_team)
+        # next_state_obs = self.decode_state(next_state)
+
         # check this reward function
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team, action)
         if enemy_count < self.previous_enemy_count:
@@ -440,9 +444,14 @@ class MyLearner(BaseLearningAgentGym):
             # we can define specific non-playable actions i think
             # check this
             # self.action_mask[len(self.my_units)*7:49] = 0
+            # rather than using self.my_units we should check unit number in the next state
+            # self.action_mask[len(next_info[2])*7:49] = 0
             # self.action_mask[49+len(self.my_units)*7:98] =0
-
-
+        
+        # we are no longer dependent on the self.my_units
+        # so we took this from the upper condition
+        # next_info[2] refers to our units
+        self.action_mask[len(next_info[2])*7:49] = 0
         # entity_train = action[-1]
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
@@ -498,9 +507,9 @@ class MyLearner(BaseLearningAgentGym):
         self.reward += reward
 
         self.nec_obs = next_state
-        return self.decode_state(next_state), reward, done, info
-        # return{ "observations":self.decode_state(next_state),"action_mask":np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],dtype="float32")}, reward, done, info
+        # return self.decode_state(next_state), reward, done, info
         # return{ "observations":self.decode_state(next_state),"action_mask":self.action_mask}, reward, done, info
+        return{ "observations":next_state_obs,"action_mask":self.action_mask}, reward, done, info
 
     def render(self,):
         return None
