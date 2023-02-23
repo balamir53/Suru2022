@@ -294,9 +294,8 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
             if not isinstance(truck, np.int64):
                 if (reso == truck).all():
                     if loads[truck[0], truck[1]].max() != 3:
-                        load_reward += 10
-            else:
-                pass
+                        # load_reward += 10
+                        pass
             if not isinstance(truck, np.int64):
                 if loads[truck[0], truck[1]].max() != 0 and (truck == base_loc).all():
                     unload_reward += 20

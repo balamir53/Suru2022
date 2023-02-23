@@ -70,6 +70,6 @@ class RandomAgent:
                 target.append((3,0))
             # target.append(self.enemy_units[unit_target]['location'])
         train = 0
-        if random()<0.05:
-            train = 1
+        # if random()<0.05:
+        #     train = 1
         return (location, movement, target, train)
