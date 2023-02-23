@@ -242,7 +242,7 @@ class MyLearner(BaseLearningAgentGym):
 
     
     def take_action(self, action):
-        return self.just_take_action(action, self.nec_obs, self.team, self.train, self.gameAreaX, self.gameAreaY) 
+        return self.just_take_action(action, self.nec_obs, self.team, self.train) 
     
     @staticmethod
     def unit_types(obs, allies, enemies,  team):
@@ -251,7 +251,7 @@ class MyLearner(BaseLearningAgentGym):
         return [ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]
     
     @staticmethod
-    def just_take_action(action, raw_state, team, train, gameAreaX, gameAreaY):
+    def just_take_action(action, raw_state, team, train):
         # this function takes the output of the model
         # and converts it into a reasonable output for
         # the game to play
@@ -357,7 +357,6 @@ class MyLearner(BaseLearningAgentGym):
         harvest_reward = 0
         kill_reward = 0
         martyr_reward = 0
-        trajectory_reward = 0
         action = self.take_action(action)
         next_state, _, done =  self.game.step(action)
         next_state_obs, next_info = self.just_decode_state_(next_state,self.team,self.enemy_team)
@@ -440,6 +439,38 @@ class MyLearner(BaseLearningAgentGym):
         # next_info[2] refers to our units
         self.action_mask[len(next_info[2])*7:49] = 0
         # entity_train = action[-1]
+        
+                # mask actions other than load or unload (0) if the truck is on a resource or the base
+        resource_loc = np.argwhere(next_state['resources'] == 1)
+        units_in_next_state = next_info[2]
+        base = next_info[5]
+        # trucks_loc = truck_locs(next_state,self.team)
+
+        # we assume that all unit lists are ordered by their coordinate
+        # next_info[2] is our units in the next state
+        for i,unit in enumerate(units_in_next_state):
+            if (i>6):
+                break   
+            if(unit['tag']!='Truck'):
+                continue
+            # check first if its loaded and on the base
+            if (unit['location']==base) and unit['load']>0:
+                # find the index of the truck in the unit list
+                self.action_mask[i*7]=1
+                # mask actions other than 0
+                self.action_mask[i*7+1:i*7+7]=0
+                continue
+            if (unit['load']>2):
+                continue
+            for reso in resource_loc:            
+                # if there is resource on the next location of the truck
+                if (reso == unit['location']).all():
+                        # find the index of the truck in the unit list
+                        self.action_mask[i*7]=1
+                        # mask actions other than 0
+                        self.action_mask[i*7+1:i*7+7]=0
+                      
+                        
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
 

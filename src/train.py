@@ -15,7 +15,6 @@ from agents.RiskyValley import RiskyValley
 from agents.GolKenari import GolKenari
 from agents.MyLearner import MyLearner
 from agents.MyLearnerid import MyLearnerid
-from agents.TruckLearner import TruckLearner
 
 # from ray.rllib.algorithms.ppo import PPO
 import ray.rllib.agents.ppo as ppo
