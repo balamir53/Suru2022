@@ -466,6 +466,8 @@ class MyLearner(BaseLearningAgentGym):
         # we assume that all unit lists are ordered by their coordinate
         # next_info[2] is our units in the next state
         for i,unit in enumerate(units_in_next_state):
+            if (i>6):
+                break
             if(unit['tag']!='Truck'):
                 continue
             # check first if its loaded and on the base
