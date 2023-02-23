@@ -459,25 +459,31 @@ class MyLearner(BaseLearningAgentGym):
 
         # mask actions other than load or unload (0) if the truck is on a resource or the base
         resource_loc = np.argwhere(next_state['resources'] == 1)
-        trucks_loc = truck_locs(next_state,self.team)
-        # all unit lists are ordered by their coordinate
-        # 
-        for truck in trucks_loc:
-            
+        units_in_next_state = next_info[2]
+        base = next_info[5]
+        # trucks_loc = truck_locs(next_state,self.team)
+
+        # we assume that all unit lists are ordered by their coordinate
+        # next_info[2] is our units in the next state
+        for i,unit in enumerate(units_in_next_state):
+            if(unit['tag']!='Truck'):
+                continue
+            # check first if its loaded and on the base
+            if (unit['location']==base) and unit['load']>0:
+                # find the index of the truck in the unit list
+                self.action_mask[i*7]=1
+                # mask actions other than 0
+                self.action_mask[i*7+1:i*7+7]=0
+                continue
+            if (unit['load']>2):
+                continue
             for reso in resource_loc:            
-                if not isinstance(truck, np.int64):
-                    # if there is resource on the next location of the truck
-                    if (reso == truck).all():
+                # if there is resource on the next location of the truck
+                if (reso == unit['location']).all():
                         # find the index of the truck in the unit list
-                        for i,unit in enumerate(next_info[2]):
-                            if (unit['location']==truck).all and unit['load']<3:
-                                self.action_mask[i*7]=1
-                                # mask actions other than 0
-                                self.action_mask[i*7+1:i*7+7]=0
-                                
-                        # if loads[truck[0], truck[1]].max() != 3:
-                        #     load_reward += 10
-                        pass
+                        self.action_mask[i*7]=1
+                        # mask actions other than 0
+                        self.action_mask[i*7+1:i*7+7]=0
 
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
