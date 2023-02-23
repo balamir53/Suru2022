@@ -7,7 +7,7 @@ from gym import spaces
 import numpy as np
 import yaml
 from game import Game
-from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy
+from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy, truck_locs
 
 
 def read_hypers():
@@ -380,6 +380,9 @@ class MyLearner(BaseLearningAgentGym):
         # next_state_obs = self.decode_state(next_state)
 
         # check this reward function
+        # self.nec_obs is the old observation
+        # and we apply reward to it
+        # different from action mask which is applied on the next observation we get from the game
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team, action)
         if enemy_count < self.previous_enemy_count:
             kill_reward = (self.previous_enemy_count - enemy_count) * 5
@@ -453,6 +456,29 @@ class MyLearner(BaseLearningAgentGym):
         # next_info[2] refers to our units
         self.action_mask[len(next_info[2])*7:49] = 0
         # entity_train = action[-1]
+
+        # mask actions other than load or unload (0) if the truck is on a resource or the base
+        resource_loc = np.argwhere(next_state['resources'] == 1)
+        trucks_loc = truck_locs(next_state,self.team)
+        # all unit lists are ordered by their coordinate
+        # 
+        for truck in trucks_loc:
+            
+            for reso in resource_loc:            
+                if not isinstance(truck, np.int64):
+                    # if there is resource on the next location of the truck
+                    if (reso == truck).all():
+                        # find the index of the truck in the unit list
+                        for i,unit in enumerate(next_info[2]):
+                            if (unit['location']==truck).all and unit['load']<3:
+                                self.action_mask[i*7]=1
+                                # mask actions other than 0
+                                self.action_mask[i*7+1:i*7+7]=0
+                                
+                        # if loads[truck[0], truck[1]].max() != 3:
+                        #     load_reward += 10
+                        pass
+
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
 

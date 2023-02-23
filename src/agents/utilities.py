@@ -135,6 +135,7 @@ def nearest_enemy(allied_unit_loc, enemy_locs):
     return enemy_locs[nearest_enemy_loc]
 
 def multi_forced_anchor(movement, obs, team): # birden fazla truck için
+    # we have excluded this function
     bases = obs['bases'][team]
     units = obs['units'][team]
     loads = obs['loads'][team]
