@@ -14,7 +14,7 @@ from ray.tune.registry import register_env
 from agents.RiskyValley import RiskyValley
 from agents.GolKenari import GolKenari
 from agents.MyLearner import MyLearner
-from agents.MyLearnerid import MyLearnerid
+
 
 # from ray.rllib.algorithms.ppo import PPO
 import ray.rllib.agents.ppo as ppo
@@ -73,10 +73,9 @@ def main():
     #because they have different observation and action spaces (inspect this)
     # considering this we can gather actions and create a global model that combines them?
     # ray.init(num_gpus=1, log_to_driver=True, local_mode=True)
-    # ray.init(num_gpus=1)
+    ray.init(num_gpus=1)
     # ray.init(local_mode=True)
-    ray.init()
-    register_env("ray", lambda config: MyLearnerid(args,agents))
+    register_env("ray", lambda config: MyLearner(args,agents))
 
     #misconfiguration
     #check the documentation
@@ -117,7 +116,7 @@ def main():
 
     # this line works but the saved data doesnt match with current one
     # it finally worked on desktop
-    # algo.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000150/checkpoint-150")
+    # algo.restore(checkpoint_path="models/checkpoint_000100/checkpoint-200")
     # algo.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5")
     # algo.restore(checkpoint_path="data/inputs/model/checkpoint_001900/checkpoint-1900")
     

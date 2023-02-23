@@ -13,8 +13,6 @@ from argparse import Namespace
 from models.action_mask_model import TorchActionMaskModel
 import pickle
 
-from gym import spaces
-
 class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 
     #@override(Trainable)
@@ -37,15 +35,15 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 
 class SelfPlay:
     def __init__(self, team, action_lenght):
-        args = Namespace(map="RiskyValleyNoTerrain", render=False, gif=False, img=False)
-        # args = Namespace(map="TrainSingleMixedBuyuk", render=False, gif=False, img=False)
-        agents = [None, "RandomAgent"]
+        # args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
+        args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
+        agents = [None, "SimpleAgent"]
 
         self.team = 0
         self.enemy_team = 1
     
         # ray.init(num_gpus=1, log_to_driver=True)
-        ray.init(ignore_reinit_error=True)
+        ray.init()
         # config= {"use_critic": True,
         #      "num_workers": 1,
         #      "use_gae": True,
@@ -97,15 +95,13 @@ class SelfPlay:
             }
         # register_env("ray", lambda config: RiskyValley(args, agents))
         register_env("ray", lambda config: MyLearner(args, agents))
-        ppo_agent = PatchedPPOTrainer(config=config, env="ray")
-        ######## ppo_agent = PPOTrainer(config=config, env="ray")
+        ppo_agent = PPOTrainer(config=config, env="ray")
         # ppo_agent = PatchedPPOTrainer(config=config, env="ray")
         # ppo_agent = PPOTrainer(env="ray")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        # ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001000/checkpoint-1000")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001600/checkpoint-1600")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001050/checkpoint-1050")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
