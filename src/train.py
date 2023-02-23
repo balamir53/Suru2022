@@ -14,6 +14,7 @@ from ray.tune.registry import register_env
 from agents.RiskyValley import RiskyValley
 from agents.GolKenari import GolKenari
 from agents.MyLearner import MyLearner
+from agents.MyLearnerid import MyLearnerid
 from agents.TruckLearner import TruckLearner
 
 # from ray.rllib.algorithms.ppo import PPO
@@ -76,7 +77,7 @@ def main():
     # ray.init(num_gpus=1)
     # ray.init(local_mode=True)
     ray.init()
-    register_env("ray", lambda config: MyLearner(args,agents))
+    register_env("ray", lambda config: MyLearnerid(args,agents))
 
     #misconfiguration
     #check the documentation

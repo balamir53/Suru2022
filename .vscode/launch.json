@@ -29,7 +29,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             // "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","50"]
-            "args": ["RiskyValleyNoTerrain","SelfPlay","RandomAgent", "--numOfMatch","10"]
+            "args": ["RiskyValleyNoTerrain","SelfPlay","SimpleAgent", "--numOfMatch","10"]
        },
        {
            "name": "train",

@@ -105,7 +105,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
         # ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001000/checkpoint-1000")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001050/checkpoint-1050")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001600/checkpoint-1600")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -170,7 +170,6 @@ class SelfPlay:
         
         elif len(self.my_units) > 7:
             ally_count = 7
-            locations = self.my_units
 
             if len(self.enemy_units) == 0:
                     # yok artik alum
