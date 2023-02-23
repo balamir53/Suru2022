@@ -36,7 +36,7 @@ class MyLearner(BaseLearningAgentGym):
         # self.game.config['blue']['base']['x'] = 3
         # call this in reset function
         # self.manipulateMap(self.game.config)
-        self.mapChangeFrequency = 3000
+        self.mapChangeFrequency = 1000
         # original map size
         self.gameAreaX = 6
         self.gameAreaY = 4
@@ -266,11 +266,8 @@ class MyLearner(BaseLearningAgentGym):
 
         allies = ally_locs(raw_state, team)
         enemies = enemy_locs(raw_state, team)
-        my_units, _ = MyLearner.unit_types(raw_state, allies, enemies, team)
+        my_unit_types, _ = MyLearner.unit_types(raw_state, allies, enemies, team)
         ##added by luchy:get nearest enemy locs aq for each ally in order
-        
-        
-        
         
         nearest_enemy_locs = []
         for ally in allies:
@@ -289,21 +286,6 @@ class MyLearner(BaseLearningAgentGym):
         elif 0 < len(allies) <= 7:
             ally_count = len(allies)
             locations = allies
-
-            ##commented by luchy:
-            # counter = 0
-            # for j in target:
-            #     if len(enemies) == 0:
-            #         # yok artik alum
-            #         enemy_order = [[3, 0] for i in range(ally_count)]
-            #         continue
-                # k = j % len(enemies)
-                # if counter == ally_count:
-                    # break
-                # if len(enemies) <= 0:
-                #     break
-                # enemy_order.append(enemies[k].tolist())
-                # counter += 1
             
             ##added by luchy: this part creates a list of closest enemy order. If num of enemies == 0 creates a dummy fire point for each ally.
             if len(enemies) == 0:
@@ -331,20 +313,6 @@ class MyLearner(BaseLearningAgentGym):
             ally_count = 7
             locations = allies
 
-            ##commented by luchy:
-            # counter = 0
-            # for j in target:
-            #     if len(enemies) == 0:
-            #         # bu ne oluyor press tv
-            #         enemy_order = [[3, 0] for i in range(ally_count)]
-            #         continue
-            #     k = j % len(enemies)
-            #     if counter == ally_count:
-            #         break
-            #     if len(enemies) <= 0:
-            #         break
-            #     enemy_order.append(enemies[k].tolist())
-            #     counter += 1
             if len(enemies) == 0:
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
@@ -381,23 +349,6 @@ class MyLearner(BaseLearningAgentGym):
 
         locations = list(map(tuple, locations))
         enemy_order = list(map(tuple, enemy_order))
-        # has been copied from the singleagent
-        # it is better to put this in step function and hand the train parameter here
-        # train = 0
-        # if raw_state["score"][0]>raw_state["score"][1]+2:
-        #     if counter["Truck"]<2:
-        #         train = stringToTag["Truck"]
-        #     elif counter["LightTank"]<1:
-        #         train = stringToTag["LightTank"]
-        #     elif counter["HeavyTank"]<1:
-        #         train = stringToTag["HeavyTank"]
-        #     elif counter["Drone"]<1:
-        #         train = stringToTag["Drone"]
-        #     elif len(self.my_units)<len(self.enemy_units):
-        #         train = randint(2,4)
-        # elif state["score"][self.team]+2<state["score"][self.enemy_team] and len(self.my_units)<len(self.enemy_units)*2:
-        #     train = randint(2,4)
-
 
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, train]
@@ -418,22 +369,6 @@ class MyLearner(BaseLearningAgentGym):
         _, info = MyLearner.just_decode_state_(self.nec_obs, self.team, self.enemy_team)
         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
         
-        # try:
-        #     if self.resources != []:
-        #         distances = []
-        #         for my_u in self.my_units:
-        #             if my_u["tag"] == "Truck":
-        #                 distance = []
-        #                 for res in self.resources:
-        #                     distance.append(getDistance(my_u["location"], res))
-        #                 nearest_res = distance[np.argmin(distance)]
-        #                 distances.append(nearest_res)
-                    
-        #         for dis in distances:
-        #             trajectory_reward += ((getDistance((self.x_max,self.y_max), (0,0)) - dis) * 0.05)
-        # except Exception as e:
-        #     print(e)   
-        
         # if enemy_count < self.previous_enemy_count:
         #     kill_reward = (self.previous_enemy_count - enemy_count) * 5
         # if ally_count < self.previous_ally_count:
@@ -442,8 +377,6 @@ class MyLearner(BaseLearningAgentGym):
         # reward = harvest_reward + kill_reward - martyr_reward + trajectory_reward
         # reward = harvest_reward + kill_reward - martyr_reward
         reward = harvest_reward 
-        # print(reward)
-        # reward = harvest_reward
         # reward = 0
 
         # consider givin reward only at episode end

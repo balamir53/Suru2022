@@ -19,7 +19,7 @@
             "program": "src/traincadet.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["TrainSingleMixedBuyuk","SimpleAgent"]
+            "args": ["TrainSingleMixedBuyuk","RandomAgent"]
         },
         {
             "name": "agentsofglory",
@@ -29,7 +29,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             // "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","50"]
-            "args": ["TrainSingleMixedBuyuk","SelfPlay","SimpleAgent", "--numOfMatch","10","--render"]
+            "args": ["RiskyValleyNoTerrain","SelfPlay","RandomAgent", "--numOfMatch","10"]
        },
        {
            "name": "train",
@@ -38,7 +38,7 @@
            "program": "src/train.py",
            "console": "integratedTerminal",
            "justMyCode": false,
-           "args": ["TrainSingleMixedBuyuk","SimpleAgent"]
+           "args": ["RiskyValleyNoTerrain","RandomAgent"]
       }
     ]
 }
