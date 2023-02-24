@@ -4,6 +4,7 @@ from yaml import load
 import numpy as np
 import copy
 import time
+import math
 
 tagToString = {
     1: "Truck",
@@ -21,6 +22,8 @@ stringToTag = {
 movement_grid = [[(0, 0), (-1, 0), (0, -1), (1, 0), (1, 1), (0, 1), (-1, 1)],
 [(0, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 1), (-1, 0)]]
 
+# DIST_PARAMETER = 8 # for 6*4 map
+DIST_PARAMETER = 24 # for 24*18 map
 
 def getMovement(unit_position, action):
     return movement_grid[unit_position[1] % 2][action]
@@ -77,7 +80,7 @@ def decodeState(state):
 
 def getDistance(pos_1, pos_2):
     ##changed by luchy: to be able use if statement all enemy and ally locs must be in list format.
-    if pos_1 == None or list(pos_2) == None:
+    if list(pos_1) == None or list(pos_2) == None:
         return 999
     pos1 = copy.copy(list(pos_1))
     pos2 = copy.copy(list(pos_2))
@@ -132,7 +135,7 @@ def nearest_enemy(allied_unit_loc, enemy_locs):
         distances.append(getDistance(allied_unit_loc, enemy))
     nearest_enemy_loc = np.argmin(distances)
 
-    return enemy_locs[nearest_enemy_loc]
+    return enemy_locs[nearest_enemy_loc], distances[nearest_enemy_loc]
 
 def multi_forced_anchor(movement, obs, team): # birden fazla truck için
     # we have excluded this function
@@ -252,11 +255,12 @@ def reward_shape(obs, team):
 
     return load_reward + unload_reward
 
-def multi_reward_shape(obs, team, action): # Birden fazla truck için
+def multi_reward_shape(obs, team, action, distances): # Birden fazla truck için
     load_reward = 0
     unload_reward = 0
     enemy_load_reward = 0
     enemy_unload_reward = 0
+    partial_reward = 0
     bases = obs['bases'][team]
     units = obs['units'][team]
     enemy_bases = obs['bases'][(team+1) % 2]
@@ -280,6 +284,14 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
     for truck in trucks:
         my_action = None
         to_break = False
+
+        # get the closest source and apply a partial reward
+        # depending on its distance to it
+        # _, closest_distance = nearest_enemy(truck,resource_loc)
+        current_load = loads[truck[0], truck[1]]
+        if(current_load>1):
+            partial_reward += math.pow(DIST_PARAMETER - getDistance(truck, base_loc),2)/1000*math.pow(current_load,3)
+
         for i,x in enumerate(action[0]):
             if (x == truck).all():
                 # check for its action
@@ -293,13 +305,13 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
         for reso in resource_loc:            
             if not isinstance(truck, np.int64):
                 if (reso == truck).all():
-                    if loads[truck[0], truck[1]].max() != 3:
-                        # load_reward += 10
-                        pass
+                    if current_load != 3:
+                        load_reward += 10
+                        # pass
             if not isinstance(truck, np.int64):
-                if loads[truck[0], truck[1]].max() != 0 and (truck == base_loc).all():
+                if current_load != 0 and (truck == base_loc).all():
                     unload_reward += 20
 
-    harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward
+    harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)
 

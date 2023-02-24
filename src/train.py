@@ -118,7 +118,7 @@ def main():
 
     # this line works but the saved data doesnt match with current one
     # it finally worked on desktop
-    # algo.restore(checkpoint_path="models/checkpoint_000100/checkpoint-200")
+    algo.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001450/checkpoint-1450")
     # algo.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5")
     # algo.restore(checkpoint_path="data/inputs/model/checkpoint_001900/checkpoint-1900")
     
