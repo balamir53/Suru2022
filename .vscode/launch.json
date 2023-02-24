@@ -37,7 +37,7 @@
            "program": "src/train.py",
            "console": "integratedTerminal",
            "justMyCode": false,
-           "args": ["RiskyValleyNoTerrain","RandomAgent"]
+           "args": ["RiskyValleyNoTerrain","SimpleAgent"]
       }
     ]
 }

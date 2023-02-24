@@ -137,4 +137,4 @@ class SimpleAgent:
                 train = randint(2,4)
         elif state["score"][self.team]+2<state["score"][self.enemy_team] and len(self.my_units)<len(self.enemy_units)*2:
             train = randint(2,4)
-        return (location, movement, target, train)
+        return (location, movement, target, train) 

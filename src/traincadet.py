@@ -86,7 +86,7 @@ def main():
             "config": config,
             "checkpoint_freq": 50,
             # "restore": "models/checkpoint_000150/checkpoint-150",
-            "restore": "/workspaces/Suru2022/data/inputs/model/checkpoint_001450/checkpoint-1450",
+            "restore": "/workspaces/Suru2022/data/inputs/model/checkpoint_001900/checkpoint-1900",
             # "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400",
             # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },

@@ -135,7 +135,15 @@ def nearest_enemy(allied_unit_loc, enemy_locs):
         distances.append(getDistance(allied_unit_loc, enemy))
     nearest_enemy_loc = np.argmin(distances)
 
-    return enemy_locs[nearest_enemy_loc], distances[nearest_enemy_loc]
+    return enemy_locs[nearest_enemy_loc]
+
+# def nearest_enemy(allied_unit_loc, enemy_locs):
+#     distances = []
+#     for enemy in enemy_locs:
+#         distances.append(getDistance(allied_unit_loc, enemy))
+#     nearest_enemy_loc = np.argmin(distances)
+
+#     return enemy_locs[nearest_enemy_loc], distances[nearest_enemy_loc]
 
 def multi_forced_anchor(movement, obs, team): # birden fazla truck için
     # we have excluded this function
@@ -255,7 +263,7 @@ def reward_shape(obs, team):
 
     return load_reward + unload_reward
 
-def multi_reward_shape(obs, team, action, distances): # Birden fazla truck için
+def multi_reward_shape(obs, team, action): # Birden fazla truck için
     load_reward = 0
     unload_reward = 0
     enemy_load_reward = 0

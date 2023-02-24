@@ -266,15 +266,20 @@ class MyLearner(BaseLearningAgentGym):
         allies = ally_locs(raw_state, team)
         enemies = enemy_locs(raw_state, team)
         my_unit_types, _ = MyLearner.unit_types(raw_state, allies, enemies, team)    
+        # nearest_enemy_locs = []
+        # distances = []
+        # for ally in allies:
+        #     if len(enemies) == 0 or len(enemies) < 0:
+        #         break
+        #     nearest_e, distance = nearest_enemy(ally, enemies)    
+        #     nearest_enemy_locs.append(nearest_e)
+        #     distances.append(distance)
         nearest_enemy_locs = []
-        distances = []
         for ally in allies:
             if len(enemies) == 0 or len(enemies) < 0:
                 break
-            nearest_e, distance = nearest_enemy(ally, enemies)    
-            nearest_enemy_locs.append(nearest_e)
-            distances.append(distance)
-
+            nearest_enemy_locs.append(nearest_enemy(ally, enemies))
+            
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError
@@ -377,15 +382,16 @@ class MyLearner(BaseLearningAgentGym):
         enemy_order = list(map(tuple, enemy_order))
 
         # this has to be returned in this order according to challenge rules
-        return [locations, movement, enemy_order, train], distances
-
+        # return [locations, movement, enemy_order, train], distances
+        return [locations, movement, enemy_order, train]
     def step(self, action):
         self.action_mask = np.ones(49,dtype=np.int8)
 
         harvest_reward = 0
         kill_reward = 0
         martyr_reward = 0
-        action, distances = self.take_action(action)
+        action = self.take_action(action)
+
         next_state, _, done =  self.game.step(action)
 
         next_state_obs, next_info = self.just_decode_state_(next_state,self.team,self.enemy_team)
@@ -395,7 +401,7 @@ class MyLearner(BaseLearningAgentGym):
         #         _, info = MyLearner.just_decode_state_(self.nec_obs, self.team, self.enemy_team)
         #         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
         
-        harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team, action, distances)
+        harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team, action)
         if enemy_count < self.previous_enemy_count:
             kill_reward = (self.previous_enemy_count - enemy_count) * 5
         if ally_count < self.previous_ally_count:
