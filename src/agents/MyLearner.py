@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/RiskyValleyNoTerrain.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -164,7 +164,7 @@ class MyLearner(BaseLearningAgentGym):
         # print(self.episodes)
 
         # change it on every episode
-        self.manipulateMap(self.game.config, self.episodes)
+        # self.manipulateMap(self.game.config, self.episodes)
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
@@ -243,6 +243,12 @@ class MyLearner(BaseLearningAgentGym):
     def take_action(self, action):
         return self.just_take_action(action, self.nec_obs, self.team, self.train) 
 
+    @staticmethod
+    def unit_types(obs, allies, enemies,  team):
+        ally_units = obs['units'][team]
+        enemy_units = obs['units'][(team+1) % 2]
+        return [ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]
+    
     @staticmethod
     def just_take_action(action, raw_state, team, train):
         # this function takes the output of the model
@@ -546,7 +552,7 @@ class MyLearner(BaseLearningAgentGym):
         self.nec_obs = next_state
         # return self.decode_state(next_state), reward, done, info
         # return{ "observations":self.decode_state(next_state),"action_mask":self.action_mask}, reward, done, info
-        return{ "observations":next_state_obs,"action_mask":self.action_mask}, reward, done, info
+        return {"observations":next_state_obs,"action_mask":self.action_mask}, reward, done, info
 
     def render(self,):
         return None

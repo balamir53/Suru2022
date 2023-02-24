@@ -11,6 +11,7 @@ from fractions import Fraction
 from ray import tune
 from ray.tune.registry import register_env
 
+from ray.tune import CLIReporter
 from agents.RiskyValley import RiskyValley
 from agents.GolKenari import GolKenari
 from agents.MyLearner import MyLearner
@@ -76,7 +77,7 @@ def main():
     ray.init(num_gpus=1)
     # ray.init(local_mode=True)
     register_env("ray", lambda config: MyLearner(args,agents))
-
+    reporter = CLIReporter(max_progress_rows=10)
     #misconfiguration
     #check the documentation
     config= {"use_critic": True,
@@ -103,11 +104,12 @@ def main():
                 "kl_target": 0.01,
                 "batch_mode": "truncate_episodes",
                 "observation_filter": "NoFilter",
+                # "progress_reporter" : reporter,
                 "model":{
                     "custom_model": TorchActionMaskModel
                 }
                 }
-
+    
     # Create our RLlib Trainer.
     algo = PatchedPPOTrainer(config=config, env="ray")
     # algo = ppo.PPOTrainer(config=config, env="CartPole-v0")

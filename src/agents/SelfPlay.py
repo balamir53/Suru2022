@@ -36,8 +36,8 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 class SelfPlay:
     def __init__(self, team, action_lenght):
         # args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-        args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-        agents = [None, "SimpleAgent"]
+        args = Namespace(map="RiskyValleyNoTerrain", render=False, gif=False, img=False)
+        agents = [None, "RandomAgent"]
 
         self.team = 0
         self.enemy_team = 1
@@ -101,7 +101,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001050/checkpoint-1050")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000350/checkpoint-350")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -112,14 +112,15 @@ class SelfPlay:
         astar(pos,target,state)
         return
         '''
+        # self.action_mask = np.ones(49,dtype=np.int8)
         #TODO: get the state from already loaded checkpoint
         # state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
         state, info = MyLearner.just_decode_state_(raw_state, self.team, self.enemy_team)
         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
-        # actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(103,dtype=np.int8)})
+        actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(49,dtype=np.int8)})
         
         #TODO: get the state from already loaded checkpoint
-        actions, _, _ = self.policy.compute_single_action(state.astype(np.float32))
+        # actions, _, _ = self.policy.compute_single_action(state.astype(np.float32))
         movement = []
         target = []
         locations = []
@@ -191,6 +192,26 @@ class SelfPlay:
         # TODO: Write train logic
         train = 0
 
+        number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
+
+        for x in self.my_units:
+            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                number_of_tanks+=1
+            elif x["tag"] == "Drone":
+                number_of_uavs+=1
+            elif x["tag"] == "Truck":
+                number_of_trucks+=1
+        for x in self.enemy_units:
+            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                number_of_enemy_tanks+=1
+            elif x["tag"] == "Drone":
+                number_of_enemy_uavs+=1
+            elif x["tag"] == "Truck":
+                number_of_enemy_trucks+=1
+        
+        number_of_our_military = number_of_tanks+number_of_enemy_uavs
+        number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
+        
         if raw_state["score"][self.team]>raw_state["score"][self.enemy_team]+2:
             if counter["Truck"]<2:
                 train = stringToTag["Truck"]
@@ -200,7 +221,8 @@ class SelfPlay:
                 train = stringToTag["HeavyTank"]
             elif counter["Drone"]<1:
                 train = stringToTag["Drone"]
-            elif len(self.my_units)<len(self.enemy_units):
+            # elif len(self.my_units)<len(self.enemy_units):
+            elif number_of_our_military<number_of_enemy_military:
                 train = randint(2,4)
         elif counter["Truck"] < 1:
             train = stringToTag["Truck"]
