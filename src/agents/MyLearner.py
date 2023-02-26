@@ -496,6 +496,27 @@ class MyLearner(BaseLearningAgentGym):
                 self.action_mask[i*7+1:i*7+7]=0
                 continue
             if (unit['load']>2):
+                # unit["location"] returns (y,x). on (map_y=16,map_x=24) (0,0) means upper left, (0,24) means upper right,
+                # (16,0) means bottom left, (16,24) means bottom right. base[1] means x coor of the base.
+                # if truck has more than 2 as load, it must return to base. 
+                # if base on the left, truck is on the right(base[1] < unit["location"][1]), mask 3,4 th positions.
+                # vice versa(base[1] > unit["location"][1]), mask 1,6 th positions. and mask no movement if not on base no matter where.
+                # if base and unit is aligned on x axis, mask actions other than up and down movement accordingly.
+                if base[1] < unit["location"][1]:
+                    self.action_mask[i*7:i*7+7]=1
+                    self.action_mask[i*7+3] = 0
+                    self.action_mask[i*7+4] = 0
+                elif base[1] > unit["location"][1]:
+                    self.action_mask[i*7:i*7+7]=1
+                    self.action_mask[i*7+1] = 0
+                    self.action_mask[i*7+6] = 0
+                elif base[1] == unit["location"][1] and unit["location"][0] >  base[1]:
+                    self.action_mask[i*7:i*7+7]=0
+                    self.action_mask[i*7+2] = 1
+                elif base[1] == unit["location"][1] and unit["location"][0] <  base[1]:
+                    self.action_mask[i*7:i*7+7]=0
+                    self.action_mask[i*7+5] = 1
+                self.action_mask[i*7] = 0
                 continue
             for reso in resource_loc:            
                 # if there is resource on the next location of the truck
@@ -504,7 +525,25 @@ class MyLearner(BaseLearningAgentGym):
                         self.action_mask[i*7]=1
                         # mask actions other than 0
                         self.action_mask[i*7+1:i*7+7]=0
-
+            # if unit is on self.y_max th position it cannot go down anymore
+            if unit['location'][0] == (self.y_max-1) :
+                self.action_mask[i*7+4] = 0
+                self.action_mask[i*7+5] = 0
+                self.action_mask[i*7+6] = 0
+            # if unit is on 0th y position, it cannot go up anymore
+            elif unit['location'][0] == 0 :
+                self.action_mask[i*7+1] = 0
+                self.action_mask[i*7+2] = 0
+                self.action_mask[i*7+3] = 0
+            # if unit is on self.x_max th position it cannot right anymore
+            if unit['location'][1] == (self.x_max-1) :
+                self.action_mask[i*7+3] = 0
+                self.action_mask[i*7+4] = 0
+            # if unit is on 0th x position it cannot left anymore
+            elif unit['location'][1] == 0 :
+                self.action_mask[i*7+1] = 0
+                self.action_mask[i*7+6] = 0
+                
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
 
