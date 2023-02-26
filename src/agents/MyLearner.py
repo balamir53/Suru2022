@@ -526,7 +526,7 @@ class MyLearner(BaseLearningAgentGym):
                         # mask actions other than 0
                         self.action_mask[i*7+1:i*7+7]=0
             # if unit is on self.y_max th position it cannot go down anymore
-            if unit['location'][0] == (self.y_max-1) :
+            if unit['location'][0] == (self.configs['map']['y']-1) :
                 self.action_mask[i*7+4] = 0
                 self.action_mask[i*7+5] = 0
                 self.action_mask[i*7+6] = 0
@@ -536,7 +536,7 @@ class MyLearner(BaseLearningAgentGym):
                 self.action_mask[i*7+2] = 0
                 self.action_mask[i*7+3] = 0
             # if unit is on self.x_max th position it cannot right anymore
-            if unit['location'][1] == (self.x_max-1) :
+            if unit['location'][1] == (self.configs['map']['x']-1) :
                 self.action_mask[i*7+3] = 0
                 self.action_mask[i*7+4] = 0
             # if unit is on 0th x position it cannot left anymore
