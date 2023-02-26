@@ -300,7 +300,7 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
                 my_action = action[1][i]
 
         for reso in resource_loc:            
-            if not isinstance(truck, np.int64):
+            if not isinstance(truck, np.int64) and truck[1]:
                 if (reso == truck).all() and my_action == 0:
                     if current_load != 3:
                         load_reward += 10

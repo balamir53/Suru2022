@@ -42,7 +42,7 @@ def main():
     config= {
             "use_critic": True,
             "log_level": "WARN",
-             "num_workers": 14,
+             "num_workers": 10,
             #  "num_gpus":1,
              "use_gae": True,
              "lambda": 1.0,
