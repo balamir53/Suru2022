@@ -26,7 +26,11 @@ DIST_PARAMETER = 8 # for 6*4 map
 # DIST_PARAMETER = 30 # for 24*18 map
 
 def getMovement(unit_position, action):
-    return movement_grid[unit_position[1] % 2][action]
+    try:
+        return movement_grid[unit_position[1] % 2][action]
+    except:
+        print(unit_position)
+        print(action)
 
 
 def decodeState(state):
@@ -281,7 +285,11 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
     ally = ally_locs(obs, team)
     trucks = truck_locs(obs, team)
 
+    counter = 0
     for truck in trucks:
+        counter+=1
+        if counter>7:
+            break
         my_action = None
         to_break = False
 
@@ -309,6 +317,8 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
                 if  current_load >2 :
                     before = getDistance(base_loc, truck)
                     move = getMovement(truck,my_action)
+                    if (move == None ):
+                       break
                     new_pos = [truck[0]+ move[1], truck[1]+move[0]]
                     after = getDistance(base_loc, new_pos)
                     if after<before:
