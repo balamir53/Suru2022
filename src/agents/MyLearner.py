@@ -11,7 +11,7 @@ from utilities import multi_forced_anchor, necessary_obs, decode_location, multi
 
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
+    with open(f"/home/yzt/Suru2022/data/config/TrainSingleMixedBuyuk.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 
@@ -478,6 +478,7 @@ class MyLearner(BaseLearningAgentGym):
                 self.action_mask[i*7+1:i*7+7]=0
                 continue
             if (unit['load']>2):
+                # 
                 continue
             for reso in resource_loc:            
                 # if there is resource on the next location of the truck
