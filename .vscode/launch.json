@@ -37,7 +37,7 @@
            "program": "src/train.py",
            "console": "integratedTerminal",
            "justMyCode": false,
-           "args": ["TrainSingleMixedBuyuk","RandomAgent"]
+           "args": ["TrainSingleMixedBuyuk2","RandomAgent"]
       }
     ]
 }

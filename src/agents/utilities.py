@@ -298,21 +298,22 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
             if (x == truck).all():
                 # check for its action
                 my_action = action[1][i]
-                # if is not 0, meaning that if its not loading and unloading dont get any reward
-                if (my_action!=0):
-                    to_break = True
-                    break
-        if (to_break):
-            continue
+
         for reso in resource_loc:            
             if not isinstance(truck, np.int64):
-                if (reso == truck).all():
+                if (reso == truck).all() and my_action == 0:
                     if current_load != 3:
                         load_reward += 10
-            if not isinstance(truck, np.int64):
-                if current_load != 0 and (truck == base_loc).all():
-                    unload_reward += 20
+                if current_load != 0 and (truck == base_loc).all() and my_action == 0:
+                    unload_reward += 20*current_load
+                if  current_load >2 :
+                    before = getDistance(base_loc, truck)
+                    move = getMovement(truck,my_action)
+                    new_pos = [truck[0]+ move[1], truck[1]+move[0]]
+                    after = getDistance(base_loc, new_pos)
+                    if after<before:
+                        partial_reward += 1
 
-    harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward
+    harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)
 
