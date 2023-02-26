@@ -49,6 +49,9 @@ blue:
     - type: Truck
       x: 0
       y: 15
+    - type: Truck
+      x: 0
+      y: 15        
 resources:
   - x: 0
     y: 0
