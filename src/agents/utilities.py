@@ -29,8 +29,9 @@ def getMovement(unit_position, action):
     try:
         return movement_grid[unit_position[1] % 2][action]
     except:
-        print(unit_position)
-        print(action)
+        # print(unit_position)
+        # print(action)
+        pass
 
 
 def decodeState(state):
@@ -314,11 +315,11 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
                         load_reward += 10
                 if current_load != 0 and (truck == base_loc).all() and my_action == 0:
                     unload_reward += 20*current_load
-                if  current_load >2 :
+                if  current_load >2 and my_action != None:
                     before = getDistance(base_loc, truck)
                     move = getMovement(truck,my_action)
-                    if (move == None ):
-                       break
+                    # if (move == None ):
+                    #    break
                     new_pos = [truck[0]+ move[1], truck[1]+move[0]]
                     after = getDistance(base_loc, new_pos)
                     if after<before:
