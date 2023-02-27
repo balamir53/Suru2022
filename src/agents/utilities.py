@@ -313,6 +313,7 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
                 if (reso == truck).all() and my_action == 0:
                     if current_load != 3:
                         load_reward += 10
+                        # print("10 load reward")
                 if current_load != 0 and (truck == base_loc).all() and my_action == 0:
                     unload_reward += 20*current_load
                 if  current_load >2 and my_action != None:

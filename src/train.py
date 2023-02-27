@@ -87,7 +87,7 @@ def main():
                 "lambda": 1.0,
                 "kl_coeff": 0.2,
                 "rollout_fragment_length": 200,
-                "train_batch_size": 4000,
+                "train_batch_size": 1280,
                 "sgd_minibatch_size": 128,
                 "shuffle_sequences": True,
                 "num_sgd_iter": 30,

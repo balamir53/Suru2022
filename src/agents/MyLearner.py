@@ -38,8 +38,8 @@ class MyLearner(BaseLearningAgentGym):
         # self.manipulateMap(self.game.config)
         self.mapChangeFrequency = 1000
         # original map size
-        self.gameAreaX = 6
-        self.gameAreaY = 4
+        self.gameAreaX = 12
+        self.gameAreaY = 8
         self.train = 0
 
         self.team = team
@@ -55,12 +55,12 @@ class MyLearner(BaseLearningAgentGym):
         # define the action mask
         # self.action_mask = np.ones(49,dtype=np.int8)
 
-        self.observation_space = spaces.Box(
-            low=-2,
-            high=401,
-            shape=(24*18*10+4,),
-            dtype=np.int16
-        )
+        # self.observation_space = spaces.Box(
+        #     low=-2,
+        #     high=401,
+        #     shape=(6*4*10+4,),
+        #     dtype=np.int16
+        # )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         # exclude the last action and manage it in this script, check simpleagent for it
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
@@ -71,7 +71,7 @@ class MyLearner(BaseLearningAgentGym):
             low=-2,
             high=401,
             shape=(24*18*10+4,),
-            # shape=(6*4*10+4,),
+            # shape=(12*8*10+4,),
             dtype=np.int16
         ),
             # "action_mask" : spaces.Box(0.0, 1.0, shape=self.action_space.shape) }
