@@ -53,7 +53,7 @@ class MyLearner(BaseLearningAgentGym):
         self.nec_obs = None
 
         # define the action mask
-        self.action_mask = np.ones(103,dtype=np.int8)
+        # self.action_mask = np.ones(49,dtype=np.int8)
 
         self.observation_space = spaces.Box(
             low=-2,
