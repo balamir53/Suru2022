@@ -324,6 +324,8 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
                     after = getDistance(base_loc, new_pos)
                     if after<before:
                         partial_reward += 0.05
+                    else:
+                        partial_reward -= 0.05
 
     harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)
