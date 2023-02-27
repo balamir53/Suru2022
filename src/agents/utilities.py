@@ -297,8 +297,8 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
         # depending on its distance to it
         # _, closest_distance = nearest_enemy(truck,resource_loc)
         current_load = loads[truck[0], truck[1]]
-        if(current_load>1):
-            partial_reward += math.pow(DIST_PARAMETER - getDistance(truck, base_loc),2)/800*math.pow(current_load,3)
+        # if(current_load>1):
+            # partial_reward += math.pow(DIST_PARAMETER - getDistance(truck, base_loc),2)/10000*math.pow(current_load,3)
 
         for i,x in enumerate(action[0]):
             if (x == truck).all():
@@ -314,7 +314,7 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
             if not isinstance(truck, np.int64):
                 if (reso == truck).all():
                     if current_load != 3:
-                        load_reward += 10
+                        load_reward += 3
                         # pass
             if not isinstance(truck, np.int64):
                 if current_load != 0 and (truck == base_loc).all():
