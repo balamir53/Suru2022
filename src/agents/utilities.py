@@ -310,11 +310,11 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
 
         for reso in resource_loc:            
             if not isinstance(truck, np.int64) and truck[1]!=None:
-                if (reso == truck).all() and my_action == 0:
-                    if current_load != 3:
-                        load_reward += 10
+                # if (reso == truck).all() and my_action == 0:
+                #     if current_load != 3:
+                #         load_reward += 10
                 if current_load != 0 and (truck == base_loc).all() and my_action == 0:
-                    unload_reward += 20*current_load
+                    unload_reward += 1*current_load
                 if  current_load >2 and my_action != None:
                     before = getDistance(base_loc, truck)
                     move = getMovement(truck,my_action)
@@ -323,7 +323,7 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
                     new_pos = [truck[0]+ move[1], truck[1]+move[0]]
                     after = getDistance(base_loc, new_pos)
                     if after<before:
-                        partial_reward += 1
+                        partial_reward += 0.05
 
     harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)
