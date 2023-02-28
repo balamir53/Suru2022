@@ -7,7 +7,7 @@ from gym import spaces
 import numpy as np
 import yaml
 from game import Game
-from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy, truck_locs, getMovement
+from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy, nearest_enemy_selective, truck_locs, getMovement
 
 
 def read_hypers():
@@ -249,6 +249,18 @@ class MyLearner(BaseLearningAgentGym):
         enemy_units = obs['units'][(team+1) % 2]
         return [ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]
     
+    def nearest_enemy_details(allies, enemies):
+        nearest_enemy_detail = []
+        for ally in allies:
+            # if the ally unit is a truck, append none to nearest enemy list since it is not a fire element and continue to new ally unit.
+            if ally["tag"] == "Truck":
+                nearest_enemy_detail.append(None)
+                continue
+            if len(enemies) == 0 or len(enemies) < 0:
+                break
+            nearest_enemy_detail.append(nearest_enemy_selective(ally, enemies))
+        return nearest_enemy_detail
+    
     @staticmethod
     def just_take_action(action, raw_state, team, train):
         # this function takes the output of the model
@@ -265,7 +277,8 @@ class MyLearner(BaseLearningAgentGym):
 
         allies = ally_locs(raw_state, team)
         enemies = enemy_locs(raw_state, team)
-        my_unit_types, _ = MyLearner.unit_types(raw_state, allies, enemies, team)    
+        my_unit_types, enemy_unit_types = MyLearner.unit_types(raw_state, allies, enemies, team)  
+  
         # nearest_enemy_locs = []
         # distances = []
         # for ally in allies:
@@ -477,6 +490,9 @@ class MyLearner(BaseLearningAgentGym):
         # mask actions other than load or unload (0) if the truck is on a resource or the base
         resource_loc = np.argwhere(next_state['resources'] == 1)
         units_in_next_state = next_info[2]
+        enemy_units_in_next_state = next_info[3]
+        #it is required to calcaulate the new enemy order created after the game stepped on.
+        next_enemy_order_details = MyLearner.nearest_enemy_details(units_in_next_state, enemy_units_in_next_state)
         base = next_info[5]
         # trucks_loc = truck_locs(next_state,self.team)
 
@@ -485,7 +501,21 @@ class MyLearner(BaseLearningAgentGym):
         for i,unit in enumerate(units_in_next_state):
             if (i>6):
                 break
+            #check whether the unit is a fire element or not.
             if(unit['tag']!='Truck'):
+                # this line is not required since if unit tag is truck it wont enter the if but just in case.
+                if next_enemy_order_details[i] is None:
+                    continue
+                #if the unit is LightTank or HeavyTank and the distance to selected enemy is under 4, mask movement to 0.
+                if (unit['tag']=='LightTank' or unit['tag']=='HeavyTank') and getDistance(unit["location"], next_enemy_order_details[i]["location"]) < 4:
+                        self.action_mask[i*7]=1
+                        # mask actions other than 0
+                        self.action_mask[i*7+1:i*7+7]=0
+                #if the unit is Drone and the distance to selected enemy is under 2, mask movement to 0.
+                elif unit['tag']=='Drone' and getDistance(unit["location"], next_enemy_order_details[i]["location"]) < 2:
+                        self.action_mask[i*7]=1
+                        # mask actions other than 0
+                        self.action_mask[i*7+1:i*7+7]=0
                 continue
             # check first if its loaded and on the base
             if (unit['location']==base) and unit['load']>0:
@@ -501,21 +531,21 @@ class MyLearner(BaseLearningAgentGym):
                 # if base on the left, truck is on the right(base[1] < unit["location"][1]), mask 3,4 th positions.
                 # vice versa(base[1] > unit["location"][1]), mask 1,6 th positions. and mask no movement if not on base no matter where.
                 # if base and unit is aligned on x axis, mask actions other than up and down movement accordingly.
-                if base[1] < unit["location"][1]:
-                    self.action_mask[i*7:i*7+7]=1
-                    self.action_mask[i*7+3] = 0
-                    self.action_mask[i*7+4] = 0
-                elif base[1] > unit["location"][1]:
-                    self.action_mask[i*7:i*7+7]=1
-                    self.action_mask[i*7+1] = 0
-                    self.action_mask[i*7+6] = 0
-                elif base[1] == unit["location"][1] and unit["location"][0] >  base[1]:
-                    self.action_mask[i*7:i*7+7]=0
-                    self.action_mask[i*7+2] = 1
-                elif base[1] == unit["location"][1] and unit["location"][0] <  base[1]:
-                    self.action_mask[i*7:i*7+7]=0
-                    self.action_mask[i*7+5] = 1
-                self.action_mask[i*7] = 0
+                # if base[1] < unit["location"][1]:
+                #     self.action_mask[i*7:i*7+7]=1
+                #     self.action_mask[i*7+3] = 0
+                #     self.action_mask[i*7+4] = 0
+                # elif base[1] > unit["location"][1]:
+                #     self.action_mask[i*7:i*7+7]=1
+                #     self.action_mask[i*7+1] = 0
+                #     self.action_mask[i*7+6] = 0
+                # elif base[1] == unit["location"][1] and unit["location"][0] >  base[1]:
+                #     self.action_mask[i*7:i*7+7]=0
+                #     self.action_mask[i*7+2] = 1
+                # elif base[1] == unit["location"][1] and unit["location"][0] <  base[1]:
+                #     self.action_mask[i*7:i*7+7]=0
+                #     self.action_mask[i*7+5] = 1
+                # self.action_mask[i*7] = 0
                 continue
             for reso in resource_loc:            
                 # if there is resource on the next location of the truck
