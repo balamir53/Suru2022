@@ -102,7 +102,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001950/checkpoint-1950")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001850/checkpoint_001850/checkpoint-1850")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -169,7 +169,8 @@ class SelfPlay:
             counter[unit['tag']]+=1
             if len(self.enemy_units) == 0 or len(self.enemy_units) < 0:
                 break
-            nearest_enemy_locs.append(nearest_enemy(unit['location'], enemy_locs_))
+            my_nearest_enemy, _ = nearest_enemy(unit['location'], enemy_locs_)
+            nearest_enemy_locs.append(my_nearest_enemy)
         
         if 0 == len(self.my_units):
             locations = []
