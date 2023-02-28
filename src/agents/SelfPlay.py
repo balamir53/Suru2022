@@ -41,6 +41,7 @@ class SelfPlay:
 
         self.team = 0
         self.enemy_team = 1
+        self.action_mask = np.ones(49,dtype=np.int8)
     
         # ray.init(num_gpus=1, log_to_driver=True)
         ray.init()
@@ -117,7 +118,30 @@ class SelfPlay:
         # state = RiskyValley.just_decode_state(raw_state, self.team, self.enemy_team)
         state, info = MyLearner.just_decode_state_(raw_state, self.team, self.enemy_team)
         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
-        actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":np.ones(49,dtype=np.int8)})
+
+        for i,unit in enumerate(self.my_units):
+            if (i>6):
+                break
+            if(unit['tag']!='Truck'):
+                continue
+            # check first if its loaded and on the base
+            if (unit['location']==base) and unit['load']>0:
+                # find the index of the truck in the unit list
+                self.action_mask[i*7]=1
+                # mask actions other than 0
+                self.action_mask[i*7+1:i*7+7]=0
+                continue
+            if (unit['load']>2):
+                continue
+            for reso in self.resources:            
+                # if there is resource on the next location of the truck
+                if (reso == unit['location']):
+                        # find the index of the truck in the unit list
+                        self.action_mask[i*7]=1
+                        # mask actions other than 0
+                        self.action_mask[i*7+1:i*7+7]=0
+
+        actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":self.action_mask})
         
         #TODO: get the state from already loaded checkpoint
         # actions, _, _ = self.policy.compute_single_action(state.astype(np.float32))
@@ -145,7 +169,8 @@ class SelfPlay:
             counter[unit['tag']]+=1
             if len(self.enemy_units) == 0 or len(self.enemy_units) < 0:
                 break
-            nearest_enemy_locs.append(nearest_enemy(unit['location'], enemy_locs_))
+            my_nearest_enemy, _ = nearest_enemy(unit['location'], enemy_locs_)
+            nearest_enemy_locs.append(my_nearest_enemy)
         
         if 0 == len(self.my_units):
             locations = []
