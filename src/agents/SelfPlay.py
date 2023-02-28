@@ -102,7 +102,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001850/checkpoint_001850/checkpoint-1850")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_002200/checkpoint_002200/checkpoint-2200")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -125,7 +125,7 @@ class SelfPlay:
             if(unit['tag']!='Truck'):
                 continue
             # check first if its loaded and on the base
-            if (unit['location']==base) and unit['load']>0:
+            if (unit['location']==self.my_base) and unit['load']>0:
                 # find the index of the truck in the unit list
                 self.action_mask[i*7]=1
                 # mask actions other than 0
@@ -138,7 +138,7 @@ class SelfPlay:
                 if (reso == unit['location']):
                         # find the index of the truck in the unit list
                         self.action_mask[i*7]=1
-                        # mask actions other than 0
+                        # mask actions ot her than 0
                         self.action_mask[i*7+1:i*7+7]=0
 
         actions, _, _ = self.policy.compute_single_action({"observations":state.astype(np.float32),"action_mask":self.action_mask})
