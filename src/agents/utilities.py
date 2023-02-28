@@ -142,6 +142,60 @@ def nearest_enemy(allied_unit_loc, enemy_locs):
 
     return enemy_locs[nearest_enemy_loc]
 
+def nearest_enemy_selective(allied_unit, enemies):
+    distances = []
+    #get all enemy types.
+    enemy_types = [enemy["tag"] for enemy in enemies]
+    #get distances of all enemies according to ally unit.
+    for enemy in enemies:
+        distances.append(getDistance(allied_unit["location"], enemy["location"]))
+    #define a high dummy distance to be able to compare. 
+    temp = 1000
+    selected_enemy = None
+    for i in range(len(enemies)):
+        #check if ally unit is heavyTank or not. if the enemy being compared is drone, since HeavyTruck cannot fire to Drone just continue. 
+        if allied_unit["tag"] == "HeavyTank" and enemy_types[i] == "Drone":
+            continue
+        #if ally distance to enemy unit is less than temp, set new temp as distance between them and selected enemy accordingly.
+        if distances[i] < temp:
+            temp = distances[i]
+            selected_enemy = enemies[i]
+        #if distance is same with temp, consider new enemy as a better target. if so set it as new selected enemy. 
+        elif distances[i] == temp:
+            if (allied_unit["tag"] == "HeavyTank"):
+                if (enemies[i]["tag"] == "HeavyTank"):
+                    #if allied unit is heavytank and the new enemy with same distance is heavy tank, check selected enemy. if it is one of the following, update it with a better enemy.
+                        if(selected_enemy["tag"] == "LightTank" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                        if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+            
+            elif (allied_unit["tag"] == "LightTank"):
+                if (enemies[i]["tag"] == "HeavyTank"):
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Drone" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                        #prioritize enemy LightTank over Drone if allied unit is LightTank
+                        if(selected_enemy["tag"] == "Drone" or selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "Drone"):
+                    if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+            # allied unit type is drone.
+            else:
+                if (enemies[i]["tag"] == "HeavyTank"):
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Drone" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "Drone"):
+                        #prioritize enemy Drone over LightTank if allied unit is Drone
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                    if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+    return selected_enemy
+
 # def nearest_enemy(allied_unit_loc, enemy_locs):
 #     distances = []
 #     for enemy in enemy_locs:
