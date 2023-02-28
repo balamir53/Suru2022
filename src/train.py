@@ -106,7 +106,11 @@ def main():
                 "observation_filter": "NoFilter",
                 # "progress_reporter" : reporter,
                 "model":{
-                    "custom_model": TorchActionMaskModel
+                    "custom_model": TorchActionMaskModel,
+                    "custom_model_config" : 
+                    {
+                        "fcnet_hiddens": [512, 512, 512, 512],    
+                    }
                 }
                 }
     
@@ -118,7 +122,7 @@ def main():
 
     # this line works but the saved data doesnt match with current one
     # it finally worked on desktop
-    algo.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001900/checkpoint-1900")
+    # algo.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001900/checkpoint-1900")
     # algo.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5")
     # algo.restore(checkpoint_path="data/inputs/model/checkpoint_001900/checkpoint-1900")
     

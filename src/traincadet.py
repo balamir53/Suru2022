@@ -65,7 +65,11 @@ def main():
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
              "model":{
-                    "custom_model": TorchActionMaskModel
+                    "custom_model": TorchActionMaskModel,
+                    "custom_model_config" : 
+                    {
+                        "fcnet_hiddens": [512, 512, 512, 512],    
+                    }
                 }
             }
     config_dqn= {

@@ -26,7 +26,12 @@ movement_grid = [[(0, 0), (-1, 0), (0, -1), (1, 0), (1, 1), (0, 1), (-1, 1)],
 DIST_PARAMETER = 24 # for 24*18 map
 
 def getMovement(unit_position, action):
-    return movement_grid[unit_position[1] % 2][action]
+    try:
+        return movement_grid[unit_position[1] % 2][action]
+    except:
+        # print(unit_position)
+        # print(action)
+        pass
 
 
 def decodeState(state):
@@ -289,7 +294,11 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
     ally = ally_locs(obs, team)
     trucks = truck_locs(obs, team)
 
+    counter = 0
     for truck in trucks:
+        counter+=1
+        if counter>7:
+            break
         my_action = None
         to_break = False
 
@@ -297,28 +306,32 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
         # depending on its distance to it
         # _, closest_distance = nearest_enemy(truck,resource_loc)
         current_load = loads[truck[0], truck[1]]
+        # this doesnt help loaded trucks learn to return back to base
+        # rather than this develop a partial reward that encourages only when the truck get closer to the base
         # if(current_load>1):
-            # partial_reward += math.pow(DIST_PARAMETER - getDistance(truck, base_loc),2)/10000*math.pow(current_load,3)
+        #     partial_reward += math.pow(DIST_PARAMETER - getDistance(truck, base_loc),2)/1000*math.pow(current_load,3)
 
         for i,x in enumerate(action[0]):
             if (x == truck).all():
                 # check for its action
                 my_action = action[1][i]
-                # if is not 0, meaning that if its not loading and unloading dont get any reward
-                if (my_action!=0):
-                    to_break = True
-                    break
-        if (to_break):
-            continue
+
         for reso in resource_loc:            
-            if not isinstance(truck, np.int64):
-                if (reso == truck).all():
+            if not isinstance(truck, np.int64) and truck[1]!=None:
+                if (reso == truck).all() and my_action == 0:
                     if current_load != 3:
-                        load_reward += 3
-                        # pass
-            if not isinstance(truck, np.int64):
-                if current_load != 0 and (truck == base_loc).all():
-                    unload_reward += 20
+                        load_reward += 10
+                if current_load != 0 and (truck == base_loc).all() and my_action == 0:
+                    unload_reward += 20*current_load
+                if  current_load >2 and my_action != None:
+                    before = getDistance(base_loc, truck)
+                    move = getMovement(truck,my_action)
+                    # if (move == None ):
+                    #    break
+                    new_pos = [truck[0]+ move[1], truck[1]+move[0]]
+                    after = getDistance(base_loc, new_pos)
+                    if after<before:
+                        partial_reward += 1
 
     harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)

@@ -7,7 +7,7 @@ from gym import spaces
 import numpy as np
 import yaml
 from game import Game
-from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy, truck_locs
+from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy, truck_locs, getMovement
 
 
 def read_hypers():
@@ -53,7 +53,7 @@ class MyLearner(BaseLearningAgentGym):
         self.nec_obs = None
 
         # define the action mask
-        self.action_mask = np.ones(103,dtype=np.int8)
+        # self.action_mask = np.ones(49,dtype=np.int8)
 
         self.observation_space = spaces.Box(
             low=-2,
@@ -279,7 +279,7 @@ class MyLearner(BaseLearningAgentGym):
             if len(enemies) == 0 or len(enemies) < 0:
                 break
             nearest_enemy_locs.append(nearest_enemy(ally, enemies))
-            
+
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError
@@ -382,8 +382,8 @@ class MyLearner(BaseLearningAgentGym):
         enemy_order = list(map(tuple, enemy_order))
 
         # this has to be returned in this order according to challenge rules
-        # return [locations, movement, enemy_order, train], distances
         return [locations, movement, enemy_order, train]
+
     def step(self, action):
         self.action_mask = np.ones(49,dtype=np.int8)
 
@@ -391,7 +391,6 @@ class MyLearner(BaseLearningAgentGym):
         kill_reward = 0
         martyr_reward = 0
         action = self.take_action(action)
-
         next_state, _, done =  self.game.step(action)
 
         next_state_obs, next_info = self.just_decode_state_(next_state,self.team,self.enemy_team)
@@ -600,7 +599,7 @@ class MyLearner(BaseLearningAgentGym):
         self.nec_obs = next_state
         # return self.decode_state(next_state), reward, done, info
         # return{ "observations":self.decode_state(next_state),"action_mask":self.action_mask}, reward, done, info
-        return {"observations":next_state_obs,"action_mask":self.action_mask}, reward, done, info
+        return{ "observations":next_state_obs,"action_mask":self.action_mask}, reward, done, info
 
     def render(self,):
         return None
