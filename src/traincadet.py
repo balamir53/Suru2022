@@ -66,10 +66,10 @@ def main():
              "observation_filter": "NoFilter",
              "model":{
                     "custom_model": TorchActionMaskModel,
-                    "custom_model_config" : 
-                    {
-                        "fcnet_hiddens": [512, 512, 512, 512],    
-                    }
+                #     "custom_model_config" : 
+                #     {
+                #         "fcnet_hiddens": [512, 512, 512, 512],    
+                #     }
                 }
             }
     config_dqn= {
@@ -90,7 +90,7 @@ def main():
             "config": config,
             "checkpoint_freq": 50,
             # "restore": "models/checkpoint_000150/checkpoint-150",
-            # "restore": "/workspaces/Suru2022/data/inputs/model/checkpoint_001800/checkpoint-1800",
+            # "restore": "/workspaces/Suru2022/data/inputs/model/checkpoint_000050/checkpoint-50",
             # "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400",
             # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },

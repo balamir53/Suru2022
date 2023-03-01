@@ -50,19 +50,19 @@ blue:
     x: 0
     y: 16
   units:
-    - type: Truck
+    - type: HeavyTank
       x: 1
       y: 13
-    - type: Truck
+    - type: LightTank
       x: 1
       y: 14
-    - type: Truck
+    - type: Drone
       x: 2
       y: 17
-    - type: Truck
+    - type: Drone
       x: 2
       y: 16
-    - type: Truck
+    - type: Drone
       x: 2
       y: 15
     - type: Truck

@@ -55,12 +55,12 @@ class MyLearner(BaseLearningAgentGym):
         # define the action mask
         # self.action_mask = np.ones(49,dtype=np.int8)
 
-        self.observation_space = spaces.Box(
-            low=-2,
-            high=401,
-            shape=(24*18*10+4,),
-            dtype=np.int16
-        )
+        # self.observation_space = spaces.Box(
+        #     low=-2,
+        #     high=401,
+        #     shape=(6*4*10+4,),
+        #     dtype=np.int16
+        # )
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5])
         # exclude the last action and manage it in this script, check simpleagent for it
         # self.action_space = self.action_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7])
@@ -244,22 +244,45 @@ class MyLearner(BaseLearningAgentGym):
         return self.just_take_action(action, self.nec_obs, self.team, self.train) 
 
     @staticmethod
-    def unit_types(obs, allies, enemies,  team):
+    def unit_dicts(obs, allies, enemies,  team):
+        changed = 0
+        lists = [[], []]
         ally_units = obs['units'][team]
         enemy_units = obs['units'][(team+1) % 2]
-        return [ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]
+        units_types = [[ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]]
+        unit_locations = [allies, enemies]
+        for index in range(2):
+            for i in range(len(units_types[index])):
+                if units_types[index][i] > 4:
+                    units_types[index][i] = 4
+                    changed += 1
+                unit = {
+                    "tag" : MyLearner.tagToString[units_types[index][i]],
+                    "location" : tuple(unit_locations[index][i])
+                }
+                lists[index].append(unit)
+        return lists[0], lists[1]      
     
     def nearest_enemy_details(allies, enemies):
-        nearest_enemy_detail = []
-        for ally in allies:
-            # if the ally unit is a truck, append none to nearest enemy list since it is not a fire element and continue to new ally unit.
-            if ally["tag"] == "Truck":
-                nearest_enemy_detail.append(None)
+            nearest_enemy_detail = []
+            for ally in allies:
+                # if the ally unit is a truck, append none to nearest enemy list since it is not a fire element and continue to new ally unit.
+                if ally["tag"] == "Truck":
+                    nearest_enemy_detail.append(None)
+                    continue
+                if len(enemies) == 0 or len(enemies) < 0:
+                    break
+                nearest_enemy_detail.append(nearest_enemy_selective(ally, enemies))
+            return nearest_enemy_detail
+    
+    def nearest_enemy_list(nearest_enemy_dict):
+        nearest_enemy_locs = []
+        for n_enemy in nearest_enemy_dict:
+            if n_enemy is None:
+                nearest_enemy_locs.append(np.asarray([3, 0]))
                 continue
-            if len(enemies) == 0 or len(enemies) < 0:
-                break
-            nearest_enemy_detail.append(nearest_enemy_selective(ally, enemies))
-        return nearest_enemy_detail
+            nearest_enemy_locs.append(np.asarray(list(n_enemy["location"])))
+        return nearest_enemy_locs
     
     @staticmethod
     def just_take_action(action, raw_state, team, train):
@@ -277,22 +300,11 @@ class MyLearner(BaseLearningAgentGym):
 
         allies = ally_locs(raw_state, team)
         enemies = enemy_locs(raw_state, team)
-        my_unit_types, enemy_unit_types = MyLearner.unit_types(raw_state, allies, enemies, team)  
-  
-        # nearest_enemy_locs = []
-        # distances = []
-        # for ally in allies:
-        #     if len(enemies) == 0 or len(enemies) < 0:
-        #         break
-        #     nearest_e, distance = nearest_enemy(ally, enemies)    
-        #     nearest_enemy_locs.append(nearest_e)
-        #     distances.append(distance)
-        nearest_enemy_locs = []
-        for ally in allies:
-            if len(enemies) == 0 or len(enemies) < 0:
-                break
-            nearest_enemy_locs.append(nearest_enemy(ally, enemies))
-
+        my_unit_dict, enemy_unit_dict = MyLearner.unit_dicts(raw_state, allies, enemies, team)  
+              
+        nearest_enemy_dict = MyLearner.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
+        nearest_enemy_locs = MyLearner.nearest_enemy_list(nearest_enemy_dict)
+                
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError
@@ -493,6 +505,7 @@ class MyLearner(BaseLearningAgentGym):
         enemy_units_in_next_state = next_info[3]
         #it is required to calcaulate the new enemy order created after the game stepped on.
         next_enemy_order_details = MyLearner.nearest_enemy_details(units_in_next_state, enemy_units_in_next_state)
+        
         base = next_info[5]
         # trucks_loc = truck_locs(next_state,self.team)
 
@@ -502,8 +515,10 @@ class MyLearner(BaseLearningAgentGym):
             if (i>6):
                 break
             #check whether the unit is a fire element or not.
-            if(unit['tag']!='Truck'):
+            if(unit['tag']!='Truck') and len(enemy_units_in_next_state) != 0:
                 # this line is not required since if unit tag is truck it wont enter the if but just in case.
+                if i > len(next_enemy_order_details):
+                    continue
                 if next_enemy_order_details[i] is None:
                     continue
                 #if the unit is LightTank or HeavyTank and the distance to selected enemy is under 4, mask movement to 0.
