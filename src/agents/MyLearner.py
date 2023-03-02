@@ -38,8 +38,8 @@ class MyLearner(BaseLearningAgentGym):
         # self.manipulateMap(self.game.config)
         self.mapChangeFrequency = 1000
         # original map size
-        self.gameAreaX = 12
-        self.gameAreaY = 8
+        self.gameAreaX = 6
+        self.gameAreaY = 4
         self.train = 0
 
         self.team = team
@@ -118,8 +118,8 @@ class MyLearner(BaseLearningAgentGym):
         xOffSet = 0
         yOffSet = 0
         # change the base and units' first positions on some frequency
-        if(episode%self.mapChangeFrequency==0):
-        # if(False):
+        # if(episode%self.mapChangeFrequency==0):
+        if(False):
             # print(episode)
             self.resetPosition(mapDict)
             xOffSet = random.randint(0,self.width-self.gameAreaX)
@@ -164,7 +164,7 @@ class MyLearner(BaseLearningAgentGym):
         # print(self.episodes)
 
         # change it on every episode
-        # self.manipulateMap(self.game.config, self.episodes)
+        self.manipulateMap(self.game.config, self.episodes)
         state = self.game.reset()
         self.nec_obs = state
         return self.observation_space.sample()
@@ -244,6 +244,47 @@ class MyLearner(BaseLearningAgentGym):
         return self.just_take_action(action, self.nec_obs, self.team, self.train) 
 
     @staticmethod
+    def unit_dicts(obs, allies, enemies,  team):
+        changed = 0
+        lists = [[], []]
+        ally_units = obs['units'][team]
+        enemy_units = obs['units'][(team+1) % 2]
+        units_types = [[ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]]
+        unit_locations = [allies, enemies]
+        for index in range(2):
+            for i in range(len(units_types[index])):
+                if units_types[index][i] > 4:
+                    units_types[index][i] = 4
+                    changed += 1
+                unit = {
+                    "tag" : MyLearner.tagToString[units_types[index][i]],
+                    "location" : tuple(unit_locations[index][i])
+                }
+                lists[index].append(unit)
+        return lists[0], lists[1]      
+    
+    def nearest_enemy_details(allies, enemies):
+            nearest_enemy_detail = []
+            for ally in allies:
+                # if the ally unit is a truck, append none to nearest enemy list since it is not a fire element and continue to new ally unit.
+                if ally["tag"] == "Truck":
+                    nearest_enemy_detail.append(None)
+                    continue
+                if len(enemies) == 0 or len(enemies) < 0:
+                    break
+                nearest_enemy_detail.append(nearest_enemy_selective(ally, enemies))
+            return nearest_enemy_detail
+    
+    def nearest_enemy_list(nearest_enemy_dict):
+        nearest_enemy_locs = []
+        for n_enemy in nearest_enemy_dict:
+            if n_enemy is None:
+                nearest_enemy_locs.append(np.asarray([3, 0]))
+                continue
+            nearest_enemy_locs.append(np.asarray(list(n_enemy["location"])))
+        return nearest_enemy_locs
+    
+    @staticmethod
     def just_take_action(action, raw_state, team, train):
         # this function takes the output of the model
         # and converts it into a reasonable output for
@@ -259,13 +300,11 @@ class MyLearner(BaseLearningAgentGym):
 
         allies = ally_locs(raw_state, team)
         enemies = enemy_locs(raw_state, team)
-
-        nearest_enemy_locs = []
-        for ally in allies:
-            if len(enemies) == 0 or len(enemies) < 0:
-                break
-            nearest_enemy_locs.append(nearest_enemy(ally, enemies))
-
+        my_unit_dict, enemy_unit_dict = MyLearner.unit_dicts(raw_state, allies, enemies, team)  
+              
+        nearest_enemy_dict = MyLearner.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
+        nearest_enemy_locs = MyLearner.nearest_enemy_list(nearest_enemy_dict)
+                
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError
@@ -337,7 +376,10 @@ class MyLearner(BaseLearningAgentGym):
                 enemy_order = [[3, 0] for i in range(ally_count)]
             else:
                 enemy_order = copy.copy(nearest_enemy_locs)
-
+            
+            ##added by luchy:due to creating nearest enemy locs for each ally, if number of allies are over 7, only 7 targets must be defined.
+            enemy_order = enemy_order[:7]
+            
             while len(locations) > 7:
                 locations = list(locations)[:7]
 
@@ -379,10 +421,10 @@ class MyLearner(BaseLearningAgentGym):
         next_state_obs, next_info = self.just_decode_state_(next_state,self.team,self.enemy_team)
         # next_state_obs = self.decode_state(next_state)
 
-        # check this reward function
-        # self.nec_obs is the old observation
-        # and we apply reward to it
-        # different from action mask which is applied on the next observation we get from the game
+        # ##added by luchy:for following counter required
+        #         _, info = MyLearner.just_decode_state_(self.nec_obs, self.team, self.enemy_team)
+        #         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
+        
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team, action)
         if enemy_count < self.previous_enemy_count:
             kill_reward = (self.previous_enemy_count - enemy_count) * 5
@@ -460,6 +502,10 @@ class MyLearner(BaseLearningAgentGym):
         # mask actions other than load or unload (0) if the truck is on a resource or the base
         resource_loc = np.argwhere(next_state['resources'] == 1)
         units_in_next_state = next_info[2]
+        enemy_units_in_next_state = next_info[3]
+        #it is required to calcaulate the new enemy order created after the game stepped on.
+        next_enemy_order_details = MyLearner.nearest_enemy_details(units_in_next_state, enemy_units_in_next_state)
+        
         base = next_info[5]
         # trucks_loc = truck_locs(next_state,self.team)
 
@@ -468,7 +514,23 @@ class MyLearner(BaseLearningAgentGym):
         for i,unit in enumerate(units_in_next_state):
             if (i>6):
                 break
-            if(unit['tag']!='Truck'):
+            #check whether the unit is a fire element or not.
+            if(unit['tag']!='Truck') and len(enemy_units_in_next_state) != 0:
+                # this line is not required since if unit tag is truck it wont enter the if but just in case.
+                if i > len(next_enemy_order_details):
+                    continue
+                if next_enemy_order_details[i] is None:
+                    continue
+                #if the unit is LightTank or HeavyTank and the distance to selected enemy is under 4, mask movement to 0.
+                if (unit['tag']=='LightTank' or unit['tag']=='HeavyTank') and getDistance(unit["location"], next_enemy_order_details[i]["location"]) < 4:
+                        self.action_mask[i*7]=1
+                        # mask actions other than 0
+                        self.action_mask[i*7+1:i*7+7]=0
+                #if the unit is Drone and the distance to selected enemy is under 2, mask movement to 0.
+                elif unit['tag']=='Drone' and getDistance(unit["location"], next_enemy_order_details[i]["location"]) < 2:
+                        self.action_mask[i*7]=1
+                        # mask actions other than 0
+                        self.action_mask[i*7+1:i*7+7]=0
                 continue
             # check first if its loaded and on the base
             if (unit['location']==base) and unit['load']>0:
@@ -478,6 +540,27 @@ class MyLearner(BaseLearningAgentGym):
                 self.action_mask[i*7+1:i*7+7]=0
                 continue
             if (unit['load']>2):
+                # unit["location"] returns (y,x). on (map_y=16,map_x=24) (0,0) means upper left, (0,24) means upper right,
+                # (16,0) means bottom left, (16,24) means bottom right. base[1] means x coor of the base.
+                # if truck has more than 2 as load, it must return to base. 
+                # if base on the left, truck is on the right(base[1] < unit["location"][1]), mask 3,4 th positions.
+                # vice versa(base[1] > unit["location"][1]), mask 1,6 th positions. and mask no movement if not on base no matter where.
+                # if base and unit is aligned on x axis, mask actions other than up and down movement accordingly.
+                # if base[1] < unit["location"][1]:
+                #     self.action_mask[i*7:i*7+7]=1
+                #     self.action_mask[i*7+3] = 0
+                #     self.action_mask[i*7+4] = 0
+                # elif base[1] > unit["location"][1]:
+                #     self.action_mask[i*7:i*7+7]=1
+                #     self.action_mask[i*7+1] = 0
+                #     self.action_mask[i*7+6] = 0
+                # elif base[1] == unit["location"][1] and unit["location"][0] >  base[1]:
+                #     self.action_mask[i*7:i*7+7]=0
+                #     self.action_mask[i*7+2] = 1
+                # elif base[1] == unit["location"][1] and unit["location"][0] <  base[1]:
+                #     self.action_mask[i*7:i*7+7]=0
+                #     self.action_mask[i*7+5] = 1
+                # self.action_mask[i*7] = 0
                 continue
             for reso in resource_loc:            
                 # if there is resource on the next location of the truck
@@ -486,7 +569,25 @@ class MyLearner(BaseLearningAgentGym):
                         self.action_mask[i*7]=1
                         # mask actions other than 0
                         self.action_mask[i*7+1:i*7+7]=0
-
+            # if unit is on self.y_max th position it cannot go down anymore
+            if unit['location'][0] == (self.configs['map']['y']-1) :
+                self.action_mask[i*7+4] = 0
+                self.action_mask[i*7+5] = 0
+                self.action_mask[i*7+6] = 0
+            # if unit is on 0th y position, it cannot go up anymore
+            elif unit['location'][0] == 0 :
+                self.action_mask[i*7+1] = 0
+                self.action_mask[i*7+2] = 0
+                self.action_mask[i*7+3] = 0
+            # if unit is on self.x_max th position it cannot right anymore
+            if unit['location'][1] == (self.configs['map']['x']-1) :
+                self.action_mask[i*7+3] = 0
+                self.action_mask[i*7+4] = 0
+            # if unit is on 0th x position it cannot left anymore
+            elif unit['location'][1] == 0 :
+                self.action_mask[i*7+1] = 0
+                self.action_mask[i*7+6] = 0
+                
         number_of_our_military = number_of_tanks+number_of_enemy_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
 
