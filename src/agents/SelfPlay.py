@@ -69,7 +69,7 @@ class SelfPlay:
         #      "observation_filter": "NoFilter"}
         config= {"use_critic": True,
             "log_level": "WARN",
-             "num_workers": 12,
+             "num_workers": 0,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
@@ -102,7 +102,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000300/checkpoint-300")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000950/checkpoint-950")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
@@ -254,12 +254,18 @@ class SelfPlay:
         number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
 
         for x in self.my_units:
-            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+            if x["tag"] == "HeavyTank": 
                 number_of_tanks+=1
+                counter["HeavyTank"] +=1
+            elif x["tag"] == "LightTank":
+                number_of_tanks+=1
+                counter["LightTank"] +=1
             elif x["tag"] == "Drone":
                 number_of_uavs+=1
+                counter["Drone"] +=1
             elif x["tag"] == "Truck":
                 number_of_trucks+=1
+                counter["Truck"] +=1
         for x in self.enemy_units:
             if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
                 number_of_enemy_tanks+=1
@@ -268,7 +274,7 @@ class SelfPlay:
             elif x["tag"] == "Truck":
                 number_of_enemy_trucks+=1
         
-        number_of_our_military = number_of_tanks+number_of_enemy_uavs
+        number_of_our_military = number_of_tanks+number_of_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
         
         if raw_state["score"][self.team]>raw_state["score"][self.enemy_team]+2:
