@@ -245,19 +245,21 @@ class MyLearner(BaseLearningAgentGym):
 
     @staticmethod
     def unit_dicts(obs, allies, enemies,  team):
-        changed = 0
+        """This method creates unit dicts to be used in nearest enemy locs."""
+        #from the state(obs), following base and dead parameters comes as they are part of a unit. Resources are added just in case.
+        unitTagToString = {1: "Truck",2: "LightTank",3: "HeavyTank",4: "Drone",6: "Base",8: "Dead",9: "Resource"}
         lists = [[], []]
         ally_units = obs['units'][team]
         enemy_units = obs['units'][(team+1) % 2]
+        #creates a list consisting unit types of both sides.
         units_types = [[ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]]
+        #creates a list consisting unit locations of both sides.
         unit_locations = [allies, enemies]
+        #creates a dict for each side consisting unit type tags and unit locations.
         for index in range(2):
             for i in range(len(units_types[index])):
-                if units_types[index][i] > 4:
-                    units_types[index][i] = 4
-                    changed += 1
                 unit = {
-                    "tag" : MyLearner.tagToString[units_types[index][i]],
+                    "tag" : unitTagToString[units_types[index][i]],
                     "location" : tuple(unit_locations[index][i])
                 }
                 lists[index].append(unit)
@@ -421,9 +423,9 @@ class MyLearner(BaseLearningAgentGym):
         next_state_obs, next_info = self.just_decode_state_(next_state,self.team,self.enemy_team)
         # next_state_obs = self.decode_state(next_state)
 
-        # ##added by luchy:for following counter required
-        #         _, info = MyLearner.just_decode_state_(self.nec_obs, self.team, self.enemy_team)
-        #         self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
+        ##added by luchy:for following counter required
+        _, info = MyLearner.just_decode_state_(self.nec_obs, self.team, self.enemy_team)
+        self.x_max, self.y_max, self.my_units, self.enemy_units, self.resources, self.my_base, self.enemy_base = info
         
         harvest_reward, enemy_count, ally_count = multi_reward_shape(self.nec_obs, self.team, action)
         if enemy_count < self.previous_enemy_count:
@@ -588,7 +590,7 @@ class MyLearner(BaseLearningAgentGym):
                 self.action_mask[i*7+1] = 0
                 self.action_mask[i*7+6] = 0
                 
-        number_of_our_military = number_of_tanks+number_of_enemy_uavs
+        number_of_our_military = number_of_tanks+number_of_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
 
         # early_termination = True
