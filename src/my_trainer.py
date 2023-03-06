@@ -3,9 +3,7 @@ import ray
 import os
 from ray.tune import run_experiments, register_env
 # from agents.GolKenari import GolKenari
-from agents.RiskyValley import RiskyValley
-from agents.TruckMini import TruckMini
-from agents.MyLearner import MyLearner
+from agents.IndependentLearner import IndependentLearner
 
 from models.action_mask_model import TorchActionMaskModel
 
@@ -34,11 +32,8 @@ args = parser.parse_args()
 agents = [None, args.agentRed]
 
 def main():
-    # ray.init(num_gpus=1, log_to_driver=True)
     ray.init()
-    register_env("ray", lambda config: MyLearner(args, agents))
-    # register_env("ray", lambda config: TruckMini(args, agents))
-    # register_env("ray", lambda config: RiskyValley(args, agents))
+    register_env("ray", lambda config: IndependentLearner(args, agents))
     config= {
             "use_critic": True,
             "log_level": "WARN",
@@ -68,14 +63,7 @@ def main():
                     "custom_model": TorchActionMaskModel
                 }
             }
-    config_dqn= {
-            "log_level": "WARN",
-             "num_workers": 10,
-            
-            #  "model":{
-            #         "custom_model": TorchActionMaskModel
-            #     }
-            }
+    
     run_experiments({
         "risky_ppo_recruit": {
             "run": "PPO",
@@ -85,10 +73,7 @@ def main():
             },
             "config": config,
             "checkpoint_freq": 50,
-            # "restore": "models/checkpoint_005100/checkpoint-5100",
-            # "restore": "data/inputs/model/truckmini/checkpoint_000850/checkpoint-850",
-            # "restore": "data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400",
-            # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
+                # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },
      },resume=True)
     # })

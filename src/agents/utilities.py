@@ -22,8 +22,8 @@ stringToTag = {
 movement_grid = [[(0, 0), (-1, 0), (0, -1), (1, 0), (1, 1), (0, 1), (-1, 1)],
 [(0, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 1), (-1, 0)]]
 
-DIST_PARAMETER = 8 # for 6*4 map
-# DIST_PARAMETER = 30 # for 24*18 map
+# DIST_PARAMETER = 8 # for 6*4 map
+DIST_PARAMETER = 24 # for 24*18 map
 
 def getMovement(unit_position, action):
     try:
@@ -140,7 +140,69 @@ def nearest_enemy(allied_unit_loc, enemy_locs):
         distances.append(getDistance(allied_unit_loc, enemy))
     nearest_enemy_loc = np.argmin(distances)
 
-    return enemy_locs[nearest_enemy_loc], distances[nearest_enemy_loc]
+    return enemy_locs[nearest_enemy_loc]
+
+def nearest_enemy_selective(allied_unit, enemies):
+    distances = []
+    #get all enemy types.
+    enemy_types = [enemy["tag"] for enemy in enemies]
+    #get distances of all enemies according to ally unit.
+    for enemy in enemies:
+        distances.append(getDistance(allied_unit["location"], enemy["location"]))
+    #define a high dummy distance to be able to compare. 
+    temp = 1000
+    selected_enemy = None
+    for i in range(len(enemies)):
+        #check if ally unit is heavyTank or not. if the enemy being compared is drone, since HeavyTruck cannot fire to Drone just continue. 
+        if allied_unit["tag"] == "HeavyTank" and enemy_types[i] == "Drone":
+            continue
+        #if ally distance to enemy unit is less than temp, set new temp as distance between them and selected enemy accordingly.
+        if distances[i] < temp:
+            temp = distances[i]
+            selected_enemy = enemies[i]
+        #if distance is same with temp, consider new enemy as a better target. if so set it as new selected enemy. 
+        elif distances[i] == temp:
+            if (allied_unit["tag"] == "HeavyTank"):
+                if (enemies[i]["tag"] == "HeavyTank"):
+                    #if allied unit is heavytank and the new enemy with same distance is heavy tank, check selected enemy. if it is one of the following, update it with a better enemy.
+                        if(selected_enemy["tag"] == "LightTank" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                        if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+            
+            elif (allied_unit["tag"] == "LightTank"):
+                if (enemies[i]["tag"] == "HeavyTank"):
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Drone" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                        #prioritize enemy LightTank over Drone if allied unit is LightTank
+                        if(selected_enemy["tag"] == "Drone" or selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "Drone"):
+                    if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+            # allied unit type is drone.
+            else:
+                if (enemies[i]["tag"] == "HeavyTank"):
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Drone" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "Drone"):
+                        #prioritize enemy Drone over LightTank if allied unit is Drone
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                    if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+    return selected_enemy
+
+# def nearest_enemy(allied_unit_loc, enemy_locs):
+#     distances = []
+#     for enemy in enemy_locs:
+#         distances.append(getDistance(allied_unit_loc, enemy))
+#     nearest_enemy_loc = np.argmin(distances)
+
+#     return enemy_locs[nearest_enemy_loc], distances[nearest_enemy_loc]
 
 def multi_forced_anchor(movement, obs, team): # birden fazla truck için
     # we have excluded this function
@@ -311,7 +373,7 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
         for reso in resource_loc:            
             if not isinstance(truck, np.int64) and truck[1]!=None:
                 if (reso == truck).all() and my_action == 0:
-                    if current_load != 3:
+                    if current_load < 3:
                         load_reward += 1
                 if current_load != 0 and (truck == base_loc).all() and my_action == 0:
                     unload_reward += 1*current_load
