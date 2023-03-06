@@ -70,7 +70,8 @@ class MyLearner(BaseLearningAgentGym):
             "observations": spaces.Box(
             low=-2,
             high=401,
-            shape=(24*18*10+4,),
+            # shape=(24*18*10+4,),
+            shape=(24*18*7+276,),
             # shape=(6*4*10+4,),
             dtype=np.int16
         ),
@@ -184,6 +185,7 @@ class MyLearner(BaseLearningAgentGym):
         my_units = []
         enemy_units = []
         resources = []
+        list_terrain_ = []
         for i in range(y_max):
             for j in range(x_max):
                 if units[team][i][j]<6 and units[team][i][j] != 0:
@@ -212,6 +214,8 @@ class MyLearner(BaseLearningAgentGym):
                     my_base = (i,j)
                 if bases[enemy_team][i][j]:
                     enemy_base = (i,j)
+                if terrain[i][j] >= 1:
+                    list_terrain_.append((i,j))
         
         # print(my_units)
         unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
@@ -220,9 +224,10 @@ class MyLearner(BaseLearningAgentGym):
         ress = [*res.reshape(-1).tolist()]
         loads = [*load[0].reshape(-1).tolist(), *load[1].reshape(-1).tolist()]
         terr = [*terrain.reshape(-1).tolist()]
-        
-        state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
-
+        list_base = [*np.array(my_base).reshape(-1).tolist(), *np.array(enemy_base).reshape(-1).tolist()]
+        list_terrain = [*np.array(list_terrain_).reshape(-1).tolist()]
+        # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
+        state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *list_base, *ress, *loads, *list_terrain)
         return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
 
     @staticmethod

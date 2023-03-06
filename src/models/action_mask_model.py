@@ -73,7 +73,7 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
             num_outputs,
             model_config,
             name,
-            **kwargs,
+            **customized_model_kwargs,
     ):
         orig_space = getattr(obs_space, "original_space", obs_space)
         assert isinstance(orig_space, Dict) and \
@@ -81,7 +81,7 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
                "observations" in orig_space.spaces
 
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs,
-                              model_config, name, **kwargs)
+                              model_config, name, **customized_model_kwargs)
         nn.Module.__init__(self)
 
         self.internal_model = TorchFC(orig_space["observations"], action_space,
