@@ -38,6 +38,15 @@
            "console": "integratedTerminal",
            "justMyCode": false,
            "args": ["RiskyValley","RandomAgent"]
-      }
+      },
+      {
+        "name": "myTrain",
+        "type": "python",
+        "request": "launch",
+        "program": "src/my_trainer.py",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "args": ["RiskyValley","RandomAgent"]
+   }
     ]
 }
