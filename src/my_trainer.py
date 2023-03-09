@@ -38,24 +38,29 @@ args = parser.parse_args()
 def main():
     ray.init()
     
-    obs_space = spaces.Box(
-            low=-2,
-            high=401,
-            shape=(2,24*18*10+4),
-            dtype=np.int16
-        )
-    act_space = spaces.Discrete(7)
+    # obs_space = spaces.Box(
+    #         low=-2,
+    #         high=401,
+    #         shape=(6,24*18*10+4),
+    #         dtype=np.int16
+    #     )
+    # act_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7])
+
     truck_agents = {"truck{}".format(i) for i in range(6)}
 
     # grouped_env = env.with_agent_groups({
     #         "group1" : ['truck0', 'truck1', 'truck2']
     #     })
+
     # def policy_mapping_fn(agent_id, episode, worker, **kwargs):
     #     return "truck"+agent_id
+
     def env_creator(argo):
-        return IndependentLearner(args, truck_agents).with_agent_groups({
-             "group1" : ['truck0', 'truck1', 'truck2','truck3', 'truck4', 'truck5']
-        }, obs_space=obs_space, act_space=act_space)
+        # return IndependentLearner(args, truck_agents).with_agent_groups({
+        #      "group1" : ['truck0', 'truck1', 'truck2','truck3', 'truck4', 'truck5']
+        #     #  'group2' : ['light_tank0','light_tank1']
+        # }, obs_space=obs_space, act_space=act_space)
+        return IndependentLearner(args, truck_agents)
 
     env = env_creator({})
 
@@ -99,7 +104,8 @@ def main():
             #         "custom_model": TorchActionMaskModel
             #     },
             "multiagent": {
-                "policies":set(env.env.agents),
+                # "policies":set(env.env.agents), # first env is the group agent, seconde one independent agent
+                "policies": {"truck"},
                 # {
                 #     "truck" : PolicySpec(policy_class=None,
                 #                          observation_space=None,
@@ -116,7 +122,10 @@ def main():
                 # first try to create a grouped policy for seven trucks
                 # we will then add other type of agents 
                 "policy_mapping_fn": (
-                    lambda agent_id, episode, **kwargs: 'truck'+str(agent_id)),
+                    # lambda agent_id, episode, **kwargs: 'truck'+str(agent_id)),
+                    # lambda agent_id, episode, **kwargs: agent_id),
+                    lambda agent_id, episode, **kwargs: 'truck'),
+                    
             }
             }
     
