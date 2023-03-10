@@ -28,7 +28,7 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["RiskyValley","SelfPlay","RandomAgent", "--numOfMatch", "1", "--gif"]
+            "args": ["RiskyValley","SelfPlay","RandomAgent", "--numOfMatch","1","--gif"]
        },
        {
            "name": "train",
@@ -38,6 +38,15 @@
            "console": "integratedTerminal",
            "justMyCode": false,
            "args": ["RiskyValley","RandomAgent"]
+      },
+      {
+        "name": "myTrain",
+        "type": "python",
+        "request": "launch",
+        "program": "src/my_trainer.py",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "args": ["RiskyValley","RandomAgent"]
       }
     ]
 }

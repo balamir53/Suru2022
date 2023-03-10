@@ -22,7 +22,7 @@ blue:
     - type: Truck
       x: 1
       y: 0
-    - type: LightTank
+    - type: Truck
       x: 2
       y: 0
 resources:
