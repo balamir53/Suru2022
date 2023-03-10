@@ -71,7 +71,7 @@ class MyLearner(BaseLearningAgentGym):
             low=-2,
             high=401,
             # shape=(24*18*10+4,),
-            shape=(24*18*7+276,),
+            shape=(24*18*5+276,),
             # shape=(6*4*10+4,),
             dtype=np.int16
         ),
@@ -227,7 +227,7 @@ class MyLearner(BaseLearningAgentGym):
         list_base = [*np.array(my_base).reshape(-1).tolist(), *np.array(enemy_base).reshape(-1).tolist()]
         list_terrain = [*np.array(list_terrain_).reshape(-1).tolist()]
         # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
-        state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *list_base, *ress, *loads, *list_terrain)
+        state = (*score.tolist(), turn, max_turn, *unitss, *list_base, *ress, *loads, *list_terrain)
         return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
 
     @staticmethod

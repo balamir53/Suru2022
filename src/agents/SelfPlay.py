@@ -36,7 +36,7 @@ class PatchedPPOTrainer(ray.rllib.agents.ppo.PPOTrainer):
 class SelfPlay:
     def __init__(self, team, action_lenght):
         # args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
-        args = Namespace(map="RiskyValleyNoTerrain", render=False, gif=False, img=False)
+        args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
         agents = [None, "RandomAgent"]
 
         self.team = 0
@@ -69,7 +69,7 @@ class SelfPlay:
         #      "observation_filter": "NoFilter"}
         config= {"use_critic": True,
             "log_level": "WARN",
-             "num_workers": 0,
+             "num_workers": 13,
              "use_gae": True,
              "lambda": 1.0,
              "kl_coeff": 0.2,
@@ -102,7 +102,7 @@ class SelfPlay:
         # ppo_agent.restore(checkpoint_path="data/inputs/model/checkpoint_002600/checkpoint-2600") # Modelin Bulunduğu yeri girmeyi unutmayın!
         # ppo_agent.restore(checkpoint_path="data/inputs/model/truckmini/checkpoint_000850/checkpoint-850")
         # ppo_agent.restore(checkpoint_path="data/inputs/model/riskyvalley/minimixed/checkpoint_002400/checkpoint-2400")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000950/checkpoint-950")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001550/checkpoint-1550")
         # ppo_agent.restore(checkpoint_path="models/checkpoint_000005/checkpoint-5") # Modelin Bulunduğu yeri girmeyi unutmayın!
         self.policy = ppo_agent.get_policy()
 
