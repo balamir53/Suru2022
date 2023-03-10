@@ -20,7 +20,13 @@ class IndependentLearner(MultiAgentEnv):
         # agents will be created at the start
         # but we have to figure out a way killing them and spawning new ones
         self.agents = agents
-        
+        self.tagToString = {
+            1: "Truck",
+            2: "LightTank",
+            3: "HeavyTank",
+            4: "Drone",
+        }
+
         # agent ids are created and handed over via training script?
         # self.agentID = 0
         
@@ -47,7 +53,7 @@ class IndependentLearner(MultiAgentEnv):
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(24*18*10+4,),
+            shape=(685,),
             dtype=np.int16
         )
         self.action_space = spaces.Discrete(7)
@@ -60,12 +66,7 @@ class IndependentLearner(MultiAgentEnv):
         # check this
         self.observation_spaces = {}
         for x in self.agents:
-            self.observation_spaces[x] = spaces.Box(
-            low=-2,
-            high=401,
-            shape=(24*18*10+4,),
-            dtype=np.int16
-        )
+            self.observation_spaces[x] = self.observation_space
         # self.observation_space = spaces.Box(
         #     low=-2,
         #     high=401,
@@ -87,7 +88,7 @@ class IndependentLearner(MultiAgentEnv):
         # this is defined action space for just one agent
         self.action_spaces = {}
         for x in self.agents:
-            self.action_spaces[x] = spaces.Discrete(7)
+            self.action_spaces[x] = self.action_space
         # self.action_space = spaces.Discrete(7)
 
         # no idea what this is for, keep it for now
@@ -160,15 +161,106 @@ class IndependentLearner(MultiAgentEnv):
             obs_samples[x] = self.observation_spaces[x].sample()
         # return self.observation_space.sample()
         return obs_samples
-    
+    def _decode_state(self, obs):
+        turn = obs['turn']
+        max_turn = obs['max_turn'] 
+        units = obs['units']
+        hps = obs['hps']
+        bases = obs['bases']
+        score = obs['score']
+        res = obs['resources']
+        load = obs['loads']
+        terrain = obs["terrain"]
+        y_max, x_max = res.shape
+        my_units = []
+        enemy_units = []
+        resources = []
+        for i in range(y_max):
+            for j in range(x_max):
+                if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
+                    my_units.append(
+                    {   
+                        'unit': units[self.team][i][j],
+                        'tag': self.tagToString[units[self.team][i][j]],
+                        'hp': hps[self.team][i][j],
+                        'location': (i,j),
+                        'load': load[self.team][i][j]
+                    }
+                    )
+                if units[self.enemy_team][i][j]<6 and units[self.enemy_team][i][j] != 0:
+                    enemy_units.append(
+                    {   
+                        'unit': units[self.enemy_team][i][j],
+                        'tag': self.tagToString[units[self.enemy_team][i][j]],
+                        'hp': hps[self.enemy_team][i][j],
+                        'location': (i,j),
+                        'load': load[self.enemy_team][i][j]
+                    }
+                    )
+                if res[i][j]==1:
+                    resources.append((i,j))
+                if bases[self.team][i][j]:
+                    my_base = (i,j)
+                if bases[self.enemy_team][i][j]:
+                    enemy_base = (i,j)
+        
+        # print(my_units)
+        unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
+        hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
+        basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
+        ress = [*res.reshape(-1).tolist()]
+        loads = [*load[0].reshape(-1).tolist(), *load[1].reshape(-1).tolist()]
+        terr = [*terrain.reshape(-1).tolist()]
+        
+        state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
+        '''
+        state actually turns here into observation space for the model 
+        we will decrease it for the truck agent
+        current model:
+        scores(2) [model doesnt get any reward for these] -not needed
+        turn (1) [no model effect] -not needed (we can apply neg rew for delays)
+        max_turn (1) [no model effect]
+        unitss (map size * 2) - needed, but it can be reshaped as the agent coordinates and relative distance to others?
+        hpss (map size * 2)  - not needed for the initial model
+        basess (map size * 2) - size too much, can be modeled as coordinates?
+        ress (map size) - needed, but it can be reshaped as coordinates as well?
+        loads (map size * 2) - we don't need all the loads, can keep only agent truck load?
+        terr (map size) - needed
+        TOTAL: 4324
+        '''
+        '''
+        ********** new model shape *********
+        agents coordinate (2)
+        its load (1)
+        other units and  our base relative distance vectors ( 2 * (#our base + all units-1) + type) (3) 
+            !! use padding for max units size like 50 (fixed to 50 * 3 = 150)
+        relative distances to closest (say 50) resources (2 * resources) (100)
+        terrain (map size) ? how to manage this ? cant go into water, but we dont apply any neg rew? should we?
+            !! we can keep 7x7 grid for the agent staying in the center
+        TOTAL: 302
+        [has to be calculated per agent, all agents observations will be then handed to the model as separate obs]
+        [we need also calculate reward per agent]
+        '''
+        return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
     def step(self, action_dict):
         # wait a little bit
         # self.action_mask = np.ones(49,dtype=np.int8)
+
+        harvest_reward, kill_reward, martyr_reward = 0
 
         # self.env.step(action[self.env.agent_selection])
 
         # we are expectin an action dictionary of agents
         action = np.array([x for x in action_dict.values()])
+
+        # here we will convert the action space
+        # into the game inputs as location, movement, target and train
+        # game step returns next_state,reward,done
+
+        movement = action.tolist()
+
+        enemy_order = []
+
         obs_d = {}
         rew_d = {}
         done_d = {}
