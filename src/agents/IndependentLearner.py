@@ -98,6 +98,12 @@ class IndependentLearner(MultiAgentEnv):
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
 
+        self.agents_positions = []
+        # get the initial positions of agents
+        # should we apply the same logic as in decode state?
+        for i in range(len(self.agents)):
+            self.agents_positions.append((self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x']))
+
     # is this even called?
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
@@ -242,11 +248,14 @@ class IndependentLearner(MultiAgentEnv):
         [we need also calculate reward per agent]
         '''
         return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
+    
+    def apply_action(action):
+        pass
     def step(self, action_dict):
         # wait a little bit
         # self.action_mask = np.ones(49,dtype=np.int8)
 
-        harvest_reward, kill_reward, martyr_reward = 0
+        harvest_reward, kill_reward, martyr_reward = 0, 0, 0
 
         # self.env.step(action[self.env.agent_selection])
 
