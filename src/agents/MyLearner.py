@@ -588,7 +588,7 @@ class MyLearner(BaseLearningAgentGym):
                 self.action_mask[i*7+1] = 0
                 self.action_mask[i*7+6] = 0
                 
-        number_of_our_military = number_of_tanks+number_of_enemy_uavs
+        number_of_our_military = number_of_tanks+number_of_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
 
         # early_termination = True

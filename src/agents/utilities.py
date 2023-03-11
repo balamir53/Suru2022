@@ -153,6 +153,9 @@ def nearest_enemy_selective(allied_unit, enemies):
     temp = 1000
     selected_enemy = None
     for i in range(len(enemies)):
+        #check for unshootable enemy type.
+        if enemy_types[i] == "Base" or enemy_types[i] == "Dead" or enemy_types[i] == "Resource":
+            continue
         #check if ally unit is heavyTank or not. if the enemy being compared is drone, since HeavyTruck cannot fire to Drone just continue. 
         if allied_unit["tag"] == "HeavyTank" and enemy_types[i] == "Drone":
             continue
