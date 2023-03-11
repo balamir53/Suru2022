@@ -14,11 +14,11 @@ def read_hypers():
     with open(f"/workspaces/Suru2022/data/config/RiskyValley.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
-
+UNITS_PADDING = 50*3
+RESOURCE_PADDING = 50*2
 class IndependentLearner(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
         
-
         # our method resembles the multiagent example in petting zoo
         # agents will be created at the start
         # but we have to figure out a way killing them and spawning new ones
@@ -30,6 +30,23 @@ class IndependentLearner(MultiAgentEnv):
             4: "Drone",
         }
 
+        # keep it simple for now
+        # self.unit_type = {
+        #     'base': 0,
+        #     'my_truck': 1,
+        #     'my_ltank': 2,
+        #     'my_htank': 3,
+        #     'my_drone': 4,
+        #     'en_truck': 5,
+        #     'en_ltank': 6,
+        #     'en_htank': 7,
+        #     'en_drone': 8
+        # }
+        self.unit_type = {
+            'base': 1,
+            'friend': 2,
+            'foe': 3
+        }
         # agent ids are created and handed over via training script?
         # self.agentID = 0
         
@@ -95,6 +112,8 @@ class IndependentLearner(MultiAgentEnv):
             self.action_spaces[x] = self.action_space
         # self.action_space = spaces.Discrete(7)
 
+        self.obs_dict = []
+
         # no idea what this is for, keep it for now
         self.resetted = False
 
@@ -107,7 +126,7 @@ class IndependentLearner(MultiAgentEnv):
         # should we apply the same logic as in decode state?
         for i in range(len(self.agents)):
             self.agents_positions.append((self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x']))
-
+        self.my_base = (self.configs['blue']['base']['y'],self.configs['blue']['base']['x'])
     # is this even called?
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
@@ -214,6 +233,11 @@ class IndependentLearner(MultiAgentEnv):
                 if bases[self.enemy_team][i][j]:
                     enemy_base = (i,j)
         
+        # elaborate
+        if self.train > 0:
+            self.agents.append()
+            self.agents_positions()
+
         # update here self.agents and self.agents_positions
         # how to check which agent at which position has been killed?
         # print(my_units)
@@ -223,13 +247,94 @@ class IndependentLearner(MultiAgentEnv):
             new_pos = tuple(map(lambda i, j: i + j, self.agents_positions[i], (move_y, move_x)))
             # check if this in my_units but this still can be wrong
             # maybe another unit moved to the locations and this one cant?
+            # or there was a no-go section to go
+
+            # check for no-go section
+            if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
+                new_pos = self.agents_positions[i]
+                continue
+
+            to_break = False
+            # check if there is already a unit set there
+            for y in range (0, len(self.agents)):
+                if y == i:
+                    continue
+                if self.agents_positions[y] == new_pos:
+                    to_break = True
+                    break
+            if to_break:
+                # if there is already a unit in that pos
+                # set it to old pos
+                new_pos = self.agents_positions[i]
+                continue
+            am_i_alive = False
+            if len(self.agents) == len(my_units) and self.train == 0:
+                # two options, either nothing changed
+                # or a new unit has been created and another has been killed
+                # check self.train
+                for x in my_units:
+                    # check for the new positions in the new state
+                    if x['location'] == new_pos:
+                        self.agents_positions[i] = new_pos
+                        am_i_alive = True
+                        break
+            if not am_i_alive and len(self.agents) != len(my_units):
+                del self.agents_positions[i]
+                del self.agents[i]
+            if not am_i_alive:
+                # this is wildcard
+                # don't change anything for now
+                pass
         unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
         hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
         basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
         ress = [*res.reshape(-1).tolist()]
         loads = [*load[0].reshape(-1).tolist(), *load[1].reshape(-1).tolist()]
         terr = [*terrain.reshape(-1).tolist()]
-        
+
+        # other units and  our base relative distance vectors ( 2 * (#our base + all units-1) + type) (3) 
+        #     !! use padding for max units size like 50 (fixed to 50 * 3 = 150)
+
+
+        # return a dict of agents obs
+        for i,x in enumerate(self.agents):
+            rel_dists = []
+            # add rel dist to base
+            rel_dists+= (np.array(self.my_base)- np.array(self.agents_positions[i])).tolist()
+            rel_dists.append(self.unit_type['base'])
+            # rel dist to friendly units
+            for y in my_units:
+                # if itself, skip
+                if self.agents_positions[i] == y['location']:
+                    continue                
+                rel_dists+=(np.array(y['location'])- np.array(self.agents_positions[i])).tolist()
+                rel_dists.append(self.unit_type['friend'])
+            # rel dist to enemy units
+            for y in enemy_units:
+                rel_dists+=(np.array(y['location'])- np.array(self.agents_positions[i])).tolist()
+                rel_dists.append(self.unit_type['foe'])
+            # add padding for the rest
+            rel_dists+=[0]*(UNITS_PADDING-len(rel_dists))
+
+            # check rel distances to resources and take first 50 into account
+            res_dists = []
+            sorted_dist = []
+            for x,y in enumerate(resources):
+                # get the distances and indexes as tuple
+                dis = int(np.linalg.norm(np.array(y)-np.array(self.agents_positions[i])))
+                sorted_dist.append((dis,x))
+            # sort the distances with the indexed
+            sorted_dist = sorted(sorted_dist, key= lambda x: x[0])
+            # get relative distances of the first RESOURCE_PADDING/2
+            index = 0
+            if len(sorted_dist)>RESOURCE_PADDING/2:
+                index = int(RESOURCE_PADDING/2)
+            else: 
+                index = len(sorted_dist)
+            for x in range(index):
+                res_dists+= (np.array(resources[sorted_dist[x][1]])- np.array(self.agents_positions[i])).tolist()
+            # fix here index error for resources less than 5
+                
         state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
         '''
         state actually turns here into observation space for the model 
@@ -464,7 +569,7 @@ class IndependentLearner(MultiAgentEnv):
         # we have to update our agents and agents_locations list
         # immediately
         next_state_obs, next_info = self._decode_state(next_state)
-        _, info = self._decode_state(self.nec_obs)
+        # _, info = self._decode_state(self.nec_obs)
         # here we will convert the action space
         # into the game inputs as location, movement, target and train
         # game step returns next_state,reward,done
