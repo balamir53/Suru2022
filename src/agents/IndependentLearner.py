@@ -16,6 +16,7 @@ def read_hypers():
         return hyperparams_dict
 UNITS_PADDING = 50*3
 RESOURCE_PADDING = 50*2
+TERRAIN_PAD = 9
 class IndependentLearner(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
         
@@ -127,6 +128,10 @@ class IndependentLearner(MultiAgentEnv):
         for i in range(len(self.agents)):
             self.agents_positions.append((self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x']))
         self.my_base = (self.configs['blue']['base']['y'],self.configs['blue']['base']['x'])
+        
+        # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
+        self.terrain = self.terrain_locs()
+
     # is this even called?
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
@@ -334,7 +339,17 @@ class IndependentLearner(MultiAgentEnv):
             for x in range(index):
                 res_dists+= (np.array(resources[sorted_dist[x][1]])- np.array(self.agents_positions[i])).tolist()
             # fix here index error for resources less than 5
-                
+            agent_pos = np.array(self.agents_positions[i])
+            agent_surround = [0] * TERRAIN_PAD
+            counter = 0
+            # check for surround terrain in 3x3 box, if there is change agent surround index accordingly with terrain type
+            for hor in range(-1, 2):
+                for ver in range(-1, 2):
+                    for terr in self.terrain:
+                        if (agent_pos[0] + hor, agent_pos[1] + ver) == terr[0]:
+                            agent_surround[counter] = terr[1]
+                    counter += 1
+        
         state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
         '''
         state actually turns here into observation space for the model 
@@ -412,6 +427,17 @@ class IndependentLearner(MultiAgentEnv):
                 continue
             nearest_enemy_locs.append(np.asarray(list(n_enemy["location"])))
         return nearest_enemy_locs
+    
+    def terrain_locs(self):
+        terrain_type = {'d' : 1, 'w' : 2, 'm' : 3}
+        terrain = self.configs['map']['terrain']
+        x_max, y_max = self.configs['map']['x'], self.configs['map']['y']
+        ter_locs = []
+        for i in range(y_max):
+            for j in range(x_max):
+               if terrain[i][j] == 'd' or terrain[i][j] == 'w' or terrain[i][j] == 'm':
+                    ter_locs.append(((i,j), terrain_type[terrain[i][j]]))
+        return ter_locs
     
     def apply_action(self, action, raw_state, team):
         # this function takes the output of the model
