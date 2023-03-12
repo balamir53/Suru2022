@@ -45,8 +45,10 @@ def main():
     #         dtype=np.int16
     #     )
     # act_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7])
-
-    truck_agents = {"truck{}".format(i) for i in range(6)}
+    
+    # instead of a set hand the agents via an ordered list
+    # truck_agents = {"truck{}".format(i) for i in range(6)}
+    truck_agents = ["truck{}".format(i) for i in range(7)]
 
     # grouped_env = env.with_agent_groups({
     #         "group1" : ['truck0', 'truck1', 'truck2']
