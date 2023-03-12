@@ -333,7 +333,9 @@ class IndependentLearner(MultiAgentEnv):
                 index = len(sorted_dist)
             for x in range(index):
                 res_dists+= (np.array(resources[sorted_dist[x][1]])- np.array(self.agents_positions[i])).tolist()
-            # fix here index error for resources less than 5
+            # pad the remaining res distances if its shorter than RESOURCE PADDING
+            if len(res_dists)<RESOURCE_PADDING:
+                res_dists+=[0]*(RESOURCE_PADDING-len(res_dists))
                 
         state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
         '''
