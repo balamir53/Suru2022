@@ -1,4 +1,5 @@
 import gym
+import math
 import copy
 from agents.BaseLearningGym import BaseLearningAgentGym
 from ray.rllib.env import MultiAgentEnv
@@ -16,6 +17,7 @@ def read_hypers():
         return hyperparams_dict
 UNITS_PADDING = 50*3
 RESOURCE_PADDING = 50*2
+TERRAIN_PADDING = 7*7
 class IndependentLearner(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
         
@@ -127,6 +129,10 @@ class IndependentLearner(MultiAgentEnv):
         for i in range(len(self.agents)):
             self.agents_positions.append((self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x']))
         self.my_base = (self.configs['blue']['base']['y'],self.configs['blue']['base']['x'])
+        
+        # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
+        self.terrain = self.terrain_locs()
+
     # is this even called?
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
@@ -336,7 +342,22 @@ class IndependentLearner(MultiAgentEnv):
             # pad the remaining res distances if its shorter than RESOURCE PADDING
             if len(res_dists)<RESOURCE_PADDING:
                 res_dists+=[0]*(RESOURCE_PADDING-len(res_dists))
-                
+            
+            # get the terraing around the agent
+            agent_surround = [0] * TERRAIN_PADDING 
+            if self.terrain:
+                agent_pos = np.array(self.agents_positions[i])
+                counter = 0
+                # check for surround terrain in TERRAIN_PADDING box, if there is change agent surround index accordingly with terrain type
+                index = int(math.sqrt(TERRAIN_PADDING)//2)
+                for hor in range(-index, index+1):
+                    for ver in range(-index, index+1):
+                        coor = (agent_pos[0] + hor, agent_pos[1] + ver)
+                        lookat = coor[0]*self.width + coor[1]
+                        if self.terrain.get(lookat):
+                            agent_surround[counter] = self.terrain[lookat]
+                        counter += 1
+
         state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
         '''
         state actually turns here into observation space for the model 
@@ -414,6 +435,19 @@ class IndependentLearner(MultiAgentEnv):
                 continue
             nearest_enemy_locs.append(np.asarray(list(n_enemy["location"])))
         return nearest_enemy_locs
+    
+    def terrain_locs(self):
+        terrain_type = {'d' : 1, 'w' : 2, 'm' : 3}
+        if not self.configs['map'].get('terrain'):
+            return
+        terrain = self.configs['map']['terrain']
+        x_max, y_max = self.configs['map']['x'], self.configs['map']['y']
+        ter_locs = {}
+        for i in range(y_max):
+            for j in range(x_max):
+               if terrain[i][j] == 'd' or terrain[i][j] == 'w' or terrain[i][j] == 'm':
+                    ter_locs[i*self.width+j]=terrain_type[terrain[i][j]]
+        return ter_locs
     
     def apply_action(self, action, raw_state, team):
         # this function takes the output of the model
