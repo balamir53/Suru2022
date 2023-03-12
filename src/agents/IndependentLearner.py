@@ -272,6 +272,7 @@ class IndependentLearner(MultiAgentEnv):
         # print(my_units)
         # here we also check loads
         # apply reward for any load increase and decrease if on base
+        self.agents_positions_ = copy.copy(self.agents_positions)
         for i,x in enumerate(self.agents):
             # check if it is on the tile supposed to be
             move_x, move_y = getMovement(self.agents_positions[i],self.current_action['truck'+str(i)])
@@ -320,7 +321,15 @@ class IndependentLearner(MultiAgentEnv):
                         break
             if not am_i_alive and len(self.agents) != len(my_units):
                 del self.agents_positions[i]
+                del self.agents_positions_[i]
                 del self.agents[i]
+                del self.observation_spaces['truck' + str(i)] 
+                del self.obs_dict['truck' + str(i)] 
+                del self.loads['truck' + str(i)] 
+                del self.rewards['truck' + str(i)] 
+                del self.dones['truck' + str(i)] 
+                # del self.infos[i] 
+                continue
             if not am_i_alive:
                 # this is wildcard
                 # don't change anything for now
@@ -338,6 +347,13 @@ class IndependentLearner(MultiAgentEnv):
                 # make its done flag true
                 # self.dones[x] = True
                 pass
+        counter = 0
+        for agent in self.agents_positions:
+            for uni in my_units:
+                if agent == uni['location']:
+                    counter +=1
+        if counter < len(self.agents_positions):
+            print('Done')
         # unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
         # hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
         # basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
