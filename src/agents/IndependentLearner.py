@@ -77,7 +77,7 @@ class IndependentLearner(MultiAgentEnv):
         self.current_action = []
 
         self.observation_space = spaces.Box(
-            low=-2,
+            low=-40,
             high=401,
             shape=(302,),
             dtype=np.int16
@@ -215,7 +215,7 @@ class IndependentLearner(MultiAgentEnv):
         if new_load > old_load and old_load<3:
             self.rewards[truck_id] += self.load_reward
         # if it unloads the the loads on base
-        if self.agents_positions[truck_id] == self.my_base and old_load>new_load:
+        if self.agents_positions[int(truck_id[5])] == self.my_base and old_load>new_load:
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
 
@@ -285,7 +285,7 @@ class IndependentLearner(MultiAgentEnv):
                 new_pos = self.agents_positions[i]
                 # don't change position
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                self.load_reward_check(old_load, self.loads[x], i)        
+                self.load_reward_check(old_load, self.loads[x], x)        
                 continue
 
             to_break = False
@@ -301,7 +301,7 @@ class IndependentLearner(MultiAgentEnv):
                 # set it to old pos
                 new_pos = self.agents_positions[i]
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                self.load_reward_check(old_load, self.loads[x], i) 
+                self.load_reward_check(old_load, self.loads[x], x) 
                 continue
             am_i_alive = False
             if len(self.agents) == len(my_units) and self.train == 0:
@@ -310,10 +310,12 @@ class IndependentLearner(MultiAgentEnv):
                 # check self.train
                 for z in my_units:
                     # check for the new positions in the new state
+                    # maybe i couldnt move there and there is already other agent sitting there?
+                    # but we check this above?
                     if z['location'] == new_pos:
                         self.agents_positions[i] = new_pos
                         self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                        self.load_reward_check(old_load, self.loads[x], i) 
+                        self.load_reward_check(old_load, self.loads[x], x) 
                         am_i_alive = True
                         break
             if not am_i_alive and len(self.agents) != len(my_units):
@@ -322,6 +324,16 @@ class IndependentLearner(MultiAgentEnv):
             if not am_i_alive:
                 # this is wildcard
                 # don't change anything for now
+
+                # TODO :
+                # check terrain constraints
+                
+                # it is broken, sth is off, actions are applied maybe in different order
+                # chaos amk
+                # it may hit an enemy unit ??!!
+                new_pos = self.agents_positions[i]
+                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                self.load_reward_check(old_load, self.loads[x], x)
 
                 # make its done flag true
                 # self.dones[x] = True
@@ -429,25 +441,21 @@ class IndependentLearner(MultiAgentEnv):
     
     @staticmethod
     def unit_dicts(obs, allies, enemies,  team):
-        tagToString = {
-            1: "Truck",
-            2: "LightTank",
-            3: "HeavyTank",
-            4: "Drone",
-        }
-        changed = 0
+        """This method creates unit dicts to be used in nearest enemy locs."""
+        #from the state(obs), following base and dead parameters comes as they are part of a unit. Resources are added just in case.
+        unitTagToString = {1: "Truck",2: "LightTank",3: "HeavyTank",4: "Drone",6: "Base",8: "Dead",9: "Resource"}
         lists = [[], []]
         ally_units = obs['units'][team]
         enemy_units = obs['units'][(team+1) % 2]
+        #creates a list consisting unit types of both sides.
         units_types = [[ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]]
+        #creates a list consisting unit locations of both sides.
         unit_locations = [allies, enemies]
+        #creates a dict for each side consisting unit type tags and unit locations.
         for index in range(2):
             for i in range(len(units_types[index])):
-                if units_types[index][i] > 4:
-                    units_types[index][i] = 4
-                    changed += 1
                 unit = {
-                    "tag" : tagToString[units_types[index][i]],
+                    "tag" : unitTagToString[units_types[index][i]],
                     "location" : tuple(unit_locations[index][i])
                 }
                 lists[index].append(unit)
@@ -663,6 +671,8 @@ class IndependentLearner(MultiAgentEnv):
 
         done_d = self.dones
         info_d = self.infos
+
+        self.nec_obs = next_state
         
         return obs_d, rew_d, done_d, info_d
 
