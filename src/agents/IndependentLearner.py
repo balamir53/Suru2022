@@ -15,9 +15,9 @@ def read_hypers():
     with open(f"/workspaces/Suru2022/data/config/RiskyValley.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
-UNITS_PADDING = 50*3
-RESOURCE_PADDING = 50*2
-TERRAIN_PADDING = 7*7
+UNITS_PADDING = 50*3 # parameter * (y,x and type)
+RESOURCE_PADDING = 50*2 # parameter * (y and x)
+TERRAIN_PADDING = 7*7 # parameter
 class IndependentLearner(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
         
@@ -71,12 +71,15 @@ class IndependentLearner(MultiAgentEnv):
         self.steps = 0
         self.nec_obs = None
 
+        self.load_reward = 0.5
+        self.unload_reward = 1
+
         self.current_action = []
 
         self.observation_space = spaces.Box(
             low=-2,
             high=401,
-            shape=(685,),
+            shape=(302,),
             dtype=np.int16
         )
         self.action_space = spaces.Discrete(7)
@@ -88,8 +91,19 @@ class IndependentLearner(MultiAgentEnv):
         # will these be defined at the group agent, here or in both
         # check this
         self.observation_spaces = {}
+        self.obs_dict = {}
+        self.loads = {}
+        self.rewards = {}
+        self.dones = {}
+        self.infos = {}
         for x in self.agents:
             self.observation_spaces[x] = self.observation_space
+            self.obs_dict[x] = []
+            self.loads[x] = 0
+            self.rewards[x] = 0
+            self.dones[x] = False  #if agents die make this True
+            self.infos[x] = {}
+        self.dones['__all__'] = False
         # self.observation_space = spaces.Box(
         #     low=-2,
         #     high=401,
@@ -113,8 +127,6 @@ class IndependentLearner(MultiAgentEnv):
         for x in self.agents:
             self.action_spaces[x] = self.action_space
         # self.action_space = spaces.Discrete(7)
-
-        self.obs_dict = []
 
         # no idea what this is for, keep it for now
         self.resetted = False
@@ -174,6 +186,7 @@ class IndependentLearner(MultiAgentEnv):
         # self.spawn()
         self.resetted = True
         # self.dones = set()
+        self.dones['__all__'] = False
 
         # we should usually keep a dictionary 
         # for every agent
@@ -196,6 +209,16 @@ class IndependentLearner(MultiAgentEnv):
             obs_samples[x] = self.observation_spaces[x].sample()
         # return self.observation_space.sample()
         return obs_samples
+    
+    def load_reward_check(self, old_load, new_load, truck_id):
+        # apply reward for collecting loads
+        if new_load > old_load and old_load<3:
+            self.rewards[truck_id] += self.load_reward
+        # if it unloads the the loads on base
+        if self.agents_positions[truck_id] == self.my_base and old_load>new_load:
+            self.rewards[truck_id] += self.unload_reward * old_load
+        pass
+
     def _decode_state(self, obs):
         turn = obs['turn']
         max_turn = obs['max_turn'] 
@@ -247,6 +270,8 @@ class IndependentLearner(MultiAgentEnv):
         # update here self.agents and self.agents_positions
         # how to check which agent at which position has been killed?
         # print(my_units)
+        # here we also check loads
+        # apply reward for any load increase and decrease if on base
         for i,x in enumerate(self.agents):
             # check if it is on the tile supposed to be
             move_x, move_y = getMovement(self.agents_positions[i],self.current_action['truck'+str(i)])
@@ -254,10 +279,13 @@ class IndependentLearner(MultiAgentEnv):
             # check if this in my_units but this still can be wrong
             # maybe another unit moved to the locations and this one cant?
             # or there was a no-go section to go
-
+            old_load = self.loads[x]
             # check for no-go section
             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
                 new_pos = self.agents_positions[i]
+                # don't change position
+                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                self.load_reward_check(old_load, self.loads[x], i)        
                 continue
 
             to_break = False
@@ -272,16 +300,20 @@ class IndependentLearner(MultiAgentEnv):
                 # if there is already a unit in that pos
                 # set it to old pos
                 new_pos = self.agents_positions[i]
+                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                self.load_reward_check(old_load, self.loads[x], i) 
                 continue
             am_i_alive = False
             if len(self.agents) == len(my_units) and self.train == 0:
                 # two options, either nothing changed
                 # or a new unit has been created and another has been killed
                 # check self.train
-                for x in my_units:
+                for z in my_units:
                     # check for the new positions in the new state
-                    if x['location'] == new_pos:
+                    if z['location'] == new_pos:
                         self.agents_positions[i] = new_pos
+                        self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                        self.load_reward_check(old_load, self.loads[x], i) 
                         am_i_alive = True
                         break
             if not am_i_alive and len(self.agents) != len(my_units):
@@ -290,13 +322,16 @@ class IndependentLearner(MultiAgentEnv):
             if not am_i_alive:
                 # this is wildcard
                 # don't change anything for now
+
+                # make its done flag true
+                # self.dones[x] = True
                 pass
-        unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
-        hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
-        basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
-        ress = [*res.reshape(-1).tolist()]
-        loads = [*load[0].reshape(-1).tolist(), *load[1].reshape(-1).tolist()]
-        terr = [*terrain.reshape(-1).tolist()]
+        # unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
+        # hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
+        # basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
+        # ress = [*res.reshape(-1).tolist()]
+        # loads = [*load[0].reshape(-1).tolist(), *load[1].reshape(-1).tolist()]
+        # terr = [*terrain.reshape(-1).tolist()]
 
         # other units and  our base relative distance vectors ( 2 * (#our base + all units-1) + type) (3) 
         #     !! use padding for max units size like 50 (fixed to 50 * 3 = 150)
@@ -306,18 +341,19 @@ class IndependentLearner(MultiAgentEnv):
         for i,x in enumerate(self.agents):
             rel_dists = []
             # add rel dist to base
-            rel_dists+= (np.array(self.my_base)- np.array(self.agents_positions[i])).tolist()
+            my_pos = self.agents_positions[i]
+            rel_dists+= (np.array(self.my_base)- np.array(my_pos)).tolist()
             rel_dists.append(self.unit_type['base'])
             # rel dist to friendly units
             for y in my_units:
                 # if itself, skip
-                if self.agents_positions[i] == y['location']:
+                if my_pos == y['location']:
                     continue                
-                rel_dists+=(np.array(y['location'])- np.array(self.agents_positions[i])).tolist()
+                rel_dists+=(np.array(y['location'])- np.array(my_pos)).tolist()
                 rel_dists.append(self.unit_type['friend'])
             # rel dist to enemy units
             for y in enemy_units:
-                rel_dists+=(np.array(y['location'])- np.array(self.agents_positions[i])).tolist()
+                rel_dists+=(np.array(y['location'])- np.array(my_pos)).tolist()
                 rel_dists.append(self.unit_type['foe'])
             # add padding for the rest
             rel_dists+=[0]*(UNITS_PADDING-len(rel_dists))
@@ -325,10 +361,10 @@ class IndependentLearner(MultiAgentEnv):
             # check rel distances to resources and take first 50 into account
             res_dists = []
             sorted_dist = []
-            for x,y in enumerate(resources):
+            for z,y in enumerate(resources):
                 # get the distances and indexes as tuple
-                dis = int(np.linalg.norm(np.array(y)-np.array(self.agents_positions[i])))
-                sorted_dist.append((dis,x))
+                dis = int(np.linalg.norm(np.array(y)-np.array(my_pos)))
+                sorted_dist.append((dis,z))
             # sort the distances with the indexed
             sorted_dist = sorted(sorted_dist, key= lambda x: x[0])
             # get relative distances of the first RESOURCE_PADDING/2
@@ -337,8 +373,8 @@ class IndependentLearner(MultiAgentEnv):
                 index = int(RESOURCE_PADDING/2)
             else: 
                 index = len(sorted_dist)
-            for x in range(index):
-                res_dists+= (np.array(resources[sorted_dist[x][1]])- np.array(self.agents_positions[i])).tolist()
+            for z in range(index):
+                res_dists+= (np.array(resources[sorted_dist[z][1]])- np.array(my_pos)).tolist()
             # pad the remaining res distances if its shorter than RESOURCE PADDING
             if len(res_dists)<RESOURCE_PADDING:
                 res_dists+=[0]*(RESOURCE_PADDING-len(res_dists))
@@ -346,19 +382,20 @@ class IndependentLearner(MultiAgentEnv):
             # get the terraing around the agent
             agent_surround = [0] * TERRAIN_PADDING 
             if self.terrain:
-                agent_pos = np.array(self.agents_positions[i])
+                # agent_pos = np.array(self.agents_positions[i])
                 counter = 0
                 # check for surround terrain in TERRAIN_PADDING box, if there is change agent surround index accordingly with terrain type
                 index = int(math.sqrt(TERRAIN_PADDING)//2)
                 for hor in range(-index, index+1):
                     for ver in range(-index, index+1):
-                        coor = (agent_pos[0] + hor, agent_pos[1] + ver)
+                        coor = (my_pos[0] + hor, my_pos[1] + ver)
                         lookat = coor[0]*self.width + coor[1]
                         if self.terrain.get(lookat):
                             agent_surround[counter] = self.terrain[lookat]
                         counter += 1
-
-        state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
+            my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
+            self.obs_dict[x] = np.array(my_state, dtype=np.int16)
+        # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
         '''
         state actually turns here into observation space for the model 
         we will decrease it for the truck agent
@@ -387,7 +424,8 @@ class IndependentLearner(MultiAgentEnv):
         [has to be calculated per agent, all agents observations will be then handed to the model as separate obs]
         [we need also calculate reward per agent]
         '''
-        return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
+        # return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
+        return self.obs_dict, (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
     
     @staticmethod
     def unit_dicts(obs, allies, enemies,  team):
@@ -590,7 +628,11 @@ class IndependentLearner(MultiAgentEnv):
     def step(self, action_dict):
         # wait a little bit
         # self.action_mask = np.ones(49,dtype=np.int8)
-
+        
+        # dont forget to reset reward
+        for x in self.rewards:
+            self.rewards[x] = 0
+        
         self.current_action = action_dict
 
         harvest_reward, kill_reward, martyr_reward = 0, 0, 0
@@ -604,31 +646,24 @@ class IndependentLearner(MultiAgentEnv):
 
         # we have to update our agents and agents_locations list
         # immediately
-        next_state_obs, next_info = self._decode_state(next_state)
+        obs_d, next_info = self._decode_state(next_state)
         # _, info = self._decode_state(self.nec_obs)
         # here we will convert the action space
         # into the game inputs as location, movement, target and train
         # game step returns next_state,reward,done
 
-        obs_d = {}
-        rew_d = {}
-        done_d = {}
-        info_d = {}
-        while self.env.agents:
-            obs, rew, done, info = self.env.last()
-            a = self.env.agent_selection
-            obs_d[a] = obs
-            rew_d[a] = rew
-            done_d[a] = done
-            info_d[a] = info
-            if self.env.dones[self.env.agent_selection]:
-                self.env.step(None)
-            else:
-                break
+        # obs_d = {} # we got these from _decode_state
+        rew_d = self.rewards
 
-        all_done = not self.env.agents
-        done_d["__all__"] = all_done
+        # get rewards
+        # we managed this in decode state
 
+        if done: #this comes from game step
+            self.dones['__all__'] = True
+
+        done_d = self.dones
+        info_d = self.infos
+        
         return obs_d, rew_d, done_d, info_d
 
 
