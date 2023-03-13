@@ -512,9 +512,7 @@ class IndependentLearner(MultiAgentEnv):
         return ter_locs
     
     def apply_action(self, action, raw_state, team):
-        # this function takes the output of the model
-        # and converts it into a reasonable output for
-        # the game to play
+        # this function takes the output of the model and converts it into a reasonable output for the game to play
 
         # this is specific order as in self.agents
         movement = action[0:7]
@@ -526,16 +524,15 @@ class IndependentLearner(MultiAgentEnv):
 
         enemy_order = []
 
-        # here it changes the units order
-        # by creating a set
-        # but as long as it keeps consistent no problem
-        # but action list is handed by the model
-        # by the name of the single agents
-        # we have to keep track
-        # or we can take directly agents position
+        # here it changes the units order by creating a set but as long as it keeps consistent no problem
+        # but action list is handed by the model by the name of the single agents
+        # we have to keep track or we can take directly agents position
+        
         # allies = ally_locs(raw_state, team)
-        # this is updatep in _decode_state after each game step
+        
+        # this is updated in _decode_state after each game step
         allies = copy.copy(self.agents_positions)
+        
         # but how to check if our agent has been killed
         # or a new unit has been created (maybe we can use self.train)
         # but it has to be controlled immediately after game step
@@ -558,21 +555,6 @@ class IndependentLearner(MultiAgentEnv):
             ally_count = len(allies)
             locations = allies
 
-            # counter = 0
-            # for j in target: 
-            #     if len(enemies) == 0:
-            #         # yok artik alum
-            #         enemy_order = [[3, 0] for i in range(ally_count)]
-            #         continue
-            #     k = j % len(enemies)
-            #     if counter == ally_count:
-            #         break
-            #     if len(enemies) <= 0:
-            #         break
-            #     enemy_order.append(enemies[k].tolist())
-            #     counter += 1
-
-            ##added by luchy: this part creates a list of closest enemy order. If num of enemies == 0 creates a dummy fire point for each ally.
             if len(enemies) == 0:
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
@@ -586,32 +568,10 @@ class IndependentLearner(MultiAgentEnv):
                 # there are seven values by default
                 # these actions have to be masked
                 movement.pop()
-        
-        # mask out the unused part of the action space
-        # This have to be set at the beginning
-        # or no
-        # This value changes throughout the sim
-        # self.action_mask[]
 
-        
         elif len(allies) > 7:
             ally_count = 7
             locations = allies
-
-            # counter = 0
-            # for j in target:
-            #     if len(enemies) == 0:
-            #         # bu ne oluyor press tv
-            #         enemy_order = [[3, 0] for i in range(ally_count)]
-            #         continue
-            #     k = j % len(enemies)
-            #     if counter == ally_count:
-            #         break
-            #     if len(enemies) <= 0:
-            #         break
-            #     enemy_order.append(enemies[k].tolist())
-            #     counter += 1
-            ##added by luchy:
             if len(enemies) == 0:
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
@@ -629,20 +589,6 @@ class IndependentLearner(MultiAgentEnv):
 
         if len(locations) > 0:
             locations = list(map(list, locations))
-        
-        # boyle bisi olabilir mi ya
-        # locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
-        # for i in range(len(locations)):
-        #     for k in range(len(enemy_order)):
-        #         if getDistance(locations[i], enemy_order[k]) <= 3:
-        #             movement[i] = 0
-        #             enemy_order[i] = enemy_order[k]
-
-        # also a model manipulation, prevents model learning that actually
-        ##added by luchy:by this if the distance between ally and enemy is less than 3 then movement will be 0 as a preparation to shoot.
-        # for i in range(len(locations)):
-        #     if getDistance(locations[i], enemy_order[i]) <= 3:
-        #         movement[i] = 0
 
         locations = list(map(tuple, locations))
         enemy_order = list(map(tuple, enemy_order))
