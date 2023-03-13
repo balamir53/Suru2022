@@ -145,6 +145,9 @@ class IndependentLearner(MultiAgentEnv):
         # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
         self.terrain = self.terrain_locs()
 
+        self.old_raw_state = None
+        self.firstShot = True
+
     # is this even called?
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
@@ -273,14 +276,22 @@ class IndependentLearner(MultiAgentEnv):
         # here we also check loads
         # apply reward for any load increase and decrease if on base
         self.agents_positions_ = copy.copy(self.agents_positions)
+        someone_died = False
+        to_be_deleted = []
         for i,x in enumerate(self.agents):
+            # check for deaths
+            if len(self.agents) != len(my_units):
+                someone_died = True
+            else:
+                someone_died = False
             # check if it is on the tile supposed to be
-            move_x, move_y = getMovement(self.agents_positions[x],self.current_action['truck'+str(i)])
+            move_x, move_y = getMovement(self.agents_positions[x],self.current_action[x])
             new_pos = tuple(map(lambda i, j: i + j, self.agents_positions[x], (move_y, move_x)))
             # check if this in my_units but this still can be wrong
             # maybe another unit moved to the locations and this one cant?
             # or there was a no-go section to go
             old_load = self.loads[x]
+
             # check for no-go section
             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
                 new_pos = self.agents_positions[x]
@@ -304,19 +315,9 @@ class IndependentLearner(MultiAgentEnv):
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
                 self.load_reward_check(old_load, self.loads[x], x) 
                 continue
-            am_i_alive = False
-            if len(self.agents) != len(my_units):
-                del self.agents_positions[x]
-                del self.agents_positions_[x]
-                self.agents.remove(x)
-                del self.observation_spaces[x] 
-                del self.obs_dict[x] 
-                del self.loads[x] 
-                del self.rewards[x] 
-                del self.dones[x] 
-                # del self.infos[i] 
-                # continue
-            if len(self.agents) == len(my_units) and self.train == 0:
+            am_i_alive = False            
+            
+            if someone_died or (len(self.agents) == len(my_units) and self.train == 0):
                 # two options, either nothing changed
                 # or a new unit has been created and another has been killed
                 # check self.train
@@ -330,17 +331,18 @@ class IndependentLearner(MultiAgentEnv):
                         self.load_reward_check(old_load, self.loads[x], x) 
                         am_i_alive = True
                         break
-            # if not am_i_alive and len(self.agents) != len(my_units):
-            #     del self.agents_positions[x]
-            #     del self.agents_positions_[x]
-            #     self.agents.remove(x)
-            #     del self.observation_spaces[x] 
-            #     del self.obs_dict[x] 
-            #     del self.loads[x] 
-            #     del self.rewards[x] 
-            #     del self.dones[x] 
-            #     # del self.infos[i] 
-            #     continue
+            if not am_i_alive and someone_died:
+                to_be_deleted.append(x)
+                # del self.agents_positions[x]
+                # del self.agents_positions_[x]
+                # self.agents.remove(x)
+                # del self.observation_spaces[x] 
+                # del self.obs_dict[x] 
+                # del self.loads[x] 
+                # del self.rewards[x] 
+                # del self.dones[x] 
+                # del self.infos[i] 
+                continue
             if not am_i_alive:
                 # this is wildcard
                 # don't change anything for now
@@ -358,6 +360,18 @@ class IndependentLearner(MultiAgentEnv):
                 # make its done flag true
                 # self.dones[x] = True
                 pass
+
+        if to_be_deleted:
+            for i in range(len(to_be_deleted)):
+                del self.agents_positions[to_be_deleted[i]]
+                del self.agents_positions_[to_be_deleted[i]]
+                self.agents.remove(to_be_deleted[i])
+                del self.observation_spaces[to_be_deleted[i]] 
+                del self.obs_dict[to_be_deleted[i]] 
+                del self.loads[to_be_deleted[i]] 
+                del self.rewards[to_be_deleted[i]] 
+                del self.dones[to_be_deleted[i]] 
+                # del self.infos[i] 
         counter = 0
         for i, agent in enumerate(self.agents_positions):
             for uni in my_units:
@@ -365,8 +379,6 @@ class IndependentLearner(MultiAgentEnv):
                     counter +=1
         if counter < len(self.agents_positions):
             print('Done')
-        else:
-            print('sikome')
         # unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
         # hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
         # basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
@@ -552,7 +564,9 @@ class IndependentLearner(MultiAgentEnv):
         # we have to keep track or we can take directly agents position
         
         allies_ = ally_locs(raw_state, team)
-        
+        if not self.firstShot:
+            allies__ = ally_locs(self.old_raw_state, team)
+        self.firstShot = False
         # this is updated in _decode_state after each game step
         allies = self.agents_positions.values()
         
@@ -623,6 +637,9 @@ class IndependentLearner(MultiAgentEnv):
 
         locations = list(map(tuple, locations))
         enemy_order = list(map(tuple, enemy_order))
+
+        # TODO : delete this
+        self.old_raw_state = raw_state
 
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, self.train]
