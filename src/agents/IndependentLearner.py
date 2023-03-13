@@ -25,6 +25,7 @@ class IndependentLearner(MultiAgentEnv):
         # agents will be created at the start
         # but we have to figure out a way killing them and spawning new ones
         self.agents = agents
+        self.init_agents = copy.copy(agents)
         self.tagToString = {
             1: "Truck",
             2: "LightTank",
@@ -170,6 +171,7 @@ class IndependentLearner(MultiAgentEnv):
         return agentID
     
     def reset(self):
+        self.agent = self.init_agents
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
         self.episodes += 1
@@ -183,7 +185,20 @@ class IndependentLearner(MultiAgentEnv):
 
         # nope
         # self.agents = {}
-
+        self.observation_spaces = {}
+        self.obs_dict = {}
+        self.loads = {}
+        self.rewards = {}
+        self.dones = {}
+        self.infos = {}
+        for x in self.agents:
+            self.observation_spaces[x] = self.observation_space
+            self.obs_dict[x] = []
+            self.loads[x] = 0
+            self.rewards[x] = 0
+            self.dones[x] = False  #if agents die make this True
+            self.infos[x] = {}
+            self.dones[x] = False
         # how and when should we use this
         # elaborate
         # self.spawn()
@@ -640,6 +655,7 @@ class IndependentLearner(MultiAgentEnv):
 
         # TODO : delete this
         self.old_raw_state = raw_state
+        
 
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, self.train]
@@ -675,15 +691,17 @@ class IndependentLearner(MultiAgentEnv):
 
         # get rewards
         # we managed this in decode state
-
+        
         if done: #this comes from game step
+            for x in self.agents:
+                self.dones[x] = True
             self.dones['__all__'] = True
 
         done_d = self.dones
         info_d = self.infos
 
         self.nec_obs = next_state
-        
+
         return obs_d, rew_d, done_d, info_d
 
 
