@@ -528,10 +528,18 @@ class IndependentLearner(MultiAgentEnv):
         # but action list is handed by the model by the name of the single agents
         # we have to keep track or we can take directly agents position
         
-        # allies = ally_locs(raw_state, team)
+        allies_ = ally_locs(raw_state, team)
         
         # this is updated in _decode_state after each game step
         allies = copy.copy(self.agents_positions)
+        
+        counter = 0
+        for agent11 in allies_:
+            for uni11 in allies:
+                if agent11 == uni11:
+                    counter +=1
+        if counter != len(allies_) or counter != len(allies) or len(allies) !=len(allies_):
+            print('Hay amk')
         
         # but how to check if our agent has been killed
         # or a new unit has been created (maybe we can use self.train)
