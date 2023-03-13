@@ -305,6 +305,17 @@ class IndependentLearner(MultiAgentEnv):
                 self.load_reward_check(old_load, self.loads[x], x) 
                 continue
             am_i_alive = False
+            if len(self.agents) != len(my_units):
+                del self.agents_positions[x]
+                del self.agents_positions_[x]
+                self.agents.remove(x)
+                del self.observation_spaces[x] 
+                del self.obs_dict[x] 
+                del self.loads[x] 
+                del self.rewards[x] 
+                del self.dones[x] 
+                # del self.infos[i] 
+                # continue
             if len(self.agents) == len(my_units) and self.train == 0:
                 # two options, either nothing changed
                 # or a new unit has been created and another has been killed
@@ -319,17 +330,17 @@ class IndependentLearner(MultiAgentEnv):
                         self.load_reward_check(old_load, self.loads[x], x) 
                         am_i_alive = True
                         break
-            if not am_i_alive and len(self.agents) != len(my_units):
-                del self.agents_positions[x]
-                del self.agents_positions_[x]
-                self.agents.remove(x)
-                del self.observation_spaces[x] 
-                del self.obs_dict[x] 
-                del self.loads[x] 
-                del self.rewards[x] 
-                del self.dones[x] 
-                # del self.infos[i] 
-                continue
+            # if not am_i_alive and len(self.agents) != len(my_units):
+            #     del self.agents_positions[x]
+            #     del self.agents_positions_[x]
+            #     self.agents.remove(x)
+            #     del self.observation_spaces[x] 
+            #     del self.obs_dict[x] 
+            #     del self.loads[x] 
+            #     del self.rewards[x] 
+            #     del self.dones[x] 
+            #     # del self.infos[i] 
+            #     continue
             if not am_i_alive:
                 # this is wildcard
                 # don't change anything for now
@@ -348,9 +359,9 @@ class IndependentLearner(MultiAgentEnv):
                 # self.dones[x] = True
                 pass
         counter = 0
-        for agent in self.agents_positions:
+        for i, agent in enumerate(self.agents_positions):
             for uni in my_units:
-                if agent == uni['location']:
+                if self.agents_positions[agent] == uni['location']:
                     counter +=1
         if counter < len(self.agents_positions):
             print('Done')
