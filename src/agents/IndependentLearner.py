@@ -135,11 +135,11 @@ class IndependentLearner(MultiAgentEnv):
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
 
-        self.agents_positions = []
+        self.agents_positions = {}
         # get the initial positions of agents
         # should we apply the same logic as in decode state?
         for i in range(len(self.agents)):
-            self.agents_positions.append((self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x']))
+            self.agents_positions[self.agents[i]]=(self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x'])
         self.my_base = (self.configs['blue']['base']['y'],self.configs['blue']['base']['x'])
         
         # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
@@ -215,7 +215,7 @@ class IndependentLearner(MultiAgentEnv):
         if new_load > old_load and old_load<3:
             self.rewards[truck_id] += self.load_reward
         # if it unloads the the loads on base
-        if self.agents_positions[int(truck_id[5])] == self.my_base and old_load>new_load:
+        if self.agents_positions[truck_id] == self.my_base and old_load>new_load:
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
 
@@ -272,17 +272,18 @@ class IndependentLearner(MultiAgentEnv):
         # print(my_units)
         # here we also check loads
         # apply reward for any load increase and decrease if on base
+        self.agents_positions_ = copy.copy(self.agents_positions)
         for i,x in enumerate(self.agents):
             # check if it is on the tile supposed to be
-            move_x, move_y = getMovement(self.agents_positions[i],self.current_action['truck'+str(i)])
-            new_pos = tuple(map(lambda i, j: i + j, self.agents_positions[i], (move_y, move_x)))
+            move_x, move_y = getMovement(self.agents_positions[x],self.current_action['truck'+str(i)])
+            new_pos = tuple(map(lambda i, j: i + j, self.agents_positions[x], (move_y, move_x)))
             # check if this in my_units but this still can be wrong
             # maybe another unit moved to the locations and this one cant?
             # or there was a no-go section to go
             old_load = self.loads[x]
             # check for no-go section
             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
-                new_pos = self.agents_positions[i]
+                new_pos = self.agents_positions[x]
                 # don't change position
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
                 self.load_reward_check(old_load, self.loads[x], x)        
@@ -290,16 +291,16 @@ class IndependentLearner(MultiAgentEnv):
 
             to_break = False
             # check if there is already a unit set there
-            for y in range (0, len(self.agents)):
+            for y,q in enumerate(self.agents):
                 if y == i:
                     continue
-                if self.agents_positions[y] == new_pos:
+                if self.agents_positions[q] == new_pos:
                     to_break = True
                     break
             if to_break:
                 # if there is already a unit in that pos
                 # set it to old pos
-                new_pos = self.agents_positions[i]
+                new_pos = self.agents_positions[x]
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
                 self.load_reward_check(old_load, self.loads[x], x) 
                 continue
@@ -313,14 +314,22 @@ class IndependentLearner(MultiAgentEnv):
                     # maybe i couldnt move there and there is already other agent sitting there?
                     # but we check this above?
                     if z['location'] == new_pos:
-                        self.agents_positions[i] = new_pos
+                        self.agents_positions[x] = new_pos
                         self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
                         self.load_reward_check(old_load, self.loads[x], x) 
                         am_i_alive = True
                         break
             if not am_i_alive and len(self.agents) != len(my_units):
-                del self.agents_positions[i]
-                del self.agents[i]
+                del self.agents_positions[x]
+                del self.agents_positions_[x]
+                self.agents.remove(x)
+                del self.observation_spaces[x] 
+                del self.obs_dict[x] 
+                del self.loads[x] 
+                del self.rewards[x] 
+                del self.dones[x] 
+                # del self.infos[i] 
+                continue
             if not am_i_alive:
                 # this is wildcard
                 # don't change anything for now
@@ -331,13 +340,22 @@ class IndependentLearner(MultiAgentEnv):
                 # it is broken, sth is off, actions are applied maybe in different order
                 # chaos amk
                 # it may hit an enemy unit ??!!
-                new_pos = self.agents_positions[i]
+                new_pos = self.agents_positions[x]
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
                 self.load_reward_check(old_load, self.loads[x], x)
 
                 # make its done flag true
                 # self.dones[x] = True
                 pass
+        counter = 0
+        for agent in self.agents_positions:
+            for uni in my_units:
+                if agent == uni['location']:
+                    counter +=1
+        if counter < len(self.agents_positions):
+            print('Done')
+        else:
+            print('sikome')
         # unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
         # hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
         # basess = [*bases[0].reshape(-1).tolist(), *bases[1].reshape(-1).tolist()]
@@ -353,7 +371,7 @@ class IndependentLearner(MultiAgentEnv):
         for i,x in enumerate(self.agents):
             rel_dists = []
             # add rel dist to base
-            my_pos = self.agents_positions[i]
+            my_pos = self.agents_positions[x]
             rel_dists+= (np.array(self.my_base)- np.array(my_pos)).tolist()
             rel_dists.append(self.unit_type['base'])
             # rel dist to friendly units
@@ -448,17 +466,27 @@ class IndependentLearner(MultiAgentEnv):
         ally_units = obs['units'][team]
         enemy_units = obs['units'][(team+1) % 2]
         #creates a list consisting unit types of both sides.
-        units_types = [[ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]]
+        units_types = [[],[]]
+        for i,x in enumerate(allies):
+            units_types[0].append(ally_units[x[0]][x[1]])
+        for x in enemies:
+            units_types[1].append(enemy_units[x[0]][x[1]])
+        # units_types = [[ally_units[ally[0], ally[1]] for ally in allies], [enemy_units[enemy[0], enemy[1]] for enemy in enemies]]
         #creates a list consisting unit locations of both sides.
         unit_locations = [allies, enemies]
         #creates a dict for each side consisting unit type tags and unit locations.
-        for index in range(2):
-            for i in range(len(units_types[index])):
-                unit = {
-                    "tag" : unitTagToString[units_types[index][i]],
-                    "location" : tuple(unit_locations[index][i])
+        for i,x in enumerate(unit_locations[0]):
+            unit = {
+                    "tag" : unitTagToString[units_types[0][i]],
+                    "location" : tuple(x)
+                    }
+            lists[0].append(unit)
+        for i in range(len(units_types[1])):
+            unit = {
+                "tag" : unitTagToString[units_types[1][i]],
+                "location" : tuple(unit_locations[1][i])
                 }
-                lists[index].append(unit)
+            lists[1].append(unit)
         return lists[0], lists[1] 
     
     def nearest_enemy_details(allies, enemies):
@@ -496,9 +524,7 @@ class IndependentLearner(MultiAgentEnv):
         return ter_locs
     
     def apply_action(self, action, raw_state, team):
-        # this function takes the output of the model
-        # and converts it into a reasonable output for
-        # the game to play
+        # this function takes the output of the model and converts it into a reasonable output for the game to play
 
         # this is specific order as in self.agents
         movement = action[0:7]
@@ -510,16 +536,15 @@ class IndependentLearner(MultiAgentEnv):
 
         enemy_order = []
 
-        # here it changes the units order
-        # by creating a set
-        # but as long as it keeps consistent no problem
-        # but action list is handed by the model
-        # by the name of the single agents
-        # we have to keep track
-        # or we can take directly agents position
+        # here it changes the units order by creating a set but as long as it keeps consistent no problem
+        # but action list is handed by the model by the name of the single agents
+        # we have to keep track or we can take directly agents position
+        
         # allies = ally_locs(raw_state, team)
-        # this is updatep in _decode_state after each game step
-        allies = copy.copy(self.agents_positions)
+        
+        # this is updated in _decode_state after each game step
+        allies = self.agents_positions.values()
+        
         # but how to check if our agent has been killed
         # or a new unit has been created (maybe we can use self.train)
         # but it has to be controlled immediately after game step
@@ -542,21 +567,6 @@ class IndependentLearner(MultiAgentEnv):
             ally_count = len(allies)
             locations = allies
 
-            # counter = 0
-            # for j in target: 
-            #     if len(enemies) == 0:
-            #         # yok artik alum
-            #         enemy_order = [[3, 0] for i in range(ally_count)]
-            #         continue
-            #     k = j % len(enemies)
-            #     if counter == ally_count:
-            #         break
-            #     if len(enemies) <= 0:
-            #         break
-            #     enemy_order.append(enemies[k].tolist())
-            #     counter += 1
-
-            ##added by luchy: this part creates a list of closest enemy order. If num of enemies == 0 creates a dummy fire point for each ally.
             if len(enemies) == 0:
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
@@ -570,32 +580,10 @@ class IndependentLearner(MultiAgentEnv):
                 # there are seven values by default
                 # these actions have to be masked
                 movement.pop()
-        
-        # mask out the unused part of the action space
-        # This have to be set at the beginning
-        # or no
-        # This value changes throughout the sim
-        # self.action_mask[]
 
-        
         elif len(allies) > 7:
             ally_count = 7
             locations = allies
-
-            # counter = 0
-            # for j in target:
-            #     if len(enemies) == 0:
-            #         # bu ne oluyor press tv
-            #         enemy_order = [[3, 0] for i in range(ally_count)]
-            #         continue
-            #     k = j % len(enemies)
-            #     if counter == ally_count:
-            #         break
-            #     if len(enemies) <= 0:
-            #         break
-            #     enemy_order.append(enemies[k].tolist())
-            #     counter += 1
-            ##added by luchy:
             if len(enemies) == 0:
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
@@ -613,20 +601,6 @@ class IndependentLearner(MultiAgentEnv):
 
         if len(locations) > 0:
             locations = list(map(list, locations))
-        
-        # boyle bisi olabilir mi ya
-        # locations'dan biri, bir düşmana 2 adımda veya daha yakınsa dur (movement=0) ve ona ateş et (target = arg.min(distances))
-        # for i in range(len(locations)):
-        #     for k in range(len(enemy_order)):
-        #         if getDistance(locations[i], enemy_order[k]) <= 3:
-        #             movement[i] = 0
-        #             enemy_order[i] = enemy_order[k]
-
-        # also a model manipulation, prevents model learning that actually
-        ##added by luchy:by this if the distance between ally and enemy is less than 3 then movement will be 0 as a preparation to shoot.
-        # for i in range(len(locations)):
-        #     if getDistance(locations[i], enemy_order[i]) <= 3:
-        #         movement[i] = 0
 
         locations = list(map(tuple, locations))
         enemy_order = list(map(tuple, enemy_order))
