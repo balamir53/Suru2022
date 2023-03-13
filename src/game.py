@@ -140,8 +140,6 @@ class Game:
                 if u.getCoor() == location[i]:
                     active_unit = u
                     break
-                else:
-                    print('noluyo hiamina')
             #print(active_unit.getTag()[0],ids[i],action[i],target[i])
             result = active_unit.moveAction(action[i],target[i])
             if self.render:
