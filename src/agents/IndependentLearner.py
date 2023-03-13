@@ -25,6 +25,7 @@ class IndependentLearner(MultiAgentEnv):
         # agents will be created at the start
         # but we have to figure out a way killing them and spawning new ones
         self.agents = agents
+        self.init_agents = copy.copy(agents)
         self.tagToString = {
             1: "Truck",
             2: "LightTank",
@@ -170,6 +171,7 @@ class IndependentLearner(MultiAgentEnv):
         return agentID
     
     def reset(self):
+        self.agents = copy.copy(self.init_agents)
         self.previous_enemy_count = 4
         self.previous_ally_count = 4
         self.episodes += 1
@@ -183,7 +185,25 @@ class IndependentLearner(MultiAgentEnv):
 
         # nope
         # self.agents = {}
+        self.observation_spaces = {}
+        self.obs_dict = {}
+        self.loads = {}
+        self.rewards = {}
+        self.dones = {}
+        self.infos = {}
+        for x in self.agents:
+            self.observation_spaces[x] = self.observation_space
+            self.obs_dict[x] = []
+            self.loads[x] = 0
+            self.rewards[x] = 0
+            self.dones[x] = False  #if agents die make this True
+            self.infos[x] = {}
+            self.dones[x] = False
 
+        self.agents_positions = {}
+        for i in range(len(self.agents)):
+            self.agents_positions[self.agents[i]]=(self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x'])
+        
         # how and when should we use this
         # elaborate
         # self.spawn()
@@ -222,7 +242,7 @@ class IndependentLearner(MultiAgentEnv):
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
 
-    def _decode_state(self, obs):
+    def  _decode_state(self, obs):
         turn = obs['turn']
         max_turn = obs['max_turn'] 
         units = obs['units']
@@ -275,7 +295,7 @@ class IndependentLearner(MultiAgentEnv):
         # print(my_units)
         # here we also check loads
         # apply reward for any load increase and decrease if on base
-        self.agents_positions_ = copy.copy(self.agents_positions)
+
         someone_died = False
         to_be_deleted = []
         for i,x in enumerate(self.agents):
@@ -297,11 +317,20 @@ class IndependentLearner(MultiAgentEnv):
                 new_pos = self.agents_positions[x]
                 # don't change position
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                self.load_reward_check(old_load, self.loads[x], x)        
+                self.load_reward_check(old_load, self.loads[x], x)
+                if someone_died:
+                    dead = True
+                    for z in my_units:
+                        if z['location'] == new_pos:
+                            dead = False
+                            break
+                    if dead:
+                        to_be_deleted.append(x)
                 continue
 
             to_break = False
             # check if there is already a unit set there
+            # we are not checking terrain and enemy units
             for y,q in enumerate(self.agents):
                 if y == i:
                     continue
@@ -313,7 +342,15 @@ class IndependentLearner(MultiAgentEnv):
                 # set it to old pos
                 new_pos = self.agents_positions[x]
                 self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                self.load_reward_check(old_load, self.loads[x], x) 
+                self.load_reward_check(old_load, self.loads[x], x)
+                if someone_died:
+                    dead = True
+                    for z in my_units:
+                        if z['location'] == new_pos:
+                            dead = False
+                            break
+                    if dead:
+                        to_be_deleted.append(x)
                 continue
             am_i_alive = False            
             
@@ -364,7 +401,6 @@ class IndependentLearner(MultiAgentEnv):
         if to_be_deleted:
             for i in range(len(to_be_deleted)):
                 del self.agents_positions[to_be_deleted[i]]
-                del self.agents_positions_[to_be_deleted[i]]
                 self.agents.remove(to_be_deleted[i])
                 del self.observation_spaces[to_be_deleted[i]] 
                 del self.obs_dict[to_be_deleted[i]] 
@@ -575,7 +611,7 @@ class IndependentLearner(MultiAgentEnv):
             for uni11 in allies:
                 if agent11 == uni11:
                     counter +=1
-        if counter != len(allies_) or counter != len(allies) or len(allies) !=len(allies_):
+        if counter != len(allies):
             print('Hay amk')
         
         # but how to check if our agent has been killed
@@ -640,6 +676,7 @@ class IndependentLearner(MultiAgentEnv):
 
         # TODO : delete this
         self.old_raw_state = raw_state
+        
 
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, self.train]
@@ -675,15 +712,17 @@ class IndependentLearner(MultiAgentEnv):
 
         # get rewards
         # we managed this in decode state
-
+        
         if done: #this comes from game step
+            for x in self.agents:
+                self.dones[x] = True
             self.dones['__all__'] = True
 
         done_d = self.dones
         info_d = self.infos
 
         self.nec_obs = next_state
-        
+
         return obs_d, rew_d, done_d, info_d
 
 

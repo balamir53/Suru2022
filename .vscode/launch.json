@@ -47,6 +47,15 @@
         "console": "integratedTerminal",
         "justMyCode": false,
         "args": ["RiskyValley","RandomAgent"]
-   }
+   },
+   {
+     "name": "multitraincadet",
+     "type": "python",
+     "request": "launch",
+     "program": "src/multitraincadet.py",
+     "console": "integratedTerminal",
+     "justMyCode": false,
+     "args": ["RiskyValley","RandomAgent"]
+}
     ]
 }
