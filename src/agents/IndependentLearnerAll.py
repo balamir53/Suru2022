@@ -261,6 +261,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         my_units = []
         enemy_units = []
         resources = []
+        old_enemy_unit_dict, new_enemy_unit_dict = self.enemy_unit_dicts(self.nec_obs, obs, self.team)
         for i in range(y_max):
             for j in range(x_max):
                 if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
@@ -576,6 +577,42 @@ class IndependentLearnerAll(MultiAgentEnv):
                 }
             lists[1].append(unit)
         return lists[0], lists[1] 
+    
+    @staticmethod
+    def enemy_unit_dicts(old_state, new_state, team):
+        """This method creates unit dicts to be used in nearest enemy locs."""
+        #from the old and new state(old_state, new_state), following base and dead parameters comes as they are part of a unit. Resources are added just in case.
+        unitTagToString = {1: "Truck",2: "LightTank",3: "HeavyTank",4: "Drone",6: "Base",8: "Dead",9: "Resource"}
+        old_enemy_units = old_state['units'][(team+1) % 2]
+        old_enemy_loc = enemy_locs(old_state, team)        
+        new_enemy_units = new_state['units'][(team+1) % 2]
+        new_enemy_loc = enemy_locs(new_state, team)   
+        
+        #creates a list consisting unit types of both states.
+        old_units_types = []
+        for x in old_enemy_loc:
+            old_units_types.append(old_enemy_units[x[0]][x[1]])
+        new_units_types = []
+        for x in new_enemy_loc:
+            new_units_types.append(new_enemy_units[x[0]][x[1]])
+
+        #creates a dict for each state consisting unit type tags and unit locations.
+        old_detail_list = []
+        for i,x in enumerate(old_enemy_loc):
+            unit = {
+                "tag" : unitTagToString[old_units_types[i]],
+                "location" : tuple(x)
+                }
+            old_detail_list.append(unit)
+        new_detail_list = []
+        for i,x in enumerate(new_enemy_loc):
+            unit = {
+                "tag" : unitTagToString[new_units_types[i]],
+                "location" : tuple(x)
+                }
+            new_detail_list.append(unit)
+            
+        return old_detail_list, new_detail_list
     
     def nearest_enemy_details(allies, enemies):
             nearest_enemy_detail = []
