@@ -74,7 +74,9 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         self.load_reward = 0.5
         self.unload_reward = 1
-
+        self.kill_reward = 1
+        self.stuck_reward = 0.05
+        
         self.current_action = []
 
         self.observation_space = spaces.Box(
@@ -246,6 +248,23 @@ class IndependentLearnerAll(MultiAgentEnv):
         if self.agents_positions[truck_id] == self.my_base and old_load>new_load:
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
+    
+    def kill_reward_check(self, old_enemy, new_enemy, enemy_order):
+        for _ , old in enumerate(old_enemy):
+            for _, new in enumerate(new_enemy):
+                if (old["location"] == new["location"]) and old["tag"] != "Dead" and new["tag"] == "Dead":
+                    for k, shoot_loc in enumerate(enemy_order):
+                        if tuple(shoot_loc) == old["location"] and self.current_action[self.agents[k]] == 0:
+                            self.rewards[self.agents[k]] += self.kill_reward
+    
+    def tank_stuck_reward_check(self):
+        # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
+        for i,x in enumerate(self.agents_positions):
+            if x[:5] != "tankh":
+                continue
+            agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
+            if agent_pos_key in self.terrain.keys() and self.terrain[agent_pos_key] == 1:
+                self.rewards[x] -= self.stuck_reward
 
     def  _decode_state(self, obs):
         turn = obs['turn']
@@ -261,7 +280,13 @@ class IndependentLearnerAll(MultiAgentEnv):
         my_units = []
         enemy_units = []
         resources = []
+        
         old_enemy_unit_dict, new_enemy_unit_dict = self.enemy_unit_dicts(self.nec_obs, obs, self.team)
+        #think whether enemy type is important or not.
+        self.kill_reward_check(old_enemy_unit_dict, new_enemy_unit_dict, self.nearest_enemy_locs)
+        #neg rew if the tankh is stuck on dirt.
+        if self.terrain:
+            self.tank_stuck_reward_check()
         for i in range(y_max):
             for j in range(x_max):
                 if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
@@ -647,7 +672,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                if terrain[i][j] == 'd' or terrain[i][j] == 'w' or terrain[i][j] == 'm':
                     ter_locs[i*self.width+j]=terrain_type[terrain[i][j]]
         return ter_locs
-    
+        
     def apply_action(self, action, raw_state, team):
         # this function takes the output of the model and converts it into a reasonable output for the game to play
 
@@ -686,10 +711,14 @@ class IndependentLearnerAll(MultiAgentEnv):
         # not here, in _decode_state
         enemies = enemy_locs(raw_state, team)
         my_unit_dict, enemy_unit_dict = IndependentLearnerAll.unit_dicts(raw_state, allies, enemies, team)  
-              
+        
         nearest_enemy_dict = IndependentLearnerAll.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
         nearest_enemy_locs = IndependentLearnerAll.nearest_enemy_list(nearest_enemy_dict)
-                
+        
+        # required for _decode state to decide kill reward
+        self.nearest_enemy_locs = []
+        self.nearest_enemy_locs = copy.copy(nearest_enemy_locs)
+        
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError
