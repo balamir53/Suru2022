@@ -102,7 +102,7 @@ def main():
                 "training_iteration": 7e7,
             },
             "config": config,
-            "checkpoint_freq": 50,
+            "checkpoint_freq": 5,
                 # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },
     #  },resume=True)
