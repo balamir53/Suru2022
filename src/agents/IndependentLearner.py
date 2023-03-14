@@ -524,6 +524,7 @@ class IndependentLearner(MultiAgentEnv):
         lists = [[], []]
         ally_units = obs['units'][team]
         enemy_units = obs['units'][(team+1) % 2]
+        
         #creates a list consisting unit types of both sides.
         units_types = [[],[]]
         for i,x in enumerate(allies):
@@ -534,12 +535,20 @@ class IndependentLearner(MultiAgentEnv):
         #creates a list consisting unit locations of both sides.
         unit_locations = [allies, enemies]
         #creates a dict for each side consisting unit type tags and unit locations.
-        for i,x in enumerate(unit_locations[0]):
-            unit = {
+        try:
+            for i,x in enumerate(unit_locations[0]):
+                unit = {
                     "tag" : unitTagToString[units_types[0][i]],
                     "location" : tuple(x)
                     }
-            lists[0].append(unit)
+                lists[0].append(unit)
+        except:
+            print(allies)
+            print(units_types)
+            print(unit_locations)
+            print(ally_units)
+            print(enemy_units)
+            
         for i in range(len(units_types[1])):
             unit = {
                 "tag" : unitTagToString[units_types[1][i]],
@@ -619,10 +628,10 @@ class IndependentLearner(MultiAgentEnv):
         # but it has to be controlled immediately after game step
         # not here, in _decode_state
         enemies = enemy_locs(raw_state, team)
-        # my_unit_dict, enemy_unit_dict = IndependentLearner.unit_dicts(raw_state, allies, enemies, team)  
+        my_unit_dict, enemy_unit_dict = IndependentLearner.unit_dicts(raw_state, allies, enemies, team)  
               
-        # nearest_enemy_dict = IndependentLearner.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
-        # nearest_enemy_locs = IndependentLearner.nearest_enemy_list(nearest_enemy_dict)
+        nearest_enemy_dict = IndependentLearner.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
+        nearest_enemy_locs = IndependentLearner.nearest_enemy_list(nearest_enemy_dict)
                 
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
@@ -640,8 +649,8 @@ class IndependentLearner(MultiAgentEnv):
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
             else:
-                enemy_order = [[3, 0] for i in range(ally_count)]
-                # enemy_order = copy.copy(nearest_enemy_locs)
+                # enemy_order = [[3, 0] for i in range(ally_count)]
+                enemy_order = copy.copy(nearest_enemy_locs)
 
             while len(enemy_order) > ally_count:
                 enemy_order.pop()
@@ -658,8 +667,8 @@ class IndependentLearner(MultiAgentEnv):
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
             else:
-                enemy_order = [[3, 0] for i in range(ally_count)]
-                # enemy_order = copy.copy(nearest_enemy_locs)
+                # enemy_order = [[3, 0] for i in range(ally_count)]
+                enemy_order = copy.copy(nearest_enemy_locs)
             
             ##added by luchy:due to creating nearest enemy locs for each ally, if number of allies are over 7, only 7 targets must be defined.
             enemy_order = enemy_order[:7]

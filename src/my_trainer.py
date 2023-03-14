@@ -155,7 +155,7 @@ def main():
     # Create our RLlib Trainer.
     algo = ppo.PPOTrainer(config=config, env="ray")
     
-    for _ in range(3):
+    for _ in range(50):
         print(algo.train())
 if __name__ == "__main__":
         main()
