@@ -97,6 +97,8 @@ class IndependentLearner(MultiAgentEnv):
         self.rewards = {}
         self.dones = {}
         self.infos = {}
+        # to give partial rewards to trucks on their distances to base
+        self.old_base_distance = {}
         for x in self.agents:
             self.observation_spaces[x] = self.observation_space
             self.obs_dict[x] = []
@@ -104,6 +106,7 @@ class IndependentLearner(MultiAgentEnv):
             self.rewards[x] = 0
             self.dones[x] = False  #if agents die make this True
             self.infos[x] = {}
+            self.old_base_distance[x] = 30
         self.dones['__all__'] = False
         # self.observation_space = spaces.Box(
         #     low=-2,
@@ -191,6 +194,7 @@ class IndependentLearner(MultiAgentEnv):
         self.rewards = {}
         self.dones = {}
         self.infos = {}
+        self.old_base_distance = {}
         for x in self.agents:
             self.observation_spaces[x] = self.observation_space
             self.obs_dict[x] = []
@@ -198,6 +202,7 @@ class IndependentLearner(MultiAgentEnv):
             self.rewards[x] = 0
             self.dones[x] = False  #if agents die make this True
             self.infos[x] = {}
+            self.old_base_distance[x] = 30
             self.dones[x] = False
 
         self.agents_positions = {}
@@ -402,7 +407,8 @@ class IndependentLearner(MultiAgentEnv):
                 del self.obs_dict[to_be_deleted[i]] 
                 del self.loads[to_be_deleted[i]] 
                 del self.rewards[to_be_deleted[i]] 
-                del self.dones[to_be_deleted[i]] 
+                del self.dones[to_be_deleted[i]]
+                del self.old_base_distance[to_be_deleted[i]]
                 # del self.infos[i] 
         counter = 0
         for i, agent in enumerate(self.agents_positions):
@@ -431,6 +437,17 @@ class IndependentLearner(MultiAgentEnv):
             my_pos = self.agents_positions[x]
             rel_dists+= (np.array(self.my_base)- np.array(my_pos)).tolist()
             rel_dists.append(self.unit_type['base'])
+            
+            # check for partial rewards of trucks loaded 3
+            dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
+            if (x[:5] == 'truck') and self.loads[x] > 2:
+                if dist_to_base > self.old_base_distance[x]:
+                    self.rewards[x]-= 0.01
+                else:
+                    self.rewards[x]+= 0.05
+            self.old_base_distance[x] = dist_to_base
+
+            
             # rel dist to friendly units
             for y in my_units:
                 # if itself, skip
