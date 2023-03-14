@@ -18,7 +18,7 @@ def read_hypers():
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
 RESOURCE_PADDING = 50*2 # parameter * (y and x)
 TERRAIN_PADDING = 7*7 # parameter
-class IndependentLearner(MultiAgentEnv):
+class IndependentLearnerAll(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
         
         # our method resembles the multiagent example in petting zoo
@@ -321,8 +321,9 @@ class IndependentLearner(MultiAgentEnv):
             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
                 new_pos = self.agents_positions[x]
                 # don't change position
-                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                self.load_reward_check(old_load, self.loads[x], x)
+                if x[:5] == "truck":
+                    self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                    self.load_reward_check(old_load, self.loads[x], x)
                 if someone_died:
                     dead = True
                     for z in my_units:
@@ -346,8 +347,9 @@ class IndependentLearner(MultiAgentEnv):
                 # if there is already a unit in that pos
                 # set it to old pos
                 new_pos = self.agents_positions[x]
-                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                self.load_reward_check(old_load, self.loads[x], x)
+                if x[:5] == "truck":
+                    self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                    self.load_reward_check(old_load, self.loads[x], x)
                 if someone_died:
                     dead = True
                     for z in my_units:
@@ -370,8 +372,9 @@ class IndependentLearner(MultiAgentEnv):
                     # but we check this above?
                     if z['location'] == new_pos:
                         self.agents_positions[x] = new_pos
-                        self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                        self.load_reward_check(old_load, self.loads[x], x) 
+                        if x[:5] == "truck":
+                            self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                            self.load_reward_check(old_load, self.loads[x], x) 
                         am_i_alive = True
                         break
                 # here is the case there is a either a dead unit or enemy unit on my movement direction
@@ -382,8 +385,9 @@ class IndependentLearner(MultiAgentEnv):
                         new_pos = self.agents_positions[x]
                         if z['location'] == new_pos:
                             self.agents_positions[x] = new_pos
-                            self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                            self.load_reward_check(old_load, self.loads[x], x) 
+                            if x[:5] == "truck":
+                                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                                self.load_reward_check(old_load, self.loads[x], x) 
                             am_i_alive = True
                             break
             if not am_i_alive and someone_died:
@@ -644,10 +648,10 @@ class IndependentLearner(MultiAgentEnv):
         # but it has to be controlled immediately after game step
         # not here, in _decode_state
         enemies = enemy_locs(raw_state, team)
-        my_unit_dict, enemy_unit_dict = IndependentLearner.unit_dicts(raw_state, allies, enemies, team)  
+        my_unit_dict, enemy_unit_dict = IndependentLearnerAll.unit_dicts(raw_state, allies, enemies, team)  
               
-        nearest_enemy_dict = IndependentLearner.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
-        nearest_enemy_locs = IndependentLearner.nearest_enemy_list(nearest_enemy_dict)
+        nearest_enemy_dict = IndependentLearnerAll.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
+        nearest_enemy_locs = IndependentLearnerAll.nearest_enemy_list(nearest_enemy_dict)
                 
         if 0 > len(allies):
             print("Neden negatif adamların var ?")

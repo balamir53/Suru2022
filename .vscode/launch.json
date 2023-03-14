@@ -49,10 +49,10 @@
         "args": ["RiskyValley","RandomAgent"]
    },
    {
-    "name": "myTrainFire",
+     "name": "myTrain-all",
     "type": "python",
     "request": "launch",
-    "program": "src/my_trainerFire.py",
+     "program": "src/my_trainer-all.py",
     "console": "integratedTerminal",
     "justMyCode": false,
     "args": ["RiskyValley","RandomAgent"]
@@ -65,6 +65,15 @@
      "console": "integratedTerminal",
      "justMyCode": false,
      "args": ["RiskyValley","RandomAgent"]
+},
+{
+  "name": "multitraincadet-all",
+  "type": "python",
+  "request": "launch",
+  "program": "src/multitraincadet-all.py",
+  "console": "integratedTerminal",
+  "justMyCode": false,
+  "args": ["RiskyValley","RandomAgent"]
       }
     ]
 }

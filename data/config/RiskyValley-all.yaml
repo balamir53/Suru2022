@@ -59,16 +59,16 @@ blue:
     - type: Truck
       x: 2
       y: 17
-    - type: Truck
+    - type: LightTank
       x: 2
       y: 16
-    - type: Truck
+    - type: LightTank
       x: 2
       y: 15
-    - type: Truck
+    - type: HeavyTank
       x: 0
       y: 15
-    - type: Truck
+    - type: Drone
       x: 3
       y: 15        
 resources:

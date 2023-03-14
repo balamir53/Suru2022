@@ -8,7 +8,7 @@ import numpy as np
 import os
 from ray.tune import run_experiments, register_env
 # from agents.GolKenari import GolKenari
-from agents.IndependentLearner import IndependentLearner
+from agents.IndependentLearnerAll import IndependentLearnerAll
 
 from models.action_mask_model import TorchActionMaskModel
 
@@ -38,43 +38,29 @@ args = parser.parse_args()
 def main():
     ray.init()
     
-    # obs_space = spaces.Box(
-    #         low=-2,
-    #         high=401,
-    #         shape=(6,24*18*10+4),
-    #         dtype=np.int16
-    #     )
-    # act_space = spaces.MultiDiscrete([7, 7, 7, 7, 7, 7])
-    
-    # instead of a set hand the agents via an ordered list
-    # truck_agents = {"truck{}".format(i) for i in range(6)}
-    truck_agents = ["truck{}".format(i) for i in range(7)]
+    # truck_agents = ["truck{}".format(i) for i in range(7)]
+    agents = ["truck0", "truck1", "truck2", "tankl0", "tankl1", "tankh0", "drone0"]
 
-    # grouped_env = env.with_agent_groups({
-    #         "group1" : ['truck0', 'truck1', 'truck2']
-    #     })
-
-    # def policy_mapping_fn(agent_id, episode, worker, **kwargs):
-    #     return "truck"+agent_id
+    def policy_mapping_fn(agent_id, episode, worker, **kwargs):
+        if agent_id[:5] == "truck":
+            return "truck"
+        elif agent_id[:5] == "tankh":
+             return "tankh"
+        elif agent_id[:5] == "tankl":
+             return "tankl"
+        elif agent_id[:5] == "drone":
+             return "drone"
 
     def env_creator(argo):
         # return IndependentLearner(args, truck_agents).with_agent_groups({
         #      "group1" : ['truck0', 'truck1', 'truck2','truck3', 'truck4', 'truck5']
         #     #  'group2' : ['light_tank0','light_tank1']
         # }, obs_space=obs_space, act_space=act_space)
-        return IndependentLearner(args, truck_agents)
+        return IndependentLearnerAll(args, agents)
 
     env = env_creator({})
 
     register_env("ray", env_creator)
-
-    # >>> env = MyMultiAgentEnv(...) # doctest: +SKIP
-    #         >>> grouped_env = env.with_agent_groups(env, { # doctest: +SKIP
-    #         ...   "group1": ["agent1", "agent2", "agent3"], # doctest: +SKIP
-    #         ...   "group2": ["agent4", "agent5"], # doctest: +SKIP
-    #         ... }) # doctest: +SKIP
-
-    
 
     # register_env("ray", lambda config: IndependentLearner(args, agents))
     config= {
@@ -107,51 +93,12 @@ def main():
             #     },
             "multiagent": {
                 # "policies":set(env.env.agents), # first env is the group agent, seconde one independent agent
-                "policies": {"truck"},
-                # {
-                #     "truck" : PolicySpec(policy_class=None,
-                #                          observation_space=None,
-                #                          action_space=None,
-                #                          ),
-                #     # "light_tank": PolicySpec()   
-                # } ,
-                # rather than using ids for agents
-                # we can use names like truck1, truck2
-                # but how to manage this with changing number of agents
-                # which will be spawn and killed during the simulation
-                # and how to group them at the same time for using just one policy
-                # rather than creating polices per agent
-                # first try to create a grouped policy for seven trucks
-                # we will then add other type of agents 
-                "policy_mapping_fn": (
-                    # lambda agent_id, episode, **kwargs: 'truck'+str(agent_id)),
-                    # lambda agent_id, episode, **kwargs: agent_id),
-                    lambda agent_id, episode, **kwargs: 'truck'),
-                    
+                "policies": {"truck", "tankl","tankh", "drone"},
+                "policy_mapping_fn": policy_mapping_fn,                    
             }
             }
     
-    # run_experiments({
-    #     "risky_ppo_recruit": {
-    #         "run": "PPO",
-    #         "env": "ray",
-    #         "stop": {
-    #             "training_iteration": 7e7,
-    #         },
-    #         "config": config,
-    #         "checkpoint_freq": 50,
-    #             # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
-    #     },
-    #  },resume=True)
-    # # })
-
-    # tune.run(
-    #     "PPO",
-    #     stop={"episodes_total": 60000},
-    #     checkpoint_freq=50,
-    #     config= config
-    # )
-
+ 
     # Create our RLlib Trainer.
     algo = ppo.PPOTrainer(config=config, env="ray")
     
