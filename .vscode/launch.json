@@ -49,6 +49,15 @@
         "args": ["RiskyValley","RandomAgent"]
    },
    {
+    "name": "myTrainFire",
+    "type": "python",
+    "request": "launch",
+    "program": "src/my_trainerFire.py",
+    "console": "integratedTerminal",
+    "justMyCode": false,
+    "args": ["RiskyValley","RandomAgent"]
+},
+   {
      "name": "multitraincadet",
      "type": "python",
      "request": "launch",
