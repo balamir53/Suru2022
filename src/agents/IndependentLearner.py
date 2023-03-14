@@ -352,8 +352,9 @@ class IndependentLearner(MultiAgentEnv):
                     if dead:
                         to_be_deleted.append(x)
                 continue
-            am_i_alive = False            
-            
+
+            am_i_alive = False      
+
             if someone_died or (len(self.agents) == len(my_units) and self.train == 0):
                 # two options, either nothing changed
                 # or a new unit has been created and another has been killed
@@ -368,6 +369,18 @@ class IndependentLearner(MultiAgentEnv):
                         self.load_reward_check(old_load, self.loads[x], x) 
                         am_i_alive = True
                         break
+                # here is the case there is a either a dead unit or enemy unit on my movement direction
+                if not am_i_alive:
+                    for z in my_units:
+                        # set it to current pos and check if its there
+                        # if it is then it is alive and we should keep it 
+                        new_pos = self.agents_positions[x]
+                        if z['location'] == new_pos:
+                            self.agents_positions[x] = new_pos
+                            self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                            self.load_reward_check(old_load, self.loads[x], x) 
+                            am_i_alive = True
+                            break
             if not am_i_alive and someone_died:
                 to_be_deleted.append(x)
                 # del self.agents_positions[x]
@@ -380,23 +393,6 @@ class IndependentLearner(MultiAgentEnv):
                 # del self.dones[x] 
                 # del self.infos[i] 
                 continue
-            if not am_i_alive:
-                # this is wildcard
-                # don't change anything for now
-
-                # TODO :
-                # check terrain constraints
-                
-                # it is broken, sth is off, actions are applied maybe in different order
-                # chaos amk
-                # it may hit an enemy unit ??!!
-                new_pos = self.agents_positions[x]
-                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
-                self.load_reward_check(old_load, self.loads[x], x)
-
-                # make its done flag true
-                # self.dones[x] = True
-                pass
 
         if to_be_deleted:
             for i in range(len(to_be_deleted)):
@@ -414,6 +410,8 @@ class IndependentLearner(MultiAgentEnv):
                 if self.agents_positions[agent] == uni['location']:
                     counter +=1
         if counter < len(self.agents_positions):
+            print(self.agents_positions)
+            print(my_units)
             print('Done')
         # unitss = [*units[0].reshape(-1).tolist(), *units[1].reshape(-1).tolist()]
         # hpss = [*hps[0].reshape(-1).tolist(), *hps[1].reshape(-1).tolist()]
@@ -543,11 +541,12 @@ class IndependentLearner(MultiAgentEnv):
                     }
                 lists[0].append(unit)
         except:
-            print(allies)
-            print(units_types)
-            print(unit_locations)
-            print(ally_units)
-            print(enemy_units)
+            print('al kirdin kirdin')
+            # print(allies)
+            # print(units_types)
+            # print(unit_locations)
+            # print(ally_units)
+            # print(enemy_units)
             
         for i in range(len(units_types[1])):
             unit = {
@@ -649,7 +648,6 @@ class IndependentLearner(MultiAgentEnv):
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
             else:
-                # enemy_order = [[3, 0] for i in range(ally_count)]
                 enemy_order = copy.copy(nearest_enemy_locs)
 
             while len(enemy_order) > ally_count:
@@ -667,7 +665,6 @@ class IndependentLearner(MultiAgentEnv):
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
             else:
-                # enemy_order = [[3, 0] for i in range(ally_count)]
                 enemy_order = copy.copy(nearest_enemy_locs)
             
             ##added by luchy:due to creating nearest enemy locs for each ally, if number of allies are over 7, only 7 targets must be defined.

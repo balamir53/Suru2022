@@ -133,20 +133,15 @@ class Game:
         #    print("   ",a,b,c)
         #print("Train",train)
         #print("-----")
-        if not location:
-            print('Tum uniteler oldu')
-        try:    
-            for i in range(len(action)):
-                current_units = self.units[self.go_team]
-                active_unit = None
-                for u in current_units:
-                    if u.getCoor() == location[i]:
-                        active_unit = u
-                        break
-                #print(active_unit.getTag()[0],ids[i],action[i],target[i])
-                result = active_unit.moveAction(action[i],target[i])
-        except:
-            print('Done')
+        for i in range(len(action)):
+            current_units = self.units[self.go_team]
+            active_unit = None
+            for u in current_units:
+                if u.getCoor() == location[i]:
+                    active_unit = u
+                    break
+            #print(active_unit.getTag()[0],ids[i],action[i],target[i])
+            result = active_unit.moveAction(action[i],target[i])
             if self.render:
                 if action[i] == 0:
                     if not active_unit.loadable:
