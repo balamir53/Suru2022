@@ -8,9 +8,9 @@ red:
     x: 5
     y: 3
   units:
-    - type: LightTank
-      x: 5
-      y: 2
+    # - type: LightTank
+    #   x: 5
+    #   y: 2
     - type: Truck
       x: 4
       y: 3

@@ -55,7 +55,7 @@
      "program": "src/my_trainer-all.py",
      "console": "integratedTerminal",
      "justMyCode": false,
-     "args": ["TrainSingleMixedSmall","RandomAgent"]
+     "args": ["TrainSingleMixedSmall","RandomAgent", "--render"]
 },
    {
      "name": "multitraincadet",

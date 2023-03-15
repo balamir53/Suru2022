@@ -116,6 +116,8 @@ class IndependentLearnerAll(MultiAgentEnv):
             "action_mask": spaces.Box(0, 1, shape=(7,), dtype=np.int8)
             }
         )
+        # 0 is stay/fire/load/unload
+        # other 6 are directions
         self.action_space = spaces.Discrete(7)
         # this has to be defined
         # make it smaller by processing the observation space
@@ -362,6 +364,7 @@ class IndependentLearnerAll(MultiAgentEnv):
 
                 # check for no-go section
                 # TODO: apply mud no-go for mud,
+                # also for lake because of the drones
                 if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
                     new_pos = self.agents_positions[x]
                     # don't change position
@@ -483,10 +486,10 @@ class IndependentLearnerAll(MultiAgentEnv):
             
             # check for partial rewards of trucks loaded 3
             dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
-            if (x[:5] == 'truck'):
+            if x[:5] == 'truck':
                 # if loaded truck is on the base force it to unload
-                if my_pos==my_base and self.loads[x]>0:
-                    self.action_mask[x][1:] = 0
+                if my_pos == my_base and self.loads[x] > 0:
+                    self.action_masks[x][1:] = 0
                 if self.loads[x] > 2:
                     if dist_to_base > self.old_base_distance[x]:
                         self.rewards[x]-= 0.01
@@ -513,6 +516,9 @@ class IndependentLearnerAll(MultiAgentEnv):
             res_dists = []
             sorted_dist = []
             for z,y in enumerate(resources):
+                # if a truck is on a resource force it to collect
+                if x[:5] == 'truck' and my_pos == y:
+                    self.action_masks[x][1:] = 0
                 # get the distances and indexes as tuple
                 dis = int(np.linalg.norm(np.array(y)-np.array(my_pos)))
                 sorted_dist.append((dis,z))
