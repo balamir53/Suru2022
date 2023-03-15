@@ -96,8 +96,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.load_reward = 0.5
         self.unload_reward = 1
         self.kill_reward = 1
-        self.stuck_reward = 0.05
-        
+        self.stuck_reward = -10
+        self.stuck_agents = []
         self.current_action = []
 
         # self.observation_space = spaces.Box(
@@ -254,7 +254,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.resetted = True
         # self.dones = set()
         self.dones['__all__'] = False
-
+        self.stuck_agents = []
         # we should usually keep a dictionary 
         # for every agent
         # but because we will use only one environment
@@ -286,11 +286,12 @@ class IndependentLearnerAll(MultiAgentEnv):
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
     
-    def kill_reward_check(self, old_enemy, new_enemy, enemy_order):
+    def kill_reward_check(self, obs):
+        old_enemy, new_enemy = self.enemy_unit_dicts(obs, self.team)
         for _ , old in enumerate(old_enemy):
             for _, new in enumerate(new_enemy):
                 if (old["location"] == new["location"]) and old["tag"] != "Dead" and new["tag"] == "Dead":
-                    for k, shoot_loc in enumerate(enemy_order):
+                    for k, shoot_loc in enumerate(self.nearest_enemy_locs):
                         #TODO: self.current_action[self.agents[k] ] is not safe check this.
                         if tuple(shoot_loc) == old["location"] and self.current_action[self.agents[k]] == 0:
                             self.rewards[self.agents[k]] += self.kill_reward
@@ -298,11 +299,12 @@ class IndependentLearnerAll(MultiAgentEnv):
     def tank_stuck_reward_check(self):
         # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
         for i,x in enumerate(self.agents_positions):
-            if x[:5] != "tankh":
+            if x[:5] != "tankh" or x in self.stuck_agents:
                 continue
             agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
             if self.terrain.get(agent_pos_key) == 1:
-                self.rewards[x] -= self.stuck_reward
+                self.rewards[x] += self.stuck_reward
+                self.stuck_agents.append(x)
     
     def  _decode_state(self, obs, procOrUpdate=0):
         # this function is also called from inference mode with two options
@@ -322,12 +324,13 @@ class IndependentLearnerAll(MultiAgentEnv):
         enemy_units = []
         resources = []
         
-        old_enemy_unit_dict, new_enemy_unit_dict = self.enemy_unit_dicts(self.nec_obs, obs, self.team)
+        #with self.nec_obs as old state, obs as new state returns old enemy and new state enemy details.
         #think whether enemy type is important or not.
-        self.kill_reward_check(old_enemy_unit_dict, new_enemy_unit_dict, self.nearest_enemy_locs)
-        #neg rew if the tankh is stuck on dirt.
-        # if self.terrain:
-        #     self.tank_stuck_reward_check()
+        self.kill_reward_check(obs)
+        # neg rew if the tankh is stuck on dirt.
+        print(turn)
+        if self.terrain:
+            self.tank_stuck_reward_check()
         for i in range(y_max):
             for j in range(x_max):
                 if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
@@ -645,13 +648,13 @@ class IndependentLearnerAll(MultiAgentEnv):
             lists[1].append(unit)
         return lists[0], lists[1] 
     
-    @staticmethod
-    def enemy_unit_dicts(old_state, new_state, team):
+    # @staticmethod
+    def enemy_unit_dicts(self, new_state, team):
         """This method creates unit dicts to be used in nearest enemy locs."""
         #from the old and new state(old_state, new_state), following base and dead parameters comes as they are part of a unit. Resources are added just in case.
         unitTagToString = {1: "Truck",2: "LightTank",3: "HeavyTank",4: "Drone",6: "Base",8: "Dead",9: "Resource"}
-        old_enemy_units = old_state['units'][(team+1) % 2]
-        old_enemy_loc = enemy_locs(old_state, team)        
+        old_enemy_units = self.nec_obs['units'][(team+1) % 2]
+        old_enemy_loc = enemy_locs(self.nec_obs, team)        
         new_enemy_units = new_state['units'][(team+1) % 2]
         new_enemy_loc = enemy_locs(new_state, team)   
         
