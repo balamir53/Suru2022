@@ -11,8 +11,8 @@ import numpy as np
 # import utilities
 from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement
 
-def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/TrainSingleMixedSmall.yaml", "r") as f:   
+def read_hypers(map):
+    with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
@@ -20,11 +20,32 @@ RESOURCE_PADDING = 50*2 # parameter * (y and x)
 TERRAIN_PADDING = 7*7 # parameter
 class IndependentLearnerAll(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
-        
+        # agents is an empty list to be filled
+        self.agents = agents
+        # get agents from map config
+        self.configs = read_hypers(args.map)
+        self.truckID =0
+        self.tanklID=0
+        self.tankhID=0
+        self.droneID=0
+        for x in self.configs['blue']['units']:
+            if x['type'] == 'Truck':
+                self.agents.append('truck'+str(self.truckID))
+                self.truckID +=1
+            elif x['type'] == 'LightTank':
+                self.agents.append('tankl'+str(self.tanklID))
+                self.tanklID +=1
+            elif x['type'] == 'HeavyTank':
+                self.agents.append('tankh'+str(self.tankhID))
+                self.tankhID +=1
+            elif x['type'] == 'Drone':
+                self.agents.append('drone'+str(self.droneID))
+                self.droneID +=1
+
         # our method resembles the multiagent example in petting zoo
         # agents will be created at the start
         # but we have to figure out a way killing them and spawning new ones
-        self.agents = agents
+        
         self.init_agents = copy.copy(agents)
         self.tagToString = {
             1: "Truck",
@@ -57,14 +78,14 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         # creating our game which will run a single environment that will be 
         # played via our agents 
-        agentos = [None, "RandomAgent"]
-        self.game = Game(args, agentos)
+
+        self.game = Game(args, [None, args.agentRed])
 
         # parameters for our game
         self.train = 0
         self.team = team
         self.enemy_team = 1        
-        self.configs = read_hypers()
+        
         self.height = self.configs['map']['y']
         self.width = self.configs['map']['x']
         self.reward = 0
@@ -77,11 +98,23 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         self.current_action = {}
 
-        self.observation_space = spaces.Box(
+        # self.observation_space = spaces.Box(
+        #     low=-40,
+        #     high=401,
+        #     shape=(302,),
+        #     dtype=np.int16
+        # )
+
+        self.observation_space = spaces.Dict(
+            {
+            "observations": spaces.Box(
             low=-40,
             high=401,
             shape=(302,),
             dtype=np.int16
+        ),
+            "action_mask": spaces.Box(0, 1, shape=(7,), dtype=np.int8)
+            }
         )
         self.action_space = spaces.Discrete(7)
         # this has to be defined
@@ -97,6 +130,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.rewards = {}
         self.dones = {}
         self.infos = {}
+        self.action_masks = {}
         # to give partial rewards to trucks on their distances to base
         self.old_base_distance = {}
         for x in self.agents:
@@ -107,6 +141,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             self.dones[x] = False  #if agents die make this True
             self.infos[x] = {}
             self.old_base_distance[x] = 30
+            self.action_masks[x] = np.ones(7, dtype=np.int8)
         self.dones['__all__'] = False
         # self.observation_space = spaces.Box(
         #     low=-2,
@@ -195,6 +230,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.dones = {}
         self.infos = {}
         self.old_base_distance = {}
+        self.action_masks = {}
         for x in self.agents:
             self.observation_spaces[x] = self.observation_space
             self.obs_dict[x] = []
@@ -204,6 +240,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             self.infos[x] = {}
             self.old_base_distance[x] = 30
             self.dones[x] = False
+            self.action_masks[x] = np.ones(7, dtype=np.int8)
 
         self.agents_positions = {}
         for i in range(len(self.agents)):
@@ -420,7 +457,8 @@ class IndependentLearnerAll(MultiAgentEnv):
                     del self.rewards[to_be_deleted[i]] 
                     del self.dones[to_be_deleted[i]]
                     del self.old_base_distance[to_be_deleted[i]]
-                    del self.infos[to_be_deleted[i]] 
+                    del self.infos[to_be_deleted[i]]
+                    del self.action_masks[to_be_deleted[i]]
             counter = 0
             for i, agent in enumerate(self.agents_positions):
                 for uni in my_units:
@@ -715,8 +753,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         # self.action_mask = np.ones(49,dtype=np.int8)
         
         # dont forget to reset reward
-        for x in self.rewards:
+        for x in self.agents:
             self.rewards[x] = 0
+            self.action_masks[x] = np.ones(7,dtype=np.int8)
         
         self.current_action = action_dict
 

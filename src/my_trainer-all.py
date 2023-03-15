@@ -38,9 +38,9 @@ args = parser.parse_args()
 def main():
     ray.init()
     
-    # truck_agents = ["truck{}".format(i) for i in range(7)]
-    # agents = ["truck0", "truck1", "truck2", "tankl0", "tankl1", "tankh0", "drone0"]
-    agents = ["tankl0","truck0"]
+    # agents are derived from map in learner class
+    # hand over an empty list for now
+    agents = []
 
     def policy_mapping_fn(agent_id, episode, worker, **kwargs):
         if agent_id[:5] == "truck":
@@ -52,16 +52,7 @@ def main():
         elif agent_id[:5] == "drone":
              return "drone"
 
-    def env_creator(args):
-        # return IndependentLearner(args, truck_agents).with_agent_groups({
-        #      "group1" : ['truck0', 'truck1', 'truck2','truck3', 'truck4', 'truck5']
-        #     #  'group2' : ['light_tank0','light_tank1']
-        # }, obs_space=obs_space, act_space=act_space)
-        return IndependentLearnerAll(args['args'],[])
-
-    env = env_creator({'args':args})
-
-    register_env("ray", env_creator)
+    register_env("ray", lambda helehele: IndependentLearnerAll(args,agents))
 
     # register_env("ray", lambda config: IndependentLearner(args, agents))
     config= {
