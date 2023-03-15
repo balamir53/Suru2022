@@ -25,14 +25,14 @@ movement_grid = [[(0, 0), (-1, 0), (0, -1), (1, 0), (1, 1), (0, 1), (-1, 1)],
 # DIST_PARAMETER = 8 # for 6*4 map
 DIST_PARAMETER = 24 # for 24*18 map
 
-def getMovement(unit_position, action):
+def getDirection(pos_x, x, y):
     try:
-        return movement_grid[unit_position[1] % 2][action]
+        return movement_grid[pos_x % 2].index((x, y))
     except:
-        # print(unit_position)
-        # print(action)
-        pass
-
+        return 7
+    
+def getMovement(unit_position, action):
+    return movement_grid[unit_position[1] % 2][action]
 
 def decodeState(state):
     # score = state['score']

@@ -9,7 +9,7 @@ from gym import spaces
 import yaml
 import numpy as np
 # import utilities
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection
 
 def read_hypers(map):
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -98,7 +98,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.kill_reward = 1
         self.stuck_reward = -10
         self.stuck_agents = []
-        self.current_action = []
+        self.current_action = {}
 
         # self.observation_space = spaces.Box(
         #     low=-40,
@@ -118,6 +118,8 @@ class IndependentLearnerAll(MultiAgentEnv):
             "action_mask": spaces.Box(0, 1, shape=(7,), dtype=np.int8)
             }
         )
+        # 0 is stay/fire/load/unload
+        # other 6 are directions
         self.action_space = spaces.Discrete(7)
         # this has to be defined
         # make it smaller by processing the observation space
@@ -305,6 +307,8 @@ class IndependentLearnerAll(MultiAgentEnv):
             if self.terrain.get(agent_pos_key) == 1:
                 self.rewards[x] += self.stuck_reward
                 self.stuck_agents.append(x)
+                #momentarily mask the action to stay.
+                self.action_masks[x][1:] = 0
     
     def  _decode_state(self, obs, procOrUpdate=0):
         # this function is also called from inference mode with two options
@@ -326,11 +330,12 @@ class IndependentLearnerAll(MultiAgentEnv):
         
         #with self.nec_obs as old state, obs as new state returns old enemy and new state enemy details.
         #think whether enemy type is important or not.
-        self.kill_reward_check(obs)
+        if procOrUpdate == 0:
+            self.kill_reward_check(obs)
         # neg rew if the tankh is stuck on dirt.
-        print(turn)
-        if self.terrain:
+        if self.terrain and procOrUpdate == 0:
             self.tank_stuck_reward_check()
+
         for i in range(y_max):
             for j in range(x_max):
                 if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
@@ -389,9 +394,18 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # maybe another unit moved to the locations and this one cant?
                 # or there was a no-go section to go
                 old_load = self.loads[x]
-
-                # check for no-go section
-                # TODO: apply mud no-go for mud,
+                # check of no-go section for lake because of the drones
+                if x[:5] != 'drone' and self.terrain.get(new_pos[0]*self.width+new_pos[1]) == 2:
+                    new_pos = self.agents_positions[x]
+                    if someone_died:
+                        dead = True
+                        for z in my_units:
+                            if z['location'] == new_pos:
+                                dead = False
+                                break
+                        if dead:
+                            to_be_deleted.append(x)
+                    continue
                 if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
                     new_pos = self.agents_positions[x]
                     # don't change position
@@ -502,7 +516,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         # procOrUpdate = 2 is for update agents call from inference
         if procOrUpdate == 2 :
             return
-
+        
         # return a dict of agents obs
         for i,x in enumerate(self.agents):
             rel_dists = []
@@ -513,13 +527,20 @@ class IndependentLearnerAll(MultiAgentEnv):
             
             # check for partial rewards of trucks loaded 3
             dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
-            if (x[:5] == 'truck') and self.loads[x] > 2:
-                if dist_to_base > self.old_base_distance[x]:
-                    self.rewards[x]-= 0.01
-                else:
-                    self.rewards[x]+= 0.05
+            if x[:5] == 'truck':
+                # if loaded truck is on the base force it to unload
+                if my_pos == my_base and self.loads[x] > 0:
+                    self.action_masks[x][1:] = 0
+                if self.loads[x] > 2:
+                    if dist_to_base > self.old_base_distance[x]:
+                        self.rewards[x]-= 0.01
+                    else:
+                        self.rewards[x]+= 0.05
             self.old_base_distance[x] = dist_to_base
 
+            # action mask if mud.
+            if x in self.stuck_agents:
+                self.action_masks[x][1:] = 0
             
             # rel dist to friendly units
             for y in my_units:
@@ -539,6 +560,9 @@ class IndependentLearnerAll(MultiAgentEnv):
             res_dists = []
             sorted_dist = []
             for z,y in enumerate(resources):
+                # if a truck is on a resource force it to collect
+                if x[:5] == 'truck' and my_pos == y:
+                    self.action_masks[x][1:] = 0
                 # get the distances and indexes as tuple
                 dis = int(np.linalg.norm(np.array(y)-np.array(my_pos)))
                 sorted_dist.append((dis,z))
@@ -567,6 +591,11 @@ class IndependentLearnerAll(MultiAgentEnv):
                     for hor in range(-index, index+1):
                         coor = (my_pos[0] + ver, my_pos[1] + hor)
                         lookat = coor[0]*self.width + coor[1]
+                        # mask drone's action to not to go to mountain-side.
+                        if x[:5] == 'drone' and abs(ver)<2 and abs(hor)<2 and self.terrain.get(lookat) == 3: 
+                            direction = getDirection(my_pos[1], hor, ver)
+                            if direction < 7:
+                               self.action_masks[x][direction] = 0 
                         if self.terrain.get(lookat):
                             agent_surround[counter] = self.terrain[lookat]
                         counter += 1
