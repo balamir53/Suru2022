@@ -64,8 +64,8 @@ class Game:
         self.gif = args.gif
         self.img = args.img
         try:
-            # with open('/workspaces/Suru2022/data/config/'+args.map+'.yaml') as file:
-            with open('data/config/'+args.map+'.yaml') as file:
+            with open('/workspaces/Suru2022/data/config/'+args.map+'.yaml') as file:
+            # with open('data/config/'+args.map+'.yaml') as file:
                 self.config = yaml.load(file, Loader=yaml.FullLoader)
         except:
             print('Map Could Not be Found!')

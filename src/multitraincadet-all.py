@@ -39,7 +39,8 @@ def main():
     ray.init()
 
     # truck_agents = ["truck{}".format(i) for i in range(7)]
-    agents = ["truck0", "truck1", "truck2", "tankl0", "tankl1", "tankh0", "drone0"]
+    # agents = ["truck0", "truck1", "truck2", "tankl0", "tankl1", "tankh0", "drone0"]
+    agents = ["tankl0","truck0"]
 
     def policy_mapping_fn(agent_id, episode, worker, **kwargs):
         if agent_id[:5] == "truck":
@@ -62,7 +63,7 @@ def main():
     config= {
             "use_critic": True,
             "log_level": "WARN",
-             "num_workers": 12,
+             "num_workers": 14,
             #  "num_gpus":1,
              "use_gae": True,
              "lambda": 1.0,
@@ -90,6 +91,7 @@ def main():
             "multiagent": {
                 # "policies":set(env.env.agents), # first env is the group agent, seconde one independent agent
                 "policies": {"truck", "tankl","tankh", "drone"},
+                # "policies": {"truck", "tankl"},
                 "policy_mapping_fn": policy_mapping_fn,                    
             }
             }
@@ -102,7 +104,7 @@ def main():
                 "training_iteration": 7e7,
             },
             "config": config,
-            "checkpoint_freq": 5,
+            "checkpoint_freq": 50,
                 # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
         },
     #  },resume=True)
