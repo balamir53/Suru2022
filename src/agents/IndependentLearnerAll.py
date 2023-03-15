@@ -248,7 +248,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         if self.agents_positions[truck_id] == self.my_base and old_load>new_load:
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
-    
+
     def kill_reward_check(self, old_enemy, new_enemy, enemy_order):
         for _ , old in enumerate(old_enemy):
             for _, new in enumerate(new_enemy):
@@ -266,6 +266,299 @@ class IndependentLearnerAll(MultiAgentEnv):
             agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
             if self.terrain.get(agent_pos_key) == 1:
                 self.rewards[x] -= self.stuck_reward
+    
+    def process_obs(self,obs):
+        turn = obs['turn']
+        max_turn = obs['max_turn'] 
+        units = obs['units']
+        hps = obs['hps']
+        bases = obs['bases']
+        score = obs['score']
+        res = obs['resources']
+        load = obs['loads']
+        terrain = obs["terrain"]
+        y_max, x_max = res.shape
+        my_units = []
+        enemy_units = []
+        resources = []
+        for i in range(y_max):
+            for j in range(x_max):
+                if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
+                    my_units.append(
+                    {   
+                        'unit': units[self.team][i][j],
+                        'tag': self.tagToString[units[self.team][i][j]],
+                        'hp': hps[self.team][i][j],
+                        'location': (i,j),
+                        'load': load[self.team][i][j]
+                    }
+                    )
+                if units[self.enemy_team][i][j]<6 and units[self.enemy_team][i][j] != 0:
+                    enemy_units.append(
+                    {   
+                        'unit': units[self.enemy_team][i][j],
+                        'tag': self.tagToString[units[self.enemy_team][i][j]],
+                        'hp': hps[self.enemy_team][i][j],
+                        'location': (i,j),
+                        'load': load[self.enemy_team][i][j]
+                    }
+                    )
+                if res[i][j]==1:
+                    resources.append((i,j))
+                if bases[self.team][i][j]:
+                    my_base = (i,j)
+                if bases[self.enemy_team][i][j]:
+                    enemy_base = (i,j)
+        
+
+        # return a dict of agents obs
+        for i,x in enumerate(self.agents):
+            rel_dists = []
+            # add rel dist to base
+            my_pos = self.agents_positions[x]
+            rel_dists+= (np.array(self.my_base)- np.array(my_pos)).tolist()
+            rel_dists.append(self.unit_type['base'])
+            
+            # check for partial rewards of trucks loaded 3
+            dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
+            if (x[:5] == 'truck') and self.loads[x] > 2:
+                if dist_to_base > self.old_base_distance[x]:
+                    self.rewards[x]-= 0.01
+                else:
+                    self.rewards[x]+= 0.05
+            self.old_base_distance[x] = dist_to_base
+            
+            # rel dist to friendly units
+            for y in my_units:
+                # if itself, skip
+                if my_pos == y['location']:
+                    continue                
+                rel_dists+=(np.array(y['location'])- np.array(my_pos)).tolist()
+                rel_dists.append(self.unit_type['friend'])
+            # rel dist to enemy units
+            for y in enemy_units:
+                rel_dists+=(np.array(y['location'])- np.array(my_pos)).tolist()
+                rel_dists.append(self.unit_type['foe'])
+            # add padding for the rest
+            rel_dists+=[0]*(UNITS_PADDING-len(rel_dists))
+
+            # check rel distances to resources and take first 50 into account
+            res_dists = []
+            sorted_dist = []
+            for z,y in enumerate(resources):
+                # get the distances and indexes as tuple
+                dis = int(np.linalg.norm(np.array(y)-np.array(my_pos)))
+                sorted_dist.append((dis,z))
+            # sort the distances with the indexed
+            sorted_dist = sorted(sorted_dist, key= lambda x: x[0])
+            # get relative distances of the first RESOURCE_PADDING/2
+            index = 0
+            if len(sorted_dist)>RESOURCE_PADDING/2:
+                index = int(RESOURCE_PADDING/2)
+            else: 
+                index = len(sorted_dist)
+            for z in range(index):
+                res_dists+= (np.array(resources[sorted_dist[z][1]])- np.array(my_pos)).tolist()
+            # pad the remaining res distances if its shorter than RESOURCE PADDING
+            if len(res_dists)<RESOURCE_PADDING:
+                res_dists+=[0]*(RESOURCE_PADDING-len(res_dists))
+            
+            # get the terraing around the agent
+            agent_surround = [0] * TERRAIN_PADDING 
+            if self.terrain:
+                # agent_pos = np.array(self.agents_positions[i])
+                counter = 0
+                # check for surround terrain in TERRAIN_PADDING box, if there is change agent surround index accordingly with terrain type
+                index = int(math.sqrt(TERRAIN_PADDING)//2)
+                for hor in range(-index, index+1):
+                    for ver in range(-index, index+1):
+                        coor = (my_pos[0] + hor, my_pos[1] + ver)
+                        lookat = coor[0]*self.width + coor[1]
+                        if self.terrain.get(lookat):
+                            agent_surround[counter] = self.terrain[lookat]
+                        counter += 1
+            my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
+            self.obs_dict[x] = np.array(my_state, dtype=np.int16)
+                
+        return self.obs_dict, (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
+    
+    def update_agents_pos(self,obs):
+        turn = obs['turn']
+        max_turn = obs['max_turn'] 
+        units = obs['units']
+        hps = obs['hps']
+        bases = obs['bases']
+        score = obs['score']
+        res = obs['resources']
+        load = obs['loads']
+        terrain = obs["terrain"]
+        y_max, x_max = res.shape
+        my_units = []
+        enemy_units = []
+        resources = []
+        for i in range(y_max):
+            for j in range(x_max):
+                if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
+                    my_units.append(
+                    {   
+                        'unit': units[self.team][i][j],
+                        'tag': self.tagToString[units[self.team][i][j]],
+                        'hp': hps[self.team][i][j],
+                        'location': (i,j),
+                        'load': load[self.team][i][j]
+                    }
+                    )
+                if units[self.enemy_team][i][j]<6 and units[self.enemy_team][i][j] != 0:
+                    enemy_units.append(
+                    {   
+                        'unit': units[self.enemy_team][i][j],
+                        'tag': self.tagToString[units[self.enemy_team][i][j]],
+                        'hp': hps[self.enemy_team][i][j],
+                        'location': (i,j),
+                        'load': load[self.enemy_team][i][j]
+                    }
+                    )
+                if res[i][j]==1:
+                    resources.append((i,j))
+                if bases[self.team][i][j]:
+                    my_base = (i,j)
+                if bases[self.enemy_team][i][j]:
+                    enemy_base = (i,j)
+        
+        # elaborate
+        # TODO:
+        if self.train > 0:
+            self.agents.append()
+            self.agents_positions()
+
+        # update here self.agents and self.agents_positions
+        # how to check which agent at which position has been killed?
+        # print(my_units)
+        # here we also check loads
+        # apply reward for any load increase and decrease if on base
+
+        someone_died = False
+        to_be_deleted = []
+        for i,x in enumerate(self.agents):
+            # check for deaths
+            if len(self.agents) != len(my_units):
+                someone_died = True
+            else:
+                someone_died = False
+            # check if it is on the tile supposed to be
+            move_x, move_y = getMovement(self.agents_positions[x],self.current_action[x])
+            new_pos = tuple(map(lambda i, j: i + j, self.agents_positions[x], (move_y, move_x)))
+            # check if this in my_units but this still can be wrong
+            # maybe another unit moved to the locations and this one cant?
+            # or there was a no-go section to go
+            old_load = self.loads[x]
+
+            # check for no-go section
+            if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
+                new_pos = self.agents_positions[x]
+                # don't change position
+                if x[:5] == "truck":
+                    self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                    self.load_reward_check(old_load, self.loads[x], x)
+                if someone_died:
+                    dead = True
+                    for z in my_units:
+                        if z['location'] == new_pos:
+                            dead = False
+                            break
+                    if dead:
+                        to_be_deleted.append(x)
+                continue
+
+            to_break = False
+            # check if there is already a unit set there
+            # we are not checking terrain and enemy units
+            for y,q in enumerate(self.agents):
+                if y == i:
+                    continue
+                if self.agents_positions[q] == new_pos:
+                    to_break = True
+                    break
+            if to_break:
+                # if there is already a unit in that pos
+                # set it to old pos
+                new_pos = self.agents_positions[x]
+                if x[:5] == "truck":
+                    self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                    self.load_reward_check(old_load, self.loads[x], x)
+                if someone_died:
+                    dead = True
+                    for z in my_units:
+                        if z['location'] == new_pos:
+                            dead = False
+                            break
+                    if dead:
+                        to_be_deleted.append(x)
+                continue
+
+            am_i_alive = False      
+
+            if someone_died or (len(self.agents) == len(my_units) and self.train == 0):
+                # two options, either nothing changed
+                # or a new unit has been created and another has been killed
+                # check self.train
+                for z in my_units:
+                    # check for the new positions in the new state
+                    # maybe i couldnt move there and there is already other agent sitting there?
+                    # but we check this above?
+                    if z['location'] == new_pos:
+                        self.agents_positions[x] = new_pos
+                        if x[:5] == "truck":
+                            self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                            self.load_reward_check(old_load, self.loads[x], x) 
+                        am_i_alive = True
+                        break
+                # here is the case there is a either a dead unit or enemy unit on my movement direction
+                if not am_i_alive:
+                    for z in my_units:
+                        # set it to current pos and check if its there
+                        # if it is then it is alive and we should keep it 
+                        new_pos = self.agents_positions[x]
+                        if z['location'] == new_pos:
+                            self.agents_positions[x] = new_pos
+                            if x[:5] == "truck":
+                                self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
+                                self.load_reward_check(old_load, self.loads[x], x) 
+                            am_i_alive = True
+                            break
+            if not am_i_alive and someone_died:
+                to_be_deleted.append(x)
+                # del self.agents_positions[x]
+                # del self.agents_positions_[x]
+                # self.agents.remove(x)
+                # del self.observation_spaces[x] 
+                # del self.obs_dict[x] 
+                # del self.loads[x] 
+                # del self.rewards[x] 
+                # del self.dones[x] 
+                # del self.infos[i] 
+                continue
+
+        if to_be_deleted:
+            for i in range(len(to_be_deleted)):
+                del self.agents_positions[to_be_deleted[i]]
+                self.agents.remove(to_be_deleted[i])
+                del self.observation_spaces[to_be_deleted[i]] 
+                del self.obs_dict[to_be_deleted[i]] 
+                del self.loads[to_be_deleted[i]] 
+                del self.rewards[to_be_deleted[i]] 
+                del self.dones[to_be_deleted[i]]
+                del self.old_base_distance[to_be_deleted[i]]
+                # del self.infos[i] 
+        counter = 0
+        for i, agent in enumerate(self.agents_positions):
+            for uni in my_units:
+                if self.agents_positions[agent] == uni['location']:
+                    counter +=1
+        if counter < len(self.agents_positions):
+            print(self.agents_positions)
+            print(my_units)
+            print('Done')
 
     def  _decode_state(self, obs):
         turn = obs['turn']
