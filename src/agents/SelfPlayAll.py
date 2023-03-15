@@ -16,14 +16,14 @@ import pickle
 import yaml
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/RiskyValley.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/RiskyValley-all.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 # def my_env_creator(args, agents):
 #     return IndependentLearnerAll(args, agents)
 class SelfPlayAll:
     def __init__(self, team, action_lenght):
-        args = Namespace(map="RiskyValley", render=False, gif=False, img=False)
+        args = Namespace(map="RiskyValley-all", render=False, gif=False, img=False)
 
         self.configs = read_hypers()
         self.agents = []
@@ -81,8 +81,8 @@ class SelfPlayAll:
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
              "multiagent": {
-                # "policies": {"truck", "tankl","tankh", "drone"},
-                "policies": {"truck"},
+                "policies": {"truck", "tankl","tankh", "drone"},
+                # "policies": {"truck"},
                 "policy_mapping_fn": policy_mapping_fn,                    
             }
             }
@@ -91,7 +91,7 @@ class SelfPlayAll:
         register_env("ray", lambda config : IndependentLearnerAll(args, self.agents))
 
         ppo_agent = PPOTrainer(config=config, env="ray")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000150/checkpoint-150")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000200/checkpoint-200")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')

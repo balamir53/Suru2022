@@ -12,7 +12,7 @@ import numpy as np
 from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement
 
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/RiskyValley.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/RiskyValley-all.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
@@ -248,7 +248,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         if self.agents_positions[truck_id] == self.my_base and old_load>new_load:
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
-
+    
     def kill_reward_check(self, old_enemy, new_enemy, enemy_order):
         for _ , old in enumerate(old_enemy):
             for _, new in enumerate(new_enemy):
@@ -381,7 +381,6 @@ class IndependentLearnerAll(MultiAgentEnv):
             self.obs_dict[x] = np.array(my_state, dtype=np.int16)
                 
         return self.obs_dict, (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
-    
     def update_agents_pos(self,obs):
         turn = obs['turn']
         max_turn = obs['max_turn'] 
@@ -559,7 +558,6 @@ class IndependentLearnerAll(MultiAgentEnv):
             print(self.agents_positions)
             print(my_units)
             print('Done')
-
     def  _decode_state(self, obs):
         turn = obs['turn']
         max_turn = obs['max_turn'] 
@@ -966,7 +964,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                if terrain[i][j] == 'd' or terrain[i][j] == 'w' or terrain[i][j] == 'm':
                     ter_locs[i*self.width+j]=terrain_type[terrain[i][j]]
         return ter_locs
-        
+    
     def apply_action(self, action, raw_state, team):
         # this function takes the output of the model and converts it into a reasonable output for the game to play
 
@@ -1005,7 +1003,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         # not here, in _decode_state
         enemies = enemy_locs(raw_state, team)
         my_unit_dict, enemy_unit_dict = IndependentLearnerAll.unit_dicts(raw_state, allies, enemies, team)  
-        
+              
         nearest_enemy_dict = IndependentLearnerAll.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
         nearest_enemy_locs = IndependentLearnerAll.nearest_enemy_list(nearest_enemy_dict)
         
