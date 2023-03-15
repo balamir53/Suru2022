@@ -15,8 +15,8 @@ hp_images = ["data/images/hp_zero.png", \
     "data/images/hp_full.png"]
 unit_config = None
 try:
-    # with open('/workspaces/Suru2022/data/config/rules.yaml') as file:
-    with open('data/config/rules.yaml') as file:
+    with open('/workspaces/Suru2022/data/config/rules.yaml') as file:
+    # with open('data/config/rules.yaml') as file:
         unit_config = yaml.load(file, Loader=yaml.FullLoader)
 except:
     print('Rules Could Not be Found! Using Default Rules')

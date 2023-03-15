@@ -15,15 +15,17 @@ from models.action_mask_model import TorchActionMaskModel
 import pickle
 import yaml
 
+map="TrainSingleMixedSmall"
+
 def read_hypers():
-    with open(f"/workspaces/Suru2022/data/config/RiskyValley-all.yaml", "r") as f:   
+    with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 # def my_env_creator(args, agents):
 #     return IndependentLearnerAll(args, agents)
 class SelfPlayAll:
     def __init__(self, team, action_lenght):
-        args = Namespace(map="RiskyValley-all", render=False, gif=False, img=False)
+        args = Namespace(map=map, render=False, gif=False, img=False)
 
         self.configs = read_hypers()
         self.agents = []
@@ -91,7 +93,7 @@ class SelfPlayAll:
         register_env("ray", lambda config : IndependentLearnerAll(args, self.agents))
 
         ppo_agent = PPOTrainer(config=config, env="ray")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_000200/checkpoint-200")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000150/checkpoint-150")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')
@@ -102,10 +104,11 @@ class SelfPlayAll:
         self.env.reset()
         self.firstTime = True
     def action(self, raw_state):
-
-        obs_d, info = self.env.process_obs(raw_state)
+        # process observations
+        obs_d, info = self.env._decode_state(raw_state,1)
         if not self.firstTime:
-            self.env.update_agents_pos(raw_state)
+            # update self.env.agents
+            self.env._decode_state(raw_state,2)
         self.firstTime = False
         # get actions
         self.env.current_action = {}
