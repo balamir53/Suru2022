@@ -135,7 +135,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.old_base_distance = {}
         for x in self.agents:
             self.observation_spaces[x] = self.observation_space
-            self.obs_dict[x] = []
+            self.obs_dict[x] = {"observations":[], "action_mask":[]}
             self.loads[x] = 0
             self.rewards[x] = 0
             self.dones[x] = False  #if agents die make this True
@@ -233,7 +233,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.action_masks = {}
         for x in self.agents:
             self.observation_spaces[x] = self.observation_space
-            self.obs_dict[x] = []
+            self.obs_dict[x] = {"observations":[], "action_mask":[]}
             self.loads[x] = 0
             self.rewards[x] = 0
             self.dones[x] = False  #if agents die make this True
@@ -541,7 +541,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                             agent_surround[counter] = self.terrain[lookat]
                         counter += 1
             my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
-            self.obs_dict[x] = np.array(my_state, dtype=np.int16)
+            self.obs_dict[x]['observations'] = np.array(my_state, dtype=np.int16)
         # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
         '''
         state actually turns here into observation space for the model 
@@ -571,7 +571,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         [has to be calculated per agent, all agents observations will be then handed to the model as separate obs]
         [we need also calculate reward per agent]
         '''
-        # return np.array(state, dtype=np.int16), (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
+        for x in self.obs_dict:
+            self.obs_dict[x]['action_mask'] = self.action_masks[x]
+        
         return self.obs_dict, (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
     
     @staticmethod

@@ -80,9 +80,9 @@ def main():
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
-            #  "model":{
-            #         "custom_model": TorchActionMaskModel
-            #     },
+             "model":{
+                    "custom_model": TorchActionMaskModel
+                },
             "multiagent": {
                 # "policies":set(env.env.agents), # first env is the group agent, seconde one independent agent
                 "policies": {"truck", "tankl","tankh", "drone"},
