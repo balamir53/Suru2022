@@ -483,11 +483,15 @@ class IndependentLearnerAll(MultiAgentEnv):
             
             # check for partial rewards of trucks loaded 3
             dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
-            if (x[:5] == 'truck') and self.loads[x] > 2:
-                if dist_to_base > self.old_base_distance[x]:
-                    self.rewards[x]-= 0.01
-                else:
-                    self.rewards[x]+= 0.05
+            if (x[:5] == 'truck'):
+                # if loaded truck is on the base force it to unload
+                if my_pos==my_base and self.loads[x]>0:
+                    self.action_mask[x][1:] = 0
+                if self.loads[x] > 2:
+                    if dist_to_base > self.old_base_distance[x]:
+                        self.rewards[x]-= 0.01
+                    else:
+                        self.rewards[x]+= 0.05
             self.old_base_distance[x] = dist_to_base
 
             
