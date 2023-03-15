@@ -254,6 +254,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             for _, new in enumerate(new_enemy):
                 if (old["location"] == new["location"]) and old["tag"] != "Dead" and new["tag"] == "Dead":
                     for k, shoot_loc in enumerate(enemy_order):
+                        #TODO: self.current_action[self.agents[k] ] is not safe check this.
                         if tuple(shoot_loc) == old["location"] and self.current_action[self.agents[k]] == 0:
                             self.rewards[self.agents[k]] += self.kill_reward
     
@@ -263,7 +264,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             if x[:5] != "tankh":
                 continue
             agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
-            if agent_pos_key in self.terrain.keys() and self.terrain[agent_pos_key] == 1:
+            if self.terrain.get(agent_pos_key) == 1:
                 self.rewards[x] -= self.stuck_reward
 
     def  _decode_state(self, obs):
@@ -285,8 +286,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         #think whether enemy type is important or not.
         self.kill_reward_check(old_enemy_unit_dict, new_enemy_unit_dict, self.nearest_enemy_locs)
         #neg rew if the tankh is stuck on dirt.
-        if self.terrain:
-            self.tank_stuck_reward_check()
+        # if self.terrain:
+        #     self.tank_stuck_reward_check()
         for i in range(y_max):
             for j in range(x_max):
                 if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
