@@ -401,7 +401,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # or there was a no-go section to go
                 old_load = self.loads[x]
                 # check of no-go section for lake because of the drones
-                if x[:5] != 'drone' and self.terrain.get(new_pos[0]*self.width+new_pos[1]) == 2:
+                if x[:5] != 'drone' and self.terrain and self.terrain.get(new_pos[0]*self.width+new_pos[1]) == 2:
                     new_pos = self.agents_positions[x]
                     if someone_died:
                         dead = True
@@ -539,7 +539,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                     self.action_masks[x][1:] = 0
                 if self.loads[x] > 2:
                     if dist_to_base > self.old_base_distance[x]:
-                        self.rewards[x]-= self.neg_partial
+                        self.rewards[x]+= self.neg_partial
                     else:
                         self.rewards[x]+= self.pos_partial
             self.old_base_distance[x] = dist_to_base
