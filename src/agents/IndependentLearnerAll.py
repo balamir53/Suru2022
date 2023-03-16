@@ -771,7 +771,7 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         # this is specific order as in self.agents
         movement = action[0:7]
-        movement = movement.tolist()
+        # movement = movement.tolist()
         # target = action[7:14]
         # train = action[14]
         
@@ -883,7 +883,10 @@ class IndependentLearnerAll(MultiAgentEnv):
         # self.env.step(action[self.env.agent_selection])
 
         # we are expectin an action dictionary of agents
-        action = np.array([x for x in action_dict.values()])
+        action = []
+        for x in self.agents:
+            action.append(action_dict[x])
+        # action = np.array([x for x in action_dict.values()])
         action = self.apply_action(action, self.nec_obs, self.team)
         next_state, _, done =  self.game.step(action)
 
