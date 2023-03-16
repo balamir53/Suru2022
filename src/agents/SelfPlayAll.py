@@ -15,7 +15,8 @@ from models.action_mask_model import TorchActionMaskModel
 import pickle
 import yaml
 
-map="TrainSingleMixedSmall"
+map="RiskyValley-all"
+AGENTRED = "RandomAgent"
 
 def read_hypers():
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -25,28 +26,10 @@ def read_hypers():
 #     return IndependentLearnerAll(args, agents)
 class SelfPlayAll:
     def __init__(self, team, action_lenght):
-        args = Namespace(map=map, render=False, gif=False, img=False)
+        args = Namespace(map=map, render=False, gif=False, img=False, agentRed=AGENTRED)
 
         self.configs = read_hypers()
         self.agents = []
-        self.truckID =0
-        self.tanklID=0
-        self.tankhID=0
-        self.droneID=0
-        for x in self.configs['blue']['units']:
-            if x['type'] == 'Truck':
-                self.agents.append('truck'+str(self.truckID))
-                self.truckID +=1
-            elif x['type'] == 'LightTank':
-                self.agents.append('tankl'+str(self.tanklID))
-                self.tanklID +=1
-            elif x['type'] == 'HeavyTank':
-                self.agents.append('tankh'+str(self.tankhID))
-                self.tankhID +=1
-            elif x['type'] == 'Drone':
-                self.agents.append('drone'+str(self.droneID))
-                self.droneID +=1
-
         ray.init()
 
         def policy_mapping_fn(agent_id, episode, worker, **kwargs):
@@ -82,6 +65,9 @@ class SelfPlayAll:
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
+             "model":{
+                "custom_model": TorchActionMaskModel
+             },
              "multiagent": {
                 "policies": {"truck", "tankl","tankh", "drone"},
                 # "policies": {"truck"},
@@ -93,7 +79,7 @@ class SelfPlayAll:
         register_env("ray", lambda config : IndependentLearnerAll(args, self.agents))
 
         ppo_agent = PPOTrainer(config=config, env="ray")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000150/checkpoint-150")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001050/checkpoint-1050")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')
@@ -104,11 +90,14 @@ class SelfPlayAll:
         self.env.reset()
         self.firstTime = True
     def action(self, raw_state):
-        # process observations
-        obs_d, info = self.env._decode_state(raw_state,1)
+        
         if not self.firstTime:
             # update self.env.agents
             self.env._decode_state(raw_state,2)
+
+        # process observations
+        obs_d, info = self.env._decode_state(raw_state,1)
+        
         self.firstTime = False
         # get actions
         self.env.current_action = {}
