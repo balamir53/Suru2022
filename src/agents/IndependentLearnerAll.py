@@ -9,7 +9,7 @@ from gym import spaces
 import yaml
 import numpy as np
 # import utilities
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection
 
 def read_hypers(map):
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -95,7 +95,9 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         self.load_reward = 0.5
         self.unload_reward = 1
-
+        self.kill_reward = 1
+        self.stuck_reward = -10
+        self.stuck_agents = []
         self.current_action = {}
 
         # self.observation_space = spaces.Box(
@@ -254,7 +256,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.resetted = True
         # self.dones = set()
         self.dones['__all__'] = False
-
+        self.stuck_agents = []
         # we should usually keep a dictionary 
         # for every agent
         # but because we will use only one environment
@@ -286,6 +288,28 @@ class IndependentLearnerAll(MultiAgentEnv):
             self.rewards[truck_id] += self.unload_reward * old_load
         pass
     
+    def kill_reward_check(self, obs):
+        old_enemy, new_enemy = self.enemy_unit_dicts(obs, self.team)
+        for _ , old in enumerate(old_enemy):
+            for _, new in enumerate(new_enemy):
+                if (old["location"] == new["location"]) and old["tag"] != "Dead" and new["tag"] == "Dead":
+                    for k, shoot_loc in enumerate(self.nearest_enemy_locs):
+                        #TODO: self.current_action[self.agents[k] ] is not safe check this.
+                        if tuple(shoot_loc) == old["location"] and self.current_action[self.agents[k]] == 0:
+                            self.rewards[self.agents[k]] += self.kill_reward
+    
+    def tank_stuck_reward_check(self):
+        # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
+        for i,x in enumerate(self.agents_positions):
+            if x[:5] != "tankh" or x in self.stuck_agents:
+                continue
+            agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
+            if self.terrain.get(agent_pos_key) == 1:
+                self.rewards[x] += self.stuck_reward
+                self.stuck_agents.append(x)
+                #momentarily mask the action to stay.
+                self.action_masks[x][1:] = 0
+    
     def  _decode_state(self, obs, procOrUpdate=0):
         # this function is also called from inference mode with two options
         # procOrUpdate = 1 is for obs process call from inference
@@ -303,6 +327,15 @@ class IndependentLearnerAll(MultiAgentEnv):
         my_units = []
         enemy_units = []
         resources = []
+        
+        #with self.nec_obs as old state, obs as new state returns old enemy and new state enemy details.
+        #think whether enemy type is important or not.
+        if procOrUpdate == 0:
+            self.kill_reward_check(obs)
+        # neg rew if the tankh is stuck on dirt.
+        if self.terrain and procOrUpdate == 0:
+            self.tank_stuck_reward_check()
+
         for i in range(y_max):
             for j in range(x_max):
                 if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
@@ -361,10 +394,18 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # maybe another unit moved to the locations and this one cant?
                 # or there was a no-go section to go
                 old_load = self.loads[x]
-
-                # check for no-go section
-                # TODO: apply mud no-go for mud,
-                # also for lake because of the drones
+                # check of no-go section for lake because of the drones
+                if x[:5] != 'drone' and self.terrain.get(new_pos[0]*self.width+new_pos[1]) == 2:
+                    new_pos = self.agents_positions[x]
+                    if someone_died:
+                        dead = True
+                        for z in my_units:
+                            if z['location'] == new_pos:
+                                dead = False
+                                break
+                        if dead:
+                            to_be_deleted.append(x)
+                    continue
                 if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
                     new_pos = self.agents_positions[x]
                     # don't change position
@@ -475,7 +516,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         # procOrUpdate = 2 is for update agents call from inference
         if procOrUpdate == 2 :
             return
-
+        
         # return a dict of agents obs
         for i,x in enumerate(self.agents):
             rel_dists = []
@@ -497,6 +538,9 @@ class IndependentLearnerAll(MultiAgentEnv):
                         self.rewards[x]+= 0.05
             self.old_base_distance[x] = dist_to_base
 
+            # action mask if mud.
+            if x in self.stuck_agents:
+                self.action_masks[x][1:] = 0
             
             # rel dist to friendly units
             for y in my_units:
@@ -547,6 +591,11 @@ class IndependentLearnerAll(MultiAgentEnv):
                     for hor in range(-index, index+1):
                         coor = (my_pos[0] + ver, my_pos[1] + hor)
                         lookat = coor[0]*self.width + coor[1]
+                        # mask drone's action to not to go to mountain-side.
+                        if x[:5] == 'drone' and abs(ver)<2 and abs(hor)<2 and self.terrain.get(lookat) == 3: 
+                            direction = getDirection(my_pos[1], hor, ver)
+                            if direction < 7:
+                               self.action_masks[x][direction] = 0 
                         if self.terrain.get(lookat):
                             agent_surround[counter] = self.terrain[lookat]
                         counter += 1
@@ -628,6 +677,42 @@ class IndependentLearnerAll(MultiAgentEnv):
             lists[1].append(unit)
         return lists[0], lists[1] 
     
+    # @staticmethod
+    def enemy_unit_dicts(self, new_state, team):
+        """This method creates unit dicts to be used in nearest enemy locs."""
+        #from the old and new state(old_state, new_state), following base and dead parameters comes as they are part of a unit. Resources are added just in case.
+        unitTagToString = {1: "Truck",2: "LightTank",3: "HeavyTank",4: "Drone",6: "Base",8: "Dead",9: "Resource"}
+        old_enemy_units = self.nec_obs['units'][(team+1) % 2]
+        old_enemy_loc = enemy_locs(self.nec_obs, team)        
+        new_enemy_units = new_state['units'][(team+1) % 2]
+        new_enemy_loc = enemy_locs(new_state, team)   
+        
+        #creates a list consisting unit types of both states.
+        old_units_types = []
+        for x in old_enemy_loc:
+            old_units_types.append(old_enemy_units[x[0]][x[1]])
+        new_units_types = []
+        for x in new_enemy_loc:
+            new_units_types.append(new_enemy_units[x[0]][x[1]])
+
+        #creates a dict for each state consisting unit type tags and unit locations.
+        old_detail_list = []
+        for i,x in enumerate(old_enemy_loc):
+            unit = {
+                "tag" : unitTagToString[old_units_types[i]],
+                "location" : tuple(x)
+                }
+            old_detail_list.append(unit)
+        new_detail_list = []
+        for i,x in enumerate(new_enemy_loc):
+            unit = {
+                "tag" : unitTagToString[new_units_types[i]],
+                "location" : tuple(x)
+                }
+            new_detail_list.append(unit)
+            
+        return old_detail_list, new_detail_list
+    
     def nearest_enemy_details(allies, enemies):
             nearest_enemy_detail = []
             for ally in allies:
@@ -703,7 +788,11 @@ class IndependentLearnerAll(MultiAgentEnv):
               
         nearest_enemy_dict = IndependentLearnerAll.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
         nearest_enemy_locs = IndependentLearnerAll.nearest_enemy_list(nearest_enemy_dict)
-                
+        
+        # required for _decode state to decide kill reward
+        self.nearest_enemy_locs = []
+        self.nearest_enemy_locs = copy.copy(nearest_enemy_locs)
+        
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError

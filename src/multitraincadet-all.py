@@ -37,10 +37,10 @@ args = parser.parse_args()
 
 def main():
     ray.init()
-
-    # truck_agents = ["truck{}".format(i) for i in range(7)]
-    # agents = ["truck0", "truck1", "truck2", "tankl0", "tankl1", "tankh0", "drone0"]
-    agents = ["tankl0","truck0"]
+    
+    # agents are derived from map in learner class
+    # hand over an empty list for now
+    agents = []
 
     def policy_mapping_fn(agent_id, episode, worker, **kwargs):
         if agent_id[:5] == "truck":
@@ -51,13 +51,8 @@ def main():
              return "tankl"
         elif agent_id[:5] == "drone":
              return "drone"
-    
-    def env_creator(argo):
-        return IndependentLearnerAll(args, agents)
 
-    env = env_creator({})
-
-    register_env("ray", env_creator)
+    register_env("ray", lambda helehele: IndependentLearnerAll(args,agents))
 
     # register_env("ray", lambda config: IndependentLearner(args, agents))
     config= {
@@ -85,13 +80,12 @@ def main():
              "kl_target": 0.01,
              "batch_mode": "truncate_episodes",
              "observation_filter": "NoFilter",
-            #  "model":{
-            #         "custom_model": TorchActionMaskModel
-            #     },
+             "model":{
+                    "custom_model": TorchActionMaskModel
+                },
             "multiagent": {
                 # "policies":set(env.env.agents), # first env is the group agent, seconde one independent agent
                 "policies": {"truck", "tankl","tankh", "drone"},
-                # "policies": {"truck", "tankl"},
                 "policy_mapping_fn": policy_mapping_fn,                    
             }
             }
