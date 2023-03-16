@@ -99,7 +99,7 @@ def main():
             },
             "config": config,
             "checkpoint_freq": 50,
-                # "restore": "data/inputs/model/riskyvalley/checkpoint_002800/checkpoint-2800",
+            "restore": "models/checkpoint_000100/checkpoint-100",
         },
     #  },resume=True)
     })

@@ -339,7 +339,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         if procOrUpdate == 0:
             self.kill_reward_check(obs)
         # neg rew if the tankh is stuck on dirt.
-        if self.terrain and procOrUpdate == 0:
+
+        # this should also in update
+        if self.terrain:
             self.tank_stuck_reward_check()
 
         for i in range(y_max):
