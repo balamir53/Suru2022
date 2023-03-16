@@ -14,6 +14,7 @@ from models.action_mask_model import TorchActionMaskModel
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
+
 parser = argparse.ArgumentParser(description='Cadet Agents')
 parser.add_argument('map', metavar='map', type=str,
                     help='Select Map to Train')

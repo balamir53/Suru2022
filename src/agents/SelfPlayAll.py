@@ -15,7 +15,7 @@ from models.action_mask_model import TorchActionMaskModel
 import pickle
 import yaml
 
-map="TrainSingleMixedLarge"
+map="RiskyValley-all"
 AGENTRED = "RandomAgent"
 
 def read_hypers():
@@ -91,11 +91,13 @@ class SelfPlayAll:
         self.firstTime = True
     def action(self, raw_state):
         
-        # process observations
-        obs_d, info = self.env._decode_state(raw_state,1)
         if not self.firstTime:
             # update self.env.agents
             self.env._decode_state(raw_state,2)
+
+        # process observations
+        obs_d, info = self.env._decode_state(raw_state,1)
+
         self.firstTime = False
         # get actions
         self.env.current_action = {}
