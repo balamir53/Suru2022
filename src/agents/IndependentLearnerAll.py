@@ -9,7 +9,7 @@ from gym import spaces
 import yaml
 import numpy as np
 # import utilities
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance
 
 def read_hypers(map):
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -387,6 +387,8 @@ class IndependentLearnerAll(MultiAgentEnv):
             # here we also check loads
             # apply reward for any load increase and decrease if on base
 
+
+            
             someone_died = False
             to_be_deleted = []
             for i,x in enumerate(self.agents):
