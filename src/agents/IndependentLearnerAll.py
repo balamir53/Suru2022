@@ -387,8 +387,6 @@ class IndependentLearnerAll(MultiAgentEnv):
             # here we also check loads
             # apply reward for any load increase and decrease if on base
 
-
-            
             someone_died = False
             to_be_deleted = []
             for i,x in enumerate(self.agents):
