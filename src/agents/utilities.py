@@ -34,6 +34,14 @@ def getDirection(pos_x, x, y):
 def getMovement(unit_position, action):
     return movement_grid[unit_position[1] % 2][action]
 
+def tagConverter(x):
+    if x[:5] == "tankh":
+        return "HeavyTank"
+    elif x[:5] == "tankl":
+        return "LightTank"
+    elif x[:5] == "drone":
+        return "Drone"
+
 def decodeState(state):
     # score = state['score']
     # turn = state['turn']
@@ -148,13 +156,16 @@ def nearest_enemy_selective(allied_unit, enemies):
     enemy_types = [enemy["tag"] for enemy in enemies]
     #get distances of all enemies according to ally unit.
     for enemy in enemies:
+        # if enemy["tag"] in ["Dead", "Base", "Resource"]:
+        #     continue
         distances.append(getDistance(allied_unit["location"], enemy["location"]))
     #define a high dummy distance to be able to compare. 
     temp = 1000
     selected_enemy = None
     for i in range(len(enemies)):
         #check for unshootable enemy type.
-        if enemy_types[i] == "Base" or enemy_types[i] == "Dead" or enemy_types[i] == "Resource":
+        #enemy_types[i] == "Base" or enemy_types[i] == "Dead" or enemy_types[i] == "Resource"
+        if enemy_types[i] in ["Dead", "Base", "Resource"]:
             continue
         #check if ally unit is heavyTank or not. if the enemy being compared is drone, since HeavyTruck cannot fire to Drone just continue. 
         if allied_unit["tag"] == "HeavyTank" and enemy_types[i] == "Drone":

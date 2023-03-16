@@ -9,7 +9,7 @@ from gym import spaces
 import yaml
 import numpy as np
 # import utilities
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter
 
 def read_hypers(map):
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -611,7 +611,8 @@ class IndependentLearnerAll(MultiAgentEnv):
                         counter += 1
             #fire action mask for tankh, tankl, and drone.
             if x[:5] != 'truck':
-                nearest_enemy = nearest_enemy_selective({"tag" : x[:5].capitalize(), "location" : self.agents_positions[x]}, new_enemy)
+                tag = tagConverter(x)
+                nearest_enemy = nearest_enemy_selective({"tag" : tag, "location" : self.agents_positions[x]}, new_enemy)
                 if (x[:4] =='tank') and nearest_enemy and getDistance(self.agents_positions[x], nearest_enemy["location"]) < 4:
                     self.action_masks[x][1:] = 0
                 elif (x[:5] =='drone') and nearest_enemy and getDistance(self.agents_positions[x], nearest_enemy["location"]) < 2:
@@ -653,8 +654,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         
         return self.obs_dict, (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
     
-    @staticmethod
-    def unit_dicts(obs, allies, enemies,  team):
+    # @staticmethod
+    def unit_dicts(self, obs, allies, enemies,  team):
         """This method creates unit dicts to be used in nearest enemy locs."""
         #from the state(obs), following base and dead parameters comes as they are part of a unit. Resources are added just in case.
         unitTagToString = {1: "Truck",2: "LightTank",3: "HeavyTank",4: "Drone",6: "Base",8: "Dead",9: "Resource"}
@@ -802,7 +803,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         # but it has to be controlled immediately after game step
         # not here, in _decode_state
         enemies = enemy_locs(raw_state, team)
-        my_unit_dict, enemy_unit_dict = IndependentLearnerAll.unit_dicts(raw_state, allies, enemies, team)  
+        my_unit_dict, enemy_unit_dict = self.unit_dicts(raw_state, allies, enemies, team)  
               
         nearest_enemy_dict = self.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
         nearest_enemy_locs = self.nearest_enemy_list(nearest_enemy_dict)
