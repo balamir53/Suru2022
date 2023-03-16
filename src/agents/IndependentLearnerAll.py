@@ -9,7 +9,7 @@ from gym import spaces
 import yaml
 import numpy as np
 # import utilities
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter
 
 def read_hypers(map):
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -387,8 +387,6 @@ class IndependentLearnerAll(MultiAgentEnv):
             # here we also check loads
             # apply reward for any load increase and decrease if on base
 
-
-            
             someone_died = False
             to_be_deleted = []
             for i,x in enumerate(self.agents):
@@ -527,6 +525,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         if procOrUpdate == 2 :
             return
         
+        _, new_enemy = self.enemy_unit_dicts(obs, self.team)        
         # return a dict of agents obs
         for i,x in enumerate(self.agents):
             rel_dists = []
@@ -541,6 +540,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # if loaded truck is on the base force it to unload
                 if my_pos == my_base and self.loads[x] > 0:
                     self.action_masks[x][1:] = 0
+                # TODO: change 0 to 2
                 if self.loads[x] > 2:
                     if dist_to_base >= self.old_base_distance[x]:
                         self.rewards[x]+= self.neg_partial
@@ -609,6 +609,15 @@ class IndependentLearnerAll(MultiAgentEnv):
                         if self.terrain.get(lookat):
                             agent_surround[counter] = self.terrain[lookat]
                         counter += 1
+            #fire action mask for tankh, tankl, and drone.
+            if x[:5] != 'truck':
+                tag = tagConverter(x)
+                nearest_enemy = nearest_enemy_selective({"tag" : tag, "location" : self.agents_positions[x]}, new_enemy)
+                if (x[:4] =='tank') and nearest_enemy and getDistance(self.agents_positions[x], nearest_enemy["location"]) < 4:
+                    self.action_masks[x][1:] = 0
+                elif (x[:5] =='drone') and nearest_enemy and getDistance(self.agents_positions[x], nearest_enemy["location"]) < 2:
+                    self.action_masks[x][1:] = 0
+            
             my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
             self.obs_dict[x]['observations'] = np.array(my_state, dtype=np.int16)
         # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
@@ -645,8 +654,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         
         return self.obs_dict, (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
     
-    @staticmethod
-    def unit_dicts(obs, allies, enemies,  team):
+    # @staticmethod
+    def unit_dicts(self, obs, allies, enemies,  team):
         """This method creates unit dicts to be used in nearest enemy locs."""
         #from the state(obs), following base and dead parameters comes as they are part of a unit. Resources are added just in case.
         unitTagToString = {1: "Truck",2: "LightTank",3: "HeavyTank",4: "Drone",6: "Base",8: "Dead",9: "Resource"}
@@ -723,7 +732,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             
         return old_detail_list, new_detail_list
     
-    def nearest_enemy_details(allies, enemies):
+    def nearest_enemy_details(self, allies, enemies):
             nearest_enemy_detail = []
             for ally in allies:
                 # if the ally unit is a truck, append none to nearest enemy list since it is not a fire element and continue to new ally unit.
@@ -735,7 +744,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 nearest_enemy_detail.append(nearest_enemy_selective(ally, enemies))
             return nearest_enemy_detail
     
-    def nearest_enemy_list(nearest_enemy_dict):
+    def nearest_enemy_list(self, nearest_enemy_dict):
         nearest_enemy_locs = []
         for n_enemy in nearest_enemy_dict:
             if n_enemy is None:
@@ -794,10 +803,10 @@ class IndependentLearnerAll(MultiAgentEnv):
         # but it has to be controlled immediately after game step
         # not here, in _decode_state
         enemies = enemy_locs(raw_state, team)
-        my_unit_dict, enemy_unit_dict = IndependentLearnerAll.unit_dicts(raw_state, allies, enemies, team)  
+        my_unit_dict, enemy_unit_dict = self.unit_dicts(raw_state, allies, enemies, team)  
               
-        nearest_enemy_dict = IndependentLearnerAll.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
-        nearest_enemy_locs = IndependentLearnerAll.nearest_enemy_list(nearest_enemy_dict)
+        nearest_enemy_dict = self.nearest_enemy_details(my_unit_dict, enemy_unit_dict)
+        nearest_enemy_locs = self.nearest_enemy_list(nearest_enemy_dict)
         
         # required for _decode state to decide kill reward
         self.nearest_enemy_locs = []
