@@ -99,7 +99,7 @@ def main():
             },
             "config": config,
             "checkpoint_freq": 50,
-            "restore": "models/checkpoint_000100/checkpoint-100",
+            "restore": "models/checkpoint_000200/checkpoint-200",
         },
     #  },resume=True)
     })
