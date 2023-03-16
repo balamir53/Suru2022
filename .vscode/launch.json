@@ -28,7 +28,7 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["RiskyValley-all","SelfPlayAll","RandomAgent", "--numOfMatch","1","--render"]
+            "args": ["RiskyValley-all","SelfPlayAll","RandomAgent", "--numOfMatch","1", "--gif"]
        },
        {
            "name": "train",

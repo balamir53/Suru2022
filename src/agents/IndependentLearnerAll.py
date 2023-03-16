@@ -96,6 +96,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.load_reward = 0.5
         self.unload_reward = 1
         self.kill_reward = 1
+        self.pos_partial = 0.05
+        self.neg_partial = -0.06
         self.stuck_reward = -10
         self.stuck_agents = []
         self.current_action = {}
@@ -328,6 +330,10 @@ class IndependentLearnerAll(MultiAgentEnv):
         enemy_units = []
         resources = []
         
+        if procOrUpdate != 2:
+            for x in self.agents:
+                self.action_masks[x] = np.ones(7,dtype=np.int8)
+
         #with self.nec_obs as old state, obs as new state returns old enemy and new state enemy details.
         #think whether enemy type is important or not.
         if procOrUpdate == 0:
@@ -533,9 +539,9 @@ class IndependentLearnerAll(MultiAgentEnv):
                     self.action_masks[x][1:] = 0
                 if self.loads[x] > 2:
                     if dist_to_base > self.old_base_distance[x]:
-                        self.rewards[x]-= 0.01
+                        self.rewards[x]-= self.neg_partial
                     else:
-                        self.rewards[x]+= 0.05
+                        self.rewards[x]+= self.pos_partial
             self.old_base_distance[x] = dist_to_base
 
             # action mask if mud.
@@ -856,7 +862,6 @@ class IndependentLearnerAll(MultiAgentEnv):
         # dont forget to reset reward
         for x in self.agents:
             self.rewards[x] = 0
-            self.action_masks[x] = np.ones(7,dtype=np.int8)
         
         self.current_action = action_dict
 
