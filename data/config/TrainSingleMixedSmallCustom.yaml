@@ -3,6 +3,11 @@ turn_timer: 10
 map:
   x: 6
   y: 4
+  terrain: 
+    - ['g', 'g', 'g', 'g', 'g', 'g']
+    - ['g', 'g', 'g', 'g', 'g', 'g']
+    - ['d', 'g', 'g', 'g', 'g', 'g']
+    - ['d', 'g', 'g', 'g', 'g', 'g']
 red:
   base:
     x: 5
@@ -19,7 +24,7 @@ blue:
     x: 0
     y: 0
   units:
-    - type: LightTank
+    - type: HeavyTank
       x: 0
       y: 1
     - type: HeavyTank
