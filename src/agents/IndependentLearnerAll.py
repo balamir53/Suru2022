@@ -97,7 +97,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.unload_reward = 1
         self.kill_reward = 1
         self.pos_partial = 0.05
-        self.neg_partial = -0.06
+        self.neg_partial = -0.01
         self.stuck_reward = -10
         self.stuck_agents = []
         self.current_action = {}
@@ -300,17 +300,17 @@ class IndependentLearnerAll(MultiAgentEnv):
                         if tuple(shoot_loc) == old["location"] and self.current_action[self.agents[k]] == 0:
                             self.rewards[self.agents[k]] += self.kill_reward
     
-    def tank_stuck_reward_check(self):
+    def tank_stuck_reward_check(self, x):
         # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
-        for i,x in enumerate(self.agents_positions):
-            if x[:5] != "tankh" or x in self.stuck_agents:
-                continue
-            agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
-            if self.terrain.get(agent_pos_key) == 1:
-                self.rewards[x] += self.stuck_reward
-                self.stuck_agents.append(x)
-                #momentarily mask the action to stay.
-                self.action_masks[x][1:] = 0
+        # for i,x in enumerate(self.agents_positions):
+        #     if x[:5] != "tankh" or x in self.stuck_agents:
+        #         continue
+        agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
+        if self.terrain.get(agent_pos_key) == 1:
+            self.rewards[x] += self.stuck_reward
+            self.stuck_agents.append(x)
+            #momentarily mask the action to stay.
+            self.action_masks[x][1:] = 0
     
     def  _decode_state(self, obs, procOrUpdate=0):
         # this function is also called from inference mode with two options
@@ -339,10 +339,6 @@ class IndependentLearnerAll(MultiAgentEnv):
         if procOrUpdate == 0:
             self.kill_reward_check(obs)
         # neg rew if the tankh is stuck on dirt.
-
-        # this should also in update
-        if self.terrain:
-            self.tank_stuck_reward_check()
 
         for i in range(y_max):
             for j in range(x_max):
@@ -402,7 +398,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # maybe another unit moved to the locations and this one cant?
                 # or there was a no-go section to go
                 old_load = self.loads[x]
-                # check of no-go section for lake because of the drones
+                # check of no-go section for lake because of the drones ---> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3
                 if x[:5] != 'drone' and self.terrain and self.terrain.get(new_pos[0]*self.width+new_pos[1]) == 2:
                     new_pos = self.agents_positions[x]
                     if someone_died:
@@ -617,7 +613,9 @@ class IndependentLearnerAll(MultiAgentEnv):
                     self.action_masks[x][1:] = 0
                 elif (x[:5] =='drone') and nearest_enemy and getDistance(self.agents_positions[x], nearest_enemy["location"]) < 2:
                     self.action_masks[x][1:] = 0
-            
+            # this should also in update
+            if self.terrain and x[:5] == "tankh" and x not in self.stuck_agents:
+                self.tank_stuck_reward_check(x)
             my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
             self.obs_dict[x]['observations'] = np.array(my_state, dtype=np.int16)
         # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
@@ -771,7 +769,7 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         # this is specific order as in self.agents
         movement = action[0:7]
-        movement = movement.tolist()
+        # movement = movement.tolist()
         # target = action[7:14]
         # train = action[14]
         
@@ -883,7 +881,10 @@ class IndependentLearnerAll(MultiAgentEnv):
         # self.env.step(action[self.env.agent_selection])
 
         # we are expectin an action dictionary of agents
-        action = np.array([x for x in action_dict.values()])
+        action = []
+        for x in self.agents:
+            action.append(action_dict[x])
+        # action = np.array([x for x in action_dict.values()])
         action = self.apply_action(action, self.nec_obs, self.team)
         next_state, _, done =  self.game.step(action)
 
