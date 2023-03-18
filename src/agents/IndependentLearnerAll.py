@@ -207,6 +207,73 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.old_raw_state = None
         self.firstShot = True
 
+    def getCoordinate(self, dict):
+        return dict['y']*self.width+dict['x']
+
+    def addOffSet(self, dict, xOff, yOff):
+        dict['x']+= xOff
+        dict['y']+= yOff
+
+    def resetPosition(self, myDict):
+        myDict['blue']['base']['x'] = self.configs['blue']['base']['x']
+        myDict['blue']['base']['y'] = self.configs['blue']['base']['y']
+
+        myDict['red']['base']['x'] = self.configs['red']['base']['x']
+        myDict['red']['base']['y'] = self.configs['red']['base']['y']
+
+        for i in range(len(myDict['blue']['units'])):
+            myDict['blue']['units'][i]['x'] = self.configs['blue']['units'][i]['x']
+            myDict['blue']['units'][i]['y'] = self.configs['blue']['units'][i]['y']
+
+        for i in range(len(myDict['red']['units'])):
+            myDict['red']['units'][i]['x'] = self.configs['red']['units'][i]['x']
+            myDict['red']['units'][i]['y'] = self.configs['red']['units'][i]['y']
+
+    def manipulateMap(self, mapDict, episode):
+        # here we manipulate actually self.game.config
+        # change resources positions on every episode
+        
+        # mapDict['blue']['base']['x'] = 0 #this works
+        
+        # mapDict = copy.deepcopy(self.configs)
+        # mapDict = self.configs.copy() #this doesnt work
+        # mapDict['blue']['base']['x'] = 0
+        xOffSet = 0
+        yOffSet = 0
+        # change the base and units' first positions on some frequency
+        # if(episode%self.mapChangeFrequency==0):
+        if(False):
+            # print(episode)
+            self.resetPosition(mapDict)
+            xOffSet = random.randint(0,self.width-self.gameAreaX)
+            yOffSet = random.randint(0,self.height-self.gameAreaY)
+            self.addOffSet(mapDict['blue']['base'],xOffSet, yOffSet)
+            self.addOffSet(mapDict['red']['base'],xOffSet, yOffSet)
+            for x in mapDict['blue']['units']:
+                self.addOffSet(x,xOffSet, yOffSet)
+            for x in mapDict['red']['units']:
+                self.addOffSet(x,xOffSet, yOffSet)
+        
+        # random base on the most left tile column
+        mapDict['blue']['base']['y'] = random.randint(0,self.height-1)
+        # find out already occupied tiles
+        occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
+        for x in mapDict['blue']['units']:
+            occupiedTiles.add(self.getCoordinate(x))
+        for x in mapDict['red']['units']:
+            occupiedTiles.add(self.getCoordinate(x))
+
+        # randomize resource positions
+        for x in mapDict['resources']:
+            a = random.randint(0, self.width-1)+xOffSet
+            b = random.randint(0, self.height-1)+yOffSet
+            while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
+                a = random.randint(0, self.width-1)+xOffSet
+                b = random.randint(0, self.height-1)+yOffSet
+            occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
+            x['x'] = a
+            x['y'] = b
+
     # is this even called?
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
@@ -236,7 +303,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
 
         # consider this in the future
-        # self.manipulateMape(self.game.config,self.episodes)
+        self.manipulateMap(self.game.config,self.episodes)
 
         state = self.game.reset()
         self.nec_obs =state
