@@ -631,10 +631,26 @@ class IndependentLearnerAll(MultiAgentEnv):
                 if there_is_one:
                     self._spawn_agent()
             for i, agent in enumerate(self.agents_positions):
+                there_is_one = False
                 for uni in my_units:
                     if self.agents_positions[agent] == uni['location']:
+                        there_is_one = True
                         counter +=1
+                        break
+                # olum wildcardi
+                if not there_is_one:
+                    del self.agents_positions[agent]
+                    self.agents.remove(agent)
+                    del self.observation_spaces[agent] 
+                    del self.obs_dict[agent] 
+                    del self.loads[agent] 
+                    del self.rewards[agent] 
+                    del self.dones[agent]
+                    del self.old_base_distance[agent]
+                    del self.infos[agent]
+                    del self.action_masks[agent]
             if counter < len(self.agents_positions):
+
                 print(self.agents_positions)
                 print(my_units)
                 print('Done')
