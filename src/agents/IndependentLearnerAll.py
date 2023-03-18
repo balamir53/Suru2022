@@ -623,7 +623,8 @@ class IndependentLearnerAll(MultiAgentEnv):
                     del self.action_masks[to_be_deleted[i]]
             counter = 0
             if someone_has_spawned:
-                self._spawn_agent()
+                if len(my_units):
+                    self._spawn_agent()
             for i, agent in enumerate(self.agents_positions):
                 for uni in my_units:
                     if self.agents_positions[agent] == uni['location']:
