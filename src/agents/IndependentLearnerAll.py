@@ -334,7 +334,10 @@ class IndependentLearnerAll(MultiAgentEnv):
             self.action_masks[x][1:] = 0
     
     def _spawn_agent(self):
-        
+        # if there is a unit there already, return
+        for h in self.agents:
+            if self.agents_positions[h] == self.my_base:
+                return
         x = None
         if self.train == 1:
             x = 'truck'+str(self.truckID)
@@ -474,6 +477,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                     for d in self.dead_units:
                         if (d[0],d[1]) == self.my_base:
                             someone_has_spawned = False
+                            break
             for i,x in enumerate(self.agents):
                 # check for deaths
                 # unit is actually death on its next position
