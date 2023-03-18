@@ -997,6 +997,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         no_train = False
         # priority = 1--> truck, 2--> military
         priority = 0
+        self.train = 0
         if blue_score > 0 and raw_state["turn"] > 3:
             if number_of_trucks<1:
                 train_truck = True
