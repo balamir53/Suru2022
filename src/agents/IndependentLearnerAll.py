@@ -629,6 +629,8 @@ class IndependentLearnerAll(MultiAgentEnv):
                     if h['location'] == self.my_base:
                         there_is_one = True
                 if there_is_one:
+                    # if there is a unit already on the base
+                    # this function returns w/o spawning any agent
                     self._spawn_agent()
             for i, agent in enumerate(self.agents_positions):
                 there_is_one = False
