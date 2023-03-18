@@ -44,6 +44,11 @@ class IndependentLearnerAll(MultiAgentEnv):
                 self.agents.append('drone'+str(self.droneID))
                 self.droneID +=1
 
+        self.init_truckID = copy.copy(self.truckID)
+        self.init_tanklID = copy.copy(self.tanklID)
+        self.init_tankhID = copy.copy(self.tankhID)
+        self.init_droneID = copy.copy(self.droneID)
+
         # our method resembles the multiagent example in petting zoo
         # agents will be created at the start
         # but we have to figure out a way killing them and spawning new ones
@@ -261,6 +266,10 @@ class IndependentLearnerAll(MultiAgentEnv):
         for i in range(len(self.agents)):
             self.agents_positions[self.agents[i]]=(self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x'])
         
+        self.truckID=copy.copy(self.init_truckID)
+        self.tanklID=copy.copy(self.init_tanklID)
+        self.tankhID=copy.copy(self.init_tankhID)
+        self.droneID=copy.copy(self.init_droneID)
         # clear the dead ones set
         self.dead_ones.clear()
         self.dead_units = []
@@ -1017,7 +1026,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         
         # TODO delete this
         # for debug purposes
-        self.train = 1
+        # self.train = 1
         
         # if there is a unit 
         # cancel train action
