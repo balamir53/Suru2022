@@ -97,7 +97,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.unload_reward = 1
         self.kill_reward = 1
         self.pos_partial = 0.05
-        self.neg_partial = -0.06
+        self.neg_partial = -0.01
         self.stuck_reward = -10
         self.stuck_agents = []
         self.current_action = {}
