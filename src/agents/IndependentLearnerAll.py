@@ -8,7 +8,7 @@ from game import Game
 from gym import spaces
 import yaml
 import numpy as np
-# import utilities
+import random
 from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter
 
 def read_hypers(map):
@@ -18,6 +18,8 @@ def read_hypers(map):
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
 RESOURCE_PADDING = 50*2 # parameter * (y and x)
 TERRAIN_PADDING = 7*7 # parameter
+# update this in init function for smaller maps
+MAX_DISTANCE = 30
 class IndependentLearnerAll(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
         # agents is an empty list to be filled
@@ -93,6 +95,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
         self.nec_obs = None
 
+        if self.height < 18:
+            MAX_DISTANCE = int(math.sqrt(self.height**2+self.width**2))
+
         self.load_reward = 0.5
         self.unload_reward = 1
         self.kill_reward = 1
@@ -101,7 +106,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.stuck_reward = -10
         self.stuck_agents = []
         self.current_action = {}
-
+        self.old_my_units = {}
         # self.observation_space = spaces.Box(
         #     low=-40,
         #     high=401,
@@ -139,6 +144,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.action_masks = {}
         # to give partial rewards to trucks on their distances to base
         self.old_base_distance = {}
+        self.old_my_units = {}
         for x in self.agents:
             self.observation_spaces[x] = self.observation_space
             self.obs_dict[x] = {"observations":[], "action_mask":[]}
@@ -189,7 +195,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         
         # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
         self.terrain = self.terrain_locs()
-
+        self.init_resource_num = len(self.configs["resources"])
+        self.resources = []
         self.old_raw_state = None
         self.firstShot = True
 
@@ -300,17 +307,17 @@ class IndependentLearnerAll(MultiAgentEnv):
                         if tuple(shoot_loc) == old["location"] and self.current_action[self.agents[k]] == 0:
                             self.rewards[self.agents[k]] += self.kill_reward
     
-    def tank_stuck_reward_check(self):
+    def tank_stuck_reward_check(self, x):
         # gets terrain locs [(location(x,y) ,terrain_type)] --> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3}
-        for i,x in enumerate(self.agents_positions):
-            if x[:5] != "tankh" or x in self.stuck_agents:
-                continue
-            agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
-            if self.terrain.get(agent_pos_key) == 1:
-                self.rewards[x] += self.stuck_reward
-                self.stuck_agents.append(x)
-                #momentarily mask the action to stay.
-                self.action_masks[x][1:] = 0
+        # for i,x in enumerate(self.agents_positions):
+        #     if x[:5] != "tankh" or x in self.stuck_agents:
+        #         continue
+        agent_pos_key = self.agents_positions[x][0]*self.width+self.agents_positions[x][1]
+        if self.terrain.get(agent_pos_key) == 1:
+            self.rewards[x] += self.stuck_reward
+            self.stuck_agents.append(x)
+            #momentarily mask the action to stay.
+            self.action_masks[x][1:] = 0
     
     def  _decode_state(self, obs, procOrUpdate=0):
         # this function is also called from inference mode with two options
@@ -328,7 +335,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         y_max, x_max = res.shape
         my_units = []
         enemy_units = []
-        resources = []
+        self.resources = []
         
         if procOrUpdate != 2:
             for x in self.agents:
@@ -339,10 +346,6 @@ class IndependentLearnerAll(MultiAgentEnv):
         if procOrUpdate == 0:
             self.kill_reward_check(obs)
         # neg rew if the tankh is stuck on dirt.
-
-        # this should also in update
-        if self.terrain:
-            self.tank_stuck_reward_check()
 
         for i in range(y_max):
             for j in range(x_max):
@@ -367,7 +370,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                     }
                     )
                 if res[i][j]==1:
-                    resources.append((i,j))
+                    self.resources.append((i,j))
                 if bases[self.team][i][j]:
                     my_base = (i,j)
                 if bases[self.enemy_team][i][j]:
@@ -378,8 +381,36 @@ class IndependentLearnerAll(MultiAgentEnv):
         if procOrUpdate != 1 :
             # elaborate
             if self.train > 0:
-                self.agents.append()
-                self.agents_positions()
+                # self.agents.append()
+                # self.agents_positions()
+                x = None
+                if self.train == 1:
+                    x = 'truck'+str(self.truckID)
+                    self.agents.append(x)                    
+                    self.truckID +=1
+                elif self.train == 2:
+                    x = 'tankl'+str(self.tanklID)
+                    self.agents.append(x)
+                    self.tanklID +=1
+                elif self.train == 3:
+                    x = 'tankh'+str(self.tankhID)
+                    self.agents.append(x)
+                    self.tankhID +=1
+                elif self.train == 4:
+                    x = 'drone'+str(self.droneID)
+                    self.agents.append(x)
+                    self.droneID +=1
+                self.agents_positions[x] = (0,0)
+                # it is just created and has actually no action to play
+                self.current_action[x] = 0
+                self.observation_spaces[x] = self.observation_space
+                self.obs_dict[x] = {"observations":[], "action_mask":[]}
+                self.loads[x] = 0
+                self.rewards[x] = 0
+                self.dones[x] = False  #if agents die make this True
+                self.infos[x] = {}
+                self.old_base_distance[x] = 30
+                self.action_masks[x] = np.ones(7, dtype=np.int8)
 
             # update here self.agents and self.agents_positions
             # how to check which agent at which position has been killed?
@@ -402,7 +433,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # maybe another unit moved to the locations and this one cant?
                 # or there was a no-go section to go
                 old_load = self.loads[x]
-                # check of no-go section for lake because of the drones
+                # check of no-go section for lake because of the drones ---> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3
                 if x[:5] != 'drone' and self.terrain and self.terrain.get(new_pos[0]*self.width+new_pos[1]) == 2:
                     new_pos = self.agents_positions[x]
                     if someone_died:
@@ -545,7 +576,8 @@ class IndependentLearnerAll(MultiAgentEnv):
                     if dist_to_base >= self.old_base_distance[x]:
                         self.rewards[x]+= self.neg_partial
                     else:
-                        self.rewards[x]+= self.pos_partial
+                        # self.rewards[x]+= self.pos_partial
+                        self.rewards[x]+= (MAX_DISTANCE-dist_to_base)**2 / 10000
             self.old_base_distance[x] = dist_to_base
 
             # action mask if mud.
@@ -569,7 +601,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             # check rel distances to resources and take first 50 into account
             res_dists = []
             sorted_dist = []
-            for z,y in enumerate(resources):
+            for z,y in enumerate(self.resources):
                 # if a truck is on a resource force it to collect
                 if x[:5] == 'truck' and my_pos == y:
                     self.action_masks[x][1:] = 0
@@ -585,7 +617,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             else: 
                 index = len(sorted_dist)
             for z in range(index):
-                res_dists+= (np.array(resources[sorted_dist[z][1]])- np.array(my_pos)).tolist()
+                res_dists+= (np.array(self.resources[sorted_dist[z][1]])- np.array(my_pos)).tolist()
             # pad the remaining res distances if its shorter than RESOURCE PADDING
             if len(res_dists)<RESOURCE_PADDING:
                 res_dists+=[0]*(RESOURCE_PADDING-len(res_dists))
@@ -617,7 +649,10 @@ class IndependentLearnerAll(MultiAgentEnv):
                     self.action_masks[x][1:] = 0
                 elif (x[:5] =='drone') and nearest_enemy and getDistance(self.agents_positions[x], nearest_enemy["location"]) < 2:
                     self.action_masks[x][1:] = 0
-            
+            # this should also in update
+            # TODO WTF ?
+            if self.terrain and x[:5] == "tankh" and x not in self.stuck_agents:
+                self.tank_stuck_reward_check(x)
             my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
             self.obs_dict[x]['observations'] = np.array(my_state, dtype=np.int16)
         # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
@@ -651,8 +686,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         '''
         for x in self.obs_dict:
             self.obs_dict[x]['action_mask'] = self.action_masks[x]
-        
-        return self.obs_dict, (x_max, y_max, my_units, enemy_units, resources, my_base,enemy_base)
+        self.old_my_units = copy.copy(my_units)
+        return self.obs_dict, (x_max, y_max, my_units, enemy_units, self.resources, my_base,enemy_base)
     
     # @staticmethod
     def unit_dicts(self, obs, allies, enemies,  team):
@@ -768,7 +803,8 @@ class IndependentLearnerAll(MultiAgentEnv):
     
     def apply_action(self, action, raw_state, team):
         # this function takes the output of the model and converts it into a reasonable output for the game to play
-
+        blue_score = raw_state["score"][0]
+        red_score = raw_state["score"][1]
         # this is specific order as in self.agents
         movement = action[0:7]
         # movement = movement.tolist()
@@ -865,6 +901,106 @@ class IndependentLearnerAll(MultiAgentEnv):
         # TODO : delete this
         self.old_raw_state = raw_state
         
+        number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
+        # if hasattr(self, 'my_units'): # it is undefined on the first loop
+        for x in my_unit_dict:
+            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                number_of_tanks+=1
+            elif x["tag"] == "Drone":
+                number_of_uavs+=1
+            elif x["tag"] == "Truck":
+                number_of_trucks+=1
+        for x in enemy_unit_dict:
+            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
+                number_of_enemy_tanks+=1
+            elif x["tag"] == "Drone":
+                number_of_enemy_uavs+=1
+            elif x["tag"] == "Truck":
+                number_of_enemy_trucks+=1
+        
+        number_of_our_military = number_of_tanks+number_of_uavs
+        number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
+        
+        train_truck = False
+        train_military = False
+        no_train = False
+        # priority = 1--> truck, 2--> military
+        priority = 0
+        if blue_score > 0 and raw_state["turn"] > 3:
+            if number_of_trucks<1:
+                train_truck = True
+                priority = 1
+            if number_of_our_military<number_of_enemy_military:
+                train_military = True
+                if priority == 0:
+                    priority = 2
+            if number_of_trucks < number_of_enemy_trucks:
+                train_truck = True
+            if raw_state["turn"] / raw_state["max_turn"] > 0.9: 
+                no_train = True  
+            if raw_state["turn"] > 1 and len(self.resources) / self.init_resource_num < 0.05 and blue_score > red_score+3:
+                train_truck = False
+            # decide train type.
+            if not no_train:
+                if priority == 1 and train_truck:
+                    self.train = 1
+                elif priority == 2:
+                    self.train = random.randint(2,3)
+                elif train_truck:
+                    self.train = 1
+                elif train_military:
+                    self.train = random.randint(2,4)
+        else:
+            self.train = 0
+        
+        # TODO delete this
+        # for debug purposes
+        self.train = 1
+        
+        # if there is a unit 
+        # cancel train action
+        unit_on_base = False
+        for x in self.agents:
+            if self.agents_positions[x] == self.my_base:
+                unit_on_base = True
+                break
+        if unit_on_base:
+            self.train = 0
+
+        '''
+        # if blue_score > 0:
+        #     if raw_state["turn"] / raw_state["max_turn"] > 0.9: 
+        #         self.train = 0 
+        #     elif raw_state["turn"] > 1 and len(self.resources) / self.init_resource_num < 0.05 and blue_score > red_score+3:
+        #         self.train = 0
+        #     elif number_of_trucks<1:
+        #         self.train = 1
+        #     elif blue_score>red_score+1:
+        #         if number_of_trucks<2:
+        #             self.train = 1
+        #         elif number_of_tanks<1:
+        #             self.train = 2
+        #         elif number_of_uavs<1:
+        #             self.train = 4
+        #     elif blue_score>red_score+2:
+        #         if number_of_trucks<2:
+        #             self.train = 1
+        #         elif number_of_tanks<1:
+        #             self.train = 3
+        #         elif number_of_uavs<1:
+        #             self.train = 4
+        #         elif number_of_our_military<number_of_enemy_military:
+        #             self.train = random.randint(2,4)
+        #     elif blue_score < red_score and blue_score > 0:
+        #         if number_of_trucks<1 or (number_of_trucks<2 and len(self.resources) / self.init_resource_num) > 0.6:
+        #             self.train = 1
+        #         elif number_of_trucks>1 and number_of_tanks<1:
+        #             self.train = random.randint(2,3)
+        #         elif number_of_trucks>1 and number_of_uavs<1:
+        #             self.train = 4
+        # else:
+        #     self.train = 0
+        '''   
 
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, self.train]
