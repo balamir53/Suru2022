@@ -632,15 +632,17 @@ class IndependentLearnerAll(MultiAgentEnv):
                     # if there is a unit already on the base
                     # this function returns w/o spawning any agent
                     self._spawn_agent()
-            there_is_one = False
+            
             wild_delete = []
             for i, agent in enumerate(self.agents_positions):
+                there_is_one = False
                 for uni in my_units:
                     if self.agents_positions[agent] == uni['location']:
                         there_is_one = True
-                        wild_delete.append(agent)
                         counter +=1
                         break
+                if not there_is_one:
+                    wild_delete.append(agent)
             for y in wild_delete:
                 del self.agents_positions[y]
                 self.agents.remove(y)
