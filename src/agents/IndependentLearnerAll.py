@@ -100,6 +100,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
         self.nec_obs = None
 
+        self.mapChangeFrequency = 1000
+
         if self.height < 18:
             MAX_DISTANCE = int(math.sqrt(self.height**2+self.width**2))
 
@@ -242,37 +244,38 @@ class IndependentLearnerAll(MultiAgentEnv):
         yOffSet = 0
         # change the base and units' first positions on some frequency
         # if(episode%self.mapChangeFrequency==0):
-        if(False):
+        # if(False):
             # print(episode)
-            self.resetPosition(mapDict)
-            xOffSet = random.randint(0,self.width-self.gameAreaX)
-            yOffSet = random.randint(0,self.height-self.gameAreaY)
-            self.addOffSet(mapDict['blue']['base'],xOffSet, yOffSet)
-            self.addOffSet(mapDict['red']['base'],xOffSet, yOffSet)
-            for x in mapDict['blue']['units']:
-                self.addOffSet(x,xOffSet, yOffSet)
-            for x in mapDict['red']['units']:
-                self.addOffSet(x,xOffSet, yOffSet)
-        
-        # random base on the most left tile column
-        mapDict['blue']['base']['y'] = random.randint(0,self.height-1)
-        # find out already occupied tiles
-        occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
-        for x in mapDict['blue']['units']:
-            occupiedTiles.add(self.getCoordinate(x))
-        for x in mapDict['red']['units']:
-            occupiedTiles.add(self.getCoordinate(x))
+            # self.resetPosition(mapDict)
+            # xOffSet = random.randint(0,self.width-self.gameAreaX)
+            # yOffSet = random.randint(0,self.height-self.gameAreaY)
+            # self.addOffSet(mapDict['blue']['base'],xOffSet, yOffSet)
+            # self.addOffSet(mapDict['red']['base'],xOffSet, yOffSet)
+            # for x in mapDict['blue']['units']:
+            #     self.addOffSet(x,xOffSet, yOffSet)
+            # for x in mapDict['red']['units']:
+            #     self.addOffSet(x,xOffSet, yOffSet)
 
-        # randomize resource positions
-        for x in mapDict['resources']:
-            a = random.randint(0, self.width-1)+xOffSet
-            b = random.randint(0, self.height-1)+yOffSet
-            while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
+        if(episode%self.mapChangeFrequency==0):
+            # random base on the most left tile column
+            mapDict['blue']['base']['y'] = random.randint(0,self.height-1)
+            # find out already occupied tiles
+            occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
+            for x in mapDict['blue']['units']:
+                occupiedTiles.add(self.getCoordinate(x))
+            for x in mapDict['red']['units']:
+                occupiedTiles.add(self.getCoordinate(x))
+
+            # randomize resource positions
+            for x in mapDict['resources']:
                 a = random.randint(0, self.width-1)+xOffSet
                 b = random.randint(0, self.height-1)+yOffSet
-            occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
-            x['x'] = a
-            x['y'] = b
+                while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
+                    a = random.randint(0, self.width-1)+xOffSet
+                    b = random.randint(0, self.height-1)+yOffSet
+                occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
+                x['x'] = a
+                x['y'] = b
 
     # is this even called?
     def setup(self, obs_spec, action_spec):
