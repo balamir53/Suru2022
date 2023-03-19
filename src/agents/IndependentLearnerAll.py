@@ -18,6 +18,8 @@ def read_hypers(map):
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
 RESOURCE_PADDING = 50*2 # parameter * (y and x)
 TERRAIN_PADDING = 7*7 # parameter
+# update this in init function for smaller maps
+MAX_DISTANCE = 30
 class IndependentLearnerAll(MultiAgentEnv):
     def __init__(self, args, agents, team=0):
         # agents is an empty list to be filled
@@ -41,6 +43,11 @@ class IndependentLearnerAll(MultiAgentEnv):
             elif x['type'] == 'Drone':
                 self.agents.append('drone'+str(self.droneID))
                 self.droneID +=1
+
+        self.init_truckID = copy.copy(self.truckID)
+        self.init_tanklID = copy.copy(self.tanklID)
+        self.init_tankhID = copy.copy(self.tankhID)
+        self.init_droneID = copy.copy(self.droneID)
 
         # our method resembles the multiagent example in petting zoo
         # agents will be created at the start
@@ -93,6 +100,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
         self.nec_obs = None
 
+        if self.height < 18:
+            MAX_DISTANCE = int(math.sqrt(self.height**2+self.width**2))
+
         self.load_reward = 0.5
         self.unload_reward = 1
         self.kill_reward = 1
@@ -102,6 +112,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.stuck_agents = []
         self.current_action = {}
         self.old_my_units = {}
+        self.dead_units = []
+        self.dead_ones = set()
         # self.observation_space = spaces.Box(
         #     low=-40,
         #     high=401,
@@ -195,6 +207,73 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.old_raw_state = None
         self.firstShot = True
 
+    def getCoordinate(self, dict):
+        return dict['y']*self.width+dict['x']
+
+    def addOffSet(self, dict, xOff, yOff):
+        dict['x']+= xOff
+        dict['y']+= yOff
+
+    def resetPosition(self, myDict):
+        myDict['blue']['base']['x'] = self.configs['blue']['base']['x']
+        myDict['blue']['base']['y'] = self.configs['blue']['base']['y']
+
+        myDict['red']['base']['x'] = self.configs['red']['base']['x']
+        myDict['red']['base']['y'] = self.configs['red']['base']['y']
+
+        for i in range(len(myDict['blue']['units'])):
+            myDict['blue']['units'][i]['x'] = self.configs['blue']['units'][i]['x']
+            myDict['blue']['units'][i]['y'] = self.configs['blue']['units'][i]['y']
+
+        for i in range(len(myDict['red']['units'])):
+            myDict['red']['units'][i]['x'] = self.configs['red']['units'][i]['x']
+            myDict['red']['units'][i]['y'] = self.configs['red']['units'][i]['y']
+
+    def manipulateMap(self, mapDict, episode):
+        # here we manipulate actually self.game.config
+        # change resources positions on every episode
+        
+        # mapDict['blue']['base']['x'] = 0 #this works
+        
+        # mapDict = copy.deepcopy(self.configs)
+        # mapDict = self.configs.copy() #this doesnt work
+        # mapDict['blue']['base']['x'] = 0
+        xOffSet = 0
+        yOffSet = 0
+        # change the base and units' first positions on some frequency
+        # if(episode%self.mapChangeFrequency==0):
+        if(False):
+            # print(episode)
+            self.resetPosition(mapDict)
+            xOffSet = random.randint(0,self.width-self.gameAreaX)
+            yOffSet = random.randint(0,self.height-self.gameAreaY)
+            self.addOffSet(mapDict['blue']['base'],xOffSet, yOffSet)
+            self.addOffSet(mapDict['red']['base'],xOffSet, yOffSet)
+            for x in mapDict['blue']['units']:
+                self.addOffSet(x,xOffSet, yOffSet)
+            for x in mapDict['red']['units']:
+                self.addOffSet(x,xOffSet, yOffSet)
+        
+        # random base on the most left tile column
+        mapDict['blue']['base']['y'] = random.randint(0,self.height-1)
+        # find out already occupied tiles
+        occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
+        for x in mapDict['blue']['units']:
+            occupiedTiles.add(self.getCoordinate(x))
+        for x in mapDict['red']['units']:
+            occupiedTiles.add(self.getCoordinate(x))
+
+        # randomize resource positions
+        for x in mapDict['resources']:
+            a = random.randint(0, self.width-1)+xOffSet
+            b = random.randint(0, self.height-1)+yOffSet
+            while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
+                a = random.randint(0, self.width-1)+xOffSet
+                b = random.randint(0, self.height-1)+yOffSet
+            occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
+            x['x'] = a
+            x['y'] = b
+
     # is this even called?
     def setup(self, obs_spec, action_spec):
         self.observation_space = obs_spec
@@ -224,7 +303,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
 
         # consider this in the future
-        # self.manipulateMape(self.game.config,self.episodes)
+        self.manipulateMap(self.game.config,self.episodes)
 
         state = self.game.reset()
         self.nec_obs =state
@@ -254,6 +333,13 @@ class IndependentLearnerAll(MultiAgentEnv):
         for i in range(len(self.agents)):
             self.agents_positions[self.agents[i]]=(self.configs['blue']['units'][i]['y'], self.configs['blue']['units'][i]['x'])
         
+        self.truckID=copy.copy(self.init_truckID)
+        self.tanklID=copy.copy(self.init_tanklID)
+        self.tankhID=copy.copy(self.init_tankhID)
+        self.droneID=copy.copy(self.init_droneID)
+        # clear the dead ones set
+        self.dead_ones.clear()
+        self.dead_units = []
         # how and when should we use this
         # elaborate
         # self.spawn()
@@ -314,6 +400,41 @@ class IndependentLearnerAll(MultiAgentEnv):
             #momentarily mask the action to stay.
             self.action_masks[x][1:] = 0
     
+    def _spawn_agent(self):
+        # if there is a unit there already, return
+        for h in self.agents:
+            if self.agents_positions[h] == self.my_base:
+                return
+        x = None
+        if self.train == 1:
+            x = 'truck'+str(self.truckID)
+            self.agents.append(x)                    
+            self.truckID +=1
+        elif self.train == 2:
+            x = 'tankl'+str(self.tanklID)
+            self.agents.append(x)
+            self.tanklID +=1
+        elif self.train == 3:
+            x = 'tankh'+str(self.tankhID)
+            self.agents.append(x)
+            self.tankhID +=1
+        elif self.train == 4:
+            x = 'drone'+str(self.droneID)
+            self.agents.append(x)
+            self.droneID +=1
+        self.agents_positions[x] = (0,0)
+        # it is just created and has actually no action to play
+        self.current_action[x] = 0
+        self.observation_spaces[x] = self.observation_space
+        self.obs_dict[x] = {"observations":[], "action_mask":[]}
+        self.loads[x] = 0
+        self.rewards[x] = 0
+        self.dones[x] = False  #if agents die make this True
+        self.infos[x] = {}
+        self.old_base_distance[x] = 30
+        self.action_masks[x] = np.ones(7, dtype=np.int8)
+
+
     def  _decode_state(self, obs, procOrUpdate=0):
         # this function is also called from inference mode with two options
         # procOrUpdate = 1 is for obs process call from inference
@@ -342,6 +463,16 @@ class IndependentLearnerAll(MultiAgentEnv):
             self.kill_reward_check(obs)
         # neg rew if the tankh is stuck on dirt.
 
+        # wreckage time is assumed 5, we should get this from rules.yaml
+        for x in self.dead_units:
+            x[2] += 1
+            if x[2] > 5:
+                self.dead_units.remove(x)
+                self.dead_ones.remove((x[0],x[1]))
+
+
+        someone_just_died_at = []
+        # dead_units = []
         for i in range(y_max):
             for j in range(x_max):
                 if units[self.team][i][j]<6 and units[self.team][i][j] != 0:
@@ -354,6 +485,15 @@ class IndependentLearnerAll(MultiAgentEnv):
                         'load': load[self.team][i][j]
                     }
                     )
+                elif units[self.team][i][j]==8:
+                    # we assume some unit is dead
+                    if self.dead_ones.isdisjoint({(i,j)}):
+                        someone_just_died_at.append((i,j))
+                        self.dead_ones.add((i,j))
+                        # the third element is wreckage timer
+                        self.dead_units.append([i,j,1])
+                    # this just have been killed or it is wreckage 
+                    # self.dead_units.append((i,j,0))
                 if units[self.enemy_team][i][j]<6 and units[self.enemy_team][i][j] != 0:
                     enemy_units.append(
                     {   
@@ -374,22 +514,13 @@ class IndependentLearnerAll(MultiAgentEnv):
         # procOrUpdate = 1 is for obs process call from inference
         # procOrUpdate = 2 is for update agents call from inference
         if procOrUpdate != 1 :
-            # elaborate
-            if self.train > 0:
-                # self.agents.append()
-                # self.agents_positions()
-                if self.train == 1:
-                    self.agents.append('truck'+str(self.truckID))
-                    self.truckID +=1
-                elif self.train == 2:
-                    self.agents.append('tankl'+str(self.tanklID))
-                    self.tanklID +=1
-                elif self.train == 3:
-                    self.agents.append('tankh'+str(self.tankhID))
-                    self.tankhID +=1
-                elif self.train == 4:
-                    self.agents.append('drone'+str(self.droneID))
-                    self.droneID +=1
+
+            # # this is not safe check
+            # # even if we set self.train greater than zero game sometimes wont train because of some limitations
+            # this part has been moved to spawn_agent function
+            # # elaborate
+            # if self.train > 0:
+
 
             # update here self.agents and self.agents_positions
             # how to check which agent at which position has been killed?
@@ -397,14 +528,48 @@ class IndependentLearnerAll(MultiAgentEnv):
             # here we also check loads
             # apply reward for any load increase and decrease if on base
 
-            someone_died = False
+            someone_died_or_spawned = False
             to_be_deleted = []
+            someone_has_spawned = False
+            if self.train:
+                if someone_just_died_at:
+                    if len(self.agents_positions)-len(someone_just_died_at) != len(my_units):
+                        someone_has_spawned = True
+                else:
+                    if len(my_units) != len(self.agents):
+                        someone_has_spawned = True
+                # if dead unit is on the base
+                # do not spawn
+                if someone_has_spawned:
+                    for d in self.dead_units:
+                        if (d[0],d[1]) == self.my_base:
+                            someone_has_spawned = False
+                            break
             for i,x in enumerate(self.agents):
                 # check for deaths
-                if len(self.agents) != len(my_units):
-                    someone_died = True
-                else:
-                    someone_died = False
+                # unit is actually death on its next position
+                # but maybe it didnt move because of some obstacle
+                # so we should first check if it moved to the death position?
+                # blue plays first
+                # so it will play first and then be dead, this is important
+
+                # what if a new unit has been created on the base
+                
+                # spawn the unit at the end
+
+                
+                # it will be a problem for our units to go that position
+                # if someone_just_died_at:
+
+                    # this will be true for wrackage time (5 as default) in rules.yaml
+                
+                # what if someone died and someone spawned at the same time
+                # if len(self.agents) != len(my_units):
+                #     # what if someone died and someone has spawned at the same time
+                #     # maybe we can get death units from above (where they are set to 8 and wait at that position 5 steps)
+                #     someone_died_or_spawned = True
+                # else:
+                #     someone_died_or_spawned = False
                 # check if it is on the tile supposed to be
                 move_x, move_y = getMovement(self.agents_positions[x],self.current_action[x])
                 new_pos = tuple(map(lambda i, j: i + j, self.agents_positions[x], (move_y, move_x)))
@@ -415,7 +580,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # check of no-go section for lake because of the drones ---> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3
                 if x[:5] != 'drone' and self.terrain and self.terrain.get(new_pos[0]*self.width+new_pos[1]) == 2:
                     new_pos = self.agents_positions[x]
-                    if someone_died:
+                    if someone_just_died_at:
                         dead = True
                         for z in my_units:
                             if z['location'] == new_pos:
@@ -430,7 +595,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                     if x[:5] == "truck":
                         self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
                         self.load_reward_check(old_load, self.loads[x], x)
-                    if someone_died:
+                    if someone_just_died_at:
                         dead = True
                         for z in my_units:
                             if z['location'] == new_pos:
@@ -456,7 +621,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                     if x[:5] == "truck":
                         self.loads[x] = load[self.team][new_pos[0],new_pos[1]]
                         self.load_reward_check(old_load, self.loads[x], x)
-                    if someone_died:
+                    if someone_just_died_at:
                         dead = True
                         for z in my_units:
                             if z['location'] == new_pos:
@@ -468,7 +633,9 @@ class IndependentLearnerAll(MultiAgentEnv):
 
                 am_i_alive = False      
 
-                if someone_died or (len(self.agents) == len(my_units) and self.train == 0):
+                # if someone_just_died_at or (len(self.agents) == len(my_units) and self.train == 0):
+                # this should be entered in every case
+                if True:
                     # two options, either nothing changed
                     # or a new unit has been created and another has been killed
                     # check self.train
@@ -496,7 +663,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                                     self.load_reward_check(old_load, self.loads[x], x) 
                                 am_i_alive = True
                                 break
-                if not am_i_alive and someone_died:
+                if not am_i_alive and someone_just_died_at:
                     to_be_deleted.append(x)
                     # del self.agents_positions[x]
                     # del self.agents_positions_[x]
@@ -522,11 +689,40 @@ class IndependentLearnerAll(MultiAgentEnv):
                     del self.infos[to_be_deleted[i]]
                     del self.action_masks[to_be_deleted[i]]
             counter = 0
+            if someone_has_spawned:
+                there_is_one = False
+                # check if really one has been spawned
+                for h in my_units:
+                    if h['location'] == self.my_base:
+                        there_is_one = True
+                if there_is_one:
+                    # if there is a unit already on the base
+                    # this function returns w/o spawning any agent
+                    self._spawn_agent()
+            
+            wild_delete = []
             for i, agent in enumerate(self.agents_positions):
+                there_is_one = False
                 for uni in my_units:
                     if self.agents_positions[agent] == uni['location']:
+                        there_is_one = True
                         counter +=1
+                        break
+                if not there_is_one:
+                    wild_delete.append(agent)
+            for y in wild_delete:
+                del self.agents_positions[y]
+                self.agents.remove(y)
+                del self.observation_spaces[y] 
+                del self.obs_dict[y] 
+                del self.loads[y] 
+                del self.rewards[y] 
+                del self.dones[y]
+                del self.old_base_distance[y]
+                del self.infos[y]
+                del self.action_masks[y]
             if counter < len(self.agents_positions):
+
                 print(self.agents_positions)
                 print(my_units)
                 print('Done')
@@ -556,7 +752,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                         self.rewards[x]+= self.neg_partial
                     else:
                         # self.rewards[x]+= self.pos_partial
-                        self.rewards[x]+= (30-dist_to_base)**2 / 10000
+                        self.rewards[x]+= (MAX_DISTANCE-dist_to_base)**2 / 10000
             self.old_base_distance[x] = dist_to_base
 
             # action mask if mud.
@@ -629,6 +825,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 elif (x[:5] =='drone') and nearest_enemy and getDistance(self.agents_positions[x], nearest_enemy["location"]) < 2:
                     self.action_masks[x][1:] = 0
             # this should also in update
+            # TODO WTF ?
             if self.terrain and x[:5] == "tankh" and x not in self.stuck_agents:
                 self.tank_stuck_reward_check(x)
             my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
@@ -904,6 +1101,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         no_train = False
         # priority = 1--> truck, 2--> military
         priority = 0
+        self.train = 0
         if blue_score > 0 and raw_state["turn"] > 3:
             if number_of_trucks<1:
                 train_truck = True
@@ -931,6 +1129,26 @@ class IndependentLearnerAll(MultiAgentEnv):
         else:
             self.train = 0
         
+        # TODO delete this
+        # for debug purposes
+        # self.train = 1
+        
+        # if there is a unit 
+        # cancel train action
+        # this is actually not true since the unit on the base can move into another tile
+        # and another unit can move into the base tile
+        # we should check actually next positions
+        # or should we?
+        # we can easily check new units and check if our train action has been implemented
+        # unit_on_base = False
+        # TODO FIND A BETTER SOLUTION
+        # for x in self.agents:
+        #     if self.agents_positions[x] == self.my_base:
+        #         unit_on_base = True
+        #         break
+        # if unit_on_base:
+        #     self.train = 0
+
         '''
         # if blue_score > 0:
         #     if raw_state["turn"] / raw_state["max_turn"] > 0.9: 
