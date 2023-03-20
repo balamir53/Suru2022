@@ -15,7 +15,7 @@ from models.action_mask_model import TorchActionMaskModel
 import pickle
 import yaml
 
-map="TrainDuoTruckSmall"
+map="RiskyValley-all"
 AGENTRED = "RandomAgent"
 
 def read_hypers():
@@ -79,7 +79,7 @@ class SelfPlayAll:
         register_env("ray", lambda config : IndependentLearnerAll(args, self.agents))
 
         ppo_agent = PPOTrainer(config=config, env="ray")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_000250/checkpoint-250")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001100/checkpoint-1100")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')
