@@ -3,6 +3,15 @@ turn_timer: 10
 map:
   x: 12
   y: 8
+  terrain: 
+    - ['g', 'd', 'm', 'w', 'g', 'g', 'g', 'd', 'm', 'w', 'g', 'g']
+    - ['g', 'd', 'm', 'w', 'g', 'g', 'g', 'd', 'm', 'w', 'g', 'g']
+    - ['g', 'd', 'd', 'w', 'g', 'g', 'g', 'd', 'm', 'w', 'g', 'g']
+    - ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g']
+    - ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g']
+    - ['g', 'g', 'w', 'd', 'd', 'g', 'g', 'd', 'm', 'w', 'g', 'g']
+    - ['g', 'g', 'w', 'm', 'd', 'g', 'g', 'd', 'm', 'w', 'g', 'g']
+    - ['g', 'g', 'w', 'm', 'd', 'g', 'g', 'd', 'm', 'w', 'g', 'g']
 red:
   base:
     x: 11
@@ -20,11 +29,11 @@ blue:
     y: 0
   units:
     - type: Truck
-      x: 1
-      y: 0
+      x: 0
+      y: 2
     - type: Truck
-      x: 3
-      y: 0
+      x: 0
+      y: 3
 resources:
   - x: 0
     y: 7
