@@ -760,13 +760,14 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # if loaded truck is on the base force it to unload
                 if my_pos == my_base and self.loads[x] > 0:
                     self.action_masks[x][1:] = 0
-                # TODO: change 0 to 2
-                if self.loads[x] > 2:
-                    if dist_to_base >= self.old_base_distance[x]:
-                        self.rewards[x]+= self.neg_partial
-                    else:
-                        # self.rewards[x]+= self.pos_partial
-                        self.rewards[x]+= (MAX_DISTANCE-dist_to_base)**2 / 10000
+                # TODO: this wont work if there is an obstacle btw truck and base
+                # comment it for now
+                # if self.loads[x] > 2:
+                #     if dist_to_base >= self.old_base_distance[x]:
+                #         self.rewards[x]+= self.neg_partial
+                #     else:
+                #         # self.rewards[x]+= self.pos_partial
+                #         self.rewards[x]+= (MAX_DISTANCE-dist_to_base)**2 / 10000
             self.old_base_distance[x] = dist_to_base
 
             # action mask if mud.
