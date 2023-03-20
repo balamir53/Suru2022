@@ -268,9 +268,9 @@ class IndependentLearnerAll(MultiAgentEnv):
             for x in mapDict['red']['units']:
                 occupiedTiles.add(self.getCoordinate(x))
 
-            # if self.terrain:
-            #     for ter in self.terrain.keys():
-            #        occupiedTiles.add(ter)
+            if self.terrain:
+                for ter in self.terrain.keys():
+                   occupiedTiles.add(ter)
                 
             # randomize resource positions
             for x in mapDict['resources']:
