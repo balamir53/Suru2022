@@ -817,6 +817,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # agent_pos = np.array(self.agents_positions[i])
                 counter = 0
                 # check for surround terrain in TERRAIN_PADDING box, if there is change agent surround index accordingly with terrain type
+                # check of no-go section for whole unit types ---> terrain_type : 'dirt' : 1, 'water' : 2, 'mountain' : 3
                 index = int(math.sqrt(TERRAIN_PADDING)//2)
                 for ver in range(-index, index+1):
                     for hor in range(-index, index+1):
@@ -824,6 +825,11 @@ class IndependentLearnerAll(MultiAgentEnv):
                         lookat = coor[0]*self.width + coor[1]
                         # mask drone's action to not to go to mountain-side.
                         if x[:5] == 'drone' and abs(ver)<2 and abs(hor)<2 and self.terrain.get(lookat) == 3: 
+                            direction = getDirection(my_pos[1], hor, ver)
+                            if direction < 7:
+                               self.action_masks[x][direction] = 0 
+                        # mask tank and truck' action to not to go to mountain-side, water.
+                        if (x[:4] == 'tank' or x[:5] == 'truck') and abs(ver)<2 and abs(hor)<2 and (self.terrain.get(lookat) == 2 or self.terrain.get(lookat) == 3): 
                             direction = getDirection(my_pos[1], hor, ver)
                             if direction < 7:
                                self.action_masks[x][direction] = 0 
@@ -842,6 +848,26 @@ class IndependentLearnerAll(MultiAgentEnv):
             # TODO WTF ?
             if self.terrain and x[:5] == "tankh" and x not in self.stuck_agents:
                 self.tank_stuck_reward_check(x)
+            
+            # if unit is on yth y position,it cannot go down anymore, mask actions 4,5,6
+            if self.agents_positions[x][0] == (self.height-1) :
+                if self.agents_positions[x][1] % 2:
+                   self.action_masks[x][5] = 0 
+                else:
+                   self.action_masks[x][4:] = 0
+            # if unit is on 0th y position, it cannot go up anymore, mask actions 1,2,3
+            elif self.agents_positions[x][0] == 0 :
+                if self.agents_positions[x][1] % 2:
+                   self.action_masks[x][1:4] = 0
+                else:
+                   self.action_masks[x][2] = 0 
+            # if unit is on self.x_max th position it cannot right anymore, mask actions 3,4
+            if self.agents_positions[x][1] == (self.width-1) :
+                self.action_masks[x][3:5] = 0
+            # if unit is on 0th x position it cannot left anymore, mask actions 1,6
+            elif self.agents_positions[x][1] == 0 :
+                self.action_masks[x][1] = 0
+                self.action_masks[x][6] = 0            
             my_state = (*list(my_pos), self.loads[x], *rel_dists, *res_dists, *agent_surround)
             self.obs_dict[x]['observations'] = np.array(my_state, dtype=np.int16)
         # state = (*score.tolist(), turn, max_turn, *unitss, *hpss, *basess, *ress, *loads, *terr)
