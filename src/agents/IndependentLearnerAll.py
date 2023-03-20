@@ -21,9 +21,10 @@ TERRAIN_PADDING = 7*7 # parameter
 # update this in init function for smaller maps
 MAX_DISTANCE = 30
 class IndependentLearnerAll(MultiAgentEnv):
-    def __init__(self, args, agents, team=0):
+    def __init__(self, args, agents, team=0, mapChange=False):
         # agents is an empty list to be filled
         self.agents = agents
+        self.mapChange = mapChange
         # get agents from map config
         self.configs = read_hypers(args.map)
         self.truckID =0
@@ -100,7 +101,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
         self.nec_obs = None
 
-        self.mapChangeFrequency = 300
+        self.mapChangeFrequency = 1
 
         if self.height < 18:
             MAX_DISTANCE = int(math.sqrt(self.height**2+self.width**2))
@@ -312,7 +313,8 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
 
         # consider this in the future
-        self.manipulateMap(self.game.config,self.episodes)
+        if self.mapChange:
+            self.manipulateMap(self.game.config,self.episodes)
 
         state = self.game.reset()
         self.nec_obs =state
