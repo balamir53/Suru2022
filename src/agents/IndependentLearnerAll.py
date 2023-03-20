@@ -9,7 +9,7 @@ from gym import spaces
 import yaml
 import numpy as np
 import random
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter, myStar
 
 def read_hypers(map):
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -209,6 +209,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.resources = []
         self.old_raw_state = None
         self.firstShot = True
+
+        # olum kodu
+        self.myStar = myStar(self.height, self.width, self.terrain)
 
     def getCoordinate(self, dict):
         return dict['y']*self.width+dict['x']
@@ -755,19 +758,22 @@ class IndependentLearnerAll(MultiAgentEnv):
             rel_dists.append(self.unit_type['base'])
             
             # check for partial rewards of trucks loaded 3
-            dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
+            # dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
+            dist_to_base = len(list(self.myStar.astar(my_pos,self.my_base)))-1
             if x[:5] == 'truck':
                 # if loaded truck is on the base force it to unload
-                if my_pos == my_base and self.loads[x] > 0:
+                if my_pos == self.my_base and self.loads[x] > 0:
                     self.action_masks[x][1:] = 0
                 # TODO: this wont work if there is an obstacle btw truck and base
+                # road = len(list(self.myStar.astar(my_pos,self.my_base)))-1
+                 
                 # comment it for now
-                # if self.loads[x] > 2:
-                #     if dist_to_base >= self.old_base_distance[x]:
-                #         self.rewards[x]+= self.neg_partial
-                #     else:
-                #         # self.rewards[x]+= self.pos_partial
-                #         self.rewards[x]+= (MAX_DISTANCE-dist_to_base)**2 / 10000
+                if self.loads[x] > 2:
+                    if dist_to_base >= self.old_base_distance[x]:
+                        self.rewards[x]+= self.neg_partial
+                    else:
+                        # self.rewards[x]+= self.pos_partial
+                        self.rewards[x]+= (MAX_DISTANCE-dist_to_base)**2 / 10000
             self.old_base_distance[x] = dist_to_base
 
             # action mask if mud.
@@ -1224,7 +1230,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         # else:
         #     self.train = 0
         '''   
-
+        sonuc = list(self.myStar.astar((0,0), (3,0)))
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, self.train]
     def step(self, action_dict):
