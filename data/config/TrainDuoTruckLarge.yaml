@@ -18,22 +18,22 @@ red:
     y: 7
   units:
     - type: Truck
-      x: 10
+      x: 11
       y: 7
     - type: Truck
-      x: 8
-      y: 7
+      x: 11
+      y: 5
 blue:
   base:
     x: 0
     y: 0
   units:
     - type: Truck
-      x: 1
-      y: 0
+      x: 0
+      y: 2
     - type: Truck
-      x: 3
-      y: 0
+      x: 0
+      y: 3
 resources:
   - x: 0
     y: 7
