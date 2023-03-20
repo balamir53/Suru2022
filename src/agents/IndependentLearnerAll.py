@@ -100,7 +100,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.steps = 0
         self.nec_obs = None
 
-        self.mapChangeFrequency = 1000
+        self.mapChangeFrequency = 300
 
         if self.height < 18:
             MAX_DISTANCE = int(math.sqrt(self.height**2+self.width**2))
@@ -258,7 +258,9 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         if(episode%self.mapChangeFrequency==0):
             # random base on the most left tile column
-            mapDict['blue']['base']['y'] = random.randint(0,self.height-1)
+            new_base_y = random.randint(0,self.height-1)
+            mapDict['blue']['base']['y'] = new_base_y
+            self.my_base = (new_base_y, 0)
             # find out already occupied tiles
             occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
             for x in mapDict['blue']['units']:
@@ -266,6 +268,10 @@ class IndependentLearnerAll(MultiAgentEnv):
             for x in mapDict['red']['units']:
                 occupiedTiles.add(self.getCoordinate(x))
 
+            # if self.terrain:
+            #     for ter in self.terrain.keys():
+            #        occupiedTiles.add(ter)
+                
             # randomize resource positions
             for x in mapDict['resources']:
                 a = random.randint(0, self.width-1)+xOffSet
@@ -425,7 +431,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             x = 'drone'+str(self.droneID)
             self.agents.append(x)
             self.droneID +=1
-        self.agents_positions[x] = (0,0)
+        self.agents_positions[x] = self.my_base
         # it is just created and has actually no action to play
         self.current_action[x] = 0
         self.observation_spaces[x] = self.observation_space
@@ -695,10 +701,13 @@ class IndependentLearnerAll(MultiAgentEnv):
             if someone_has_spawned:
                 there_is_one = False
                 # check if really one has been spawned
-                for h in my_units:
-                    if h['location'] == self.my_base:
+                for agent in self.agents_positions:
+                    if self.agents_positions[agent] == self.my_base:
                         there_is_one = True
-                if there_is_one:
+                # for h in my_units:
+                #     if h['location'] == self.my_base:
+                #         there_is_one = True
+                if not there_is_one:
                     # if there is a unit already on the base
                     # this function returns w/o spawning any agent
                     self._spawn_agent()
