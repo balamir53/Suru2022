@@ -759,7 +759,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             
             # check for partial rewards of trucks loaded 3
             # dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
-            
+            dist_to_base = MAX_DISTANCE
             if x[:5] == 'truck':
                 dist_to_base = len(list(self.myStar.astar(my_pos,self.my_base)))-1
                 # if loaded truck is on the base force it to unload
@@ -1231,7 +1231,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         # else:
         #     self.train = 0
         '''   
-        sonuc = list(self.myStar.astar((0,0), (3,0)))
+
         # this has to be returned in this order according to challenge rules
         return [locations, movement, enemy_order, self.train]
     def step(self, action_dict):

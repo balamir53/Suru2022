@@ -51,8 +51,9 @@ class myStar(AStar):
         return math.hypot(toN[1] - fromN[1], toN[0] - fromN[0])
     
     def distance_between(self, fromN, toN ) :
-        coor = toN[1]*self.width+toN[0]
-        if self.terrain.get(coor) != 1:
+        coor = toN[0]*self.width+toN[1]
+        lookat = self.terrain.get(coor)
+        if lookat and lookat != 1:
             return 200
         else:
             return 1
