@@ -9,7 +9,8 @@ from gym import spaces
 import yaml
 import numpy as np
 import random
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter, astar
+from custommap import maps
 
 def read_hypers(map):
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -21,10 +22,11 @@ TERRAIN_PADDING = 7*7 # parameter
 # update this in init function for smaller maps
 MAX_DISTANCE = 30
 class IndependentLearnerAll(MultiAgentEnv):
-    def __init__(self, args, agents, team=0, mapChange=False):
+    def __init__(self, args, agents, team=0, mapChange=True):
         # agents is an empty list to be filled
         self.agents = agents
         self.mapChange = mapChange
+        self.maplist = maps
         # get agents from map config
         self.configs = read_hypers(args.map)
         self.truckID =0
@@ -256,7 +258,9 @@ class IndependentLearnerAll(MultiAgentEnv):
             #     self.addOffSet(x,xOffSet, yOffSet)
             # for x in mapDict['red']['units']:
             #     self.addOffSet(x,xOffSet, yOffSet)
-
+        self.game.config["map"]["terrain"] = self.custommap(random.choice(self.maplist))
+        self.terrain = self.terrain_locs()
+        
         if(episode%self.mapChangeFrequency==0):
             # random base on the most left tile column
             new_base_y = random.randint(0,self.height-1)
@@ -304,6 +308,28 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         self.agentID += 1
         return agentID
+    
+    def custommap(self, maparray):
+        terrain_list = []
+        for i in range(self.height):
+            temp = []
+            for j in range(self.width//2):
+                temp.append(maparray[i*2][j])
+                temp.append(maparray[i*2+1][j])
+            terrain_list.append(temp)
+                        
+        for i in range(len(terrain_list)):
+            for j in range(len(terrain_list[i])):
+                if terrain_list[i][j] == 1:
+                    terrain_list[i][j] = "g"
+                elif terrain_list[i][j] == 2:
+                    terrain_list[i][j] = "d"
+                elif terrain_list[i][j] == 3:
+                    terrain_list[i][j] = "w"
+                elif terrain_list[i][j] == 4:
+                    terrain_list[i][j] = "m"
+        return terrain_list
+        
     
     def reset(self):
         self.agents = copy.copy(self.init_agents)
@@ -521,7 +547,8 @@ class IndependentLearnerAll(MultiAgentEnv):
                     my_base = (i,j)
                 if bases[self.enemy_team][i][j]:
                     enemy_base = (i,j)
-
+                    
+        # astar(self.agents_positions['truck0'], self.my_base, obs)
         # procOrUpdate = 1 is for obs process call from inference
         # procOrUpdate = 2 is for update agents call from inference
         if procOrUpdate != 1 :
@@ -1005,10 +1032,10 @@ class IndependentLearnerAll(MultiAgentEnv):
     
     def terrain_locs(self):
         terrain_type = {'d' : 1, 'w' : 2, 'm' : 3}
-        if not self.configs['map'].get('terrain'):
+        if not self.game.config['map'].get('terrain'):
             return
-        terrain = self.configs['map']['terrain']
-        x_max, y_max = self.configs['map']['x'], self.configs['map']['y']
+        terrain = self.game.config['map']['terrain']
+        x_max, y_max = self.game.config['map']['x'], self.game.config['map']['y']
         ter_locs = {}
         for i in range(y_max):
             for j in range(x_max):

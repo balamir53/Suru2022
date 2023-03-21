@@ -406,3 +406,17 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
     harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)
 
+def astar(start, target, state):
+    y_max, x_max = state['resources'].shape
+    costmap = state['units'][0] + state['units'][1]
+    costmap = np.minimum(costmap, np.ones(state['resources'].shape))
+    y_start,x_start = start
+    y_target,x_target = target
+    costmap[x_start][y_start] = -1
+    costmap[x_target][y_target] = -2
+    a = [state['terrain'] == 'd']
+    b = [state['terrain'] == 'w']
+    c = [state['terrain'] == 'm']
+    print(costmap)
+    print(a)
+    print("-----")

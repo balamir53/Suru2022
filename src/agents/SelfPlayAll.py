@@ -15,7 +15,7 @@ from models.action_mask_model import TorchActionMaskModel
 import pickle
 import yaml
 
-map="TrainDuoTruckSmall"
+map="RiskyValley-all"
 AGENTRED = "SimpleAgent"
 
 def read_hypers():

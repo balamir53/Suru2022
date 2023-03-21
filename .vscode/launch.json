@@ -28,7 +28,7 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["TrainDuoTruckLarge","SelfPlayAll","SimpleAgent", "--numOfMatch","1", "--gif"]
+            "args": ["RiskyValley-all","SelfPlayAll","RandomAgent", "--numOfMatch","10"]
        },
        {
            "name": "train",
@@ -55,7 +55,7 @@
      "program": "src/my_trainer-all.py",
     "console": "integratedTerminal",
     "justMyCode": false,
-    "args": ["TrainDuoTruckLarge","RandomAgent", "--render"]
+    "args": ["RiskyValley-all","RandomAgent", "--render"]
 },
    {
      "name": "multitraincadet",

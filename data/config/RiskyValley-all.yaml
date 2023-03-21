@@ -27,19 +27,19 @@ red:
     x: 23
     y: 1
   units:
-    - type: HeavyTank
+    - type: Truck
       x: 22
       y: 4
-    - type: LightTank
+    - type: Truck
       x: 22
       y: 3
-    - type: Drone
+    - type: Truck
       x: 21
       y: 0
-    - type: Drone
+    - type: Truck
       x: 21
       y: 1
-    - type: Drone
+    - type: Truck
       x: 21
       y: 2
     - type: Truck
@@ -59,16 +59,16 @@ blue:
     - type: Truck
       x: 2
       y: 17
-    - type: LightTank
+    - type: Truck
       x: 2
       y: 16
-    - type: LightTank
+    - type: Truck
       x: 2
       y: 15
-    - type: HeavyTank
+    - type: Truck
       x: 0
       y: 15
-    - type: Drone
+    - type: Truck
       x: 3
       y: 15        
 resources:
