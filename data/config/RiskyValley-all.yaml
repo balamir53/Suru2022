@@ -1,8 +1,9 @@
-max_turn: 100
+max_turn: 150
 turn_timer: 50
 map:
   x: 24
   y: 18
+  # g  0 , d 1, w 2 , m 3
   terrain: 
     - ['g', 'g', 'g', 'g', 'g', 'm', 'm', 'm', 'g', 'g', 'g', 'g','g', 'g', 'g', 'd', 'w', 'w', 'w', 'd', 'g', 'g', 'g', 'g']
     - ['g', 'g', 'g', 'g', 'g', 'm', 'm', 'm', 'g', 'g', 'g', 'g','g', 'g', 'd', 'd', 'w', 'w', 'w', 'd', 'g', 'g', 'g', 'g']
@@ -69,8 +70,8 @@ blue:
       x: 0
       y: 15
     - type: Drone
-      x: 3
-      y: 15        
+      x: 2
+      y: 13      
 resources:
   - x: 0
     y: 0
