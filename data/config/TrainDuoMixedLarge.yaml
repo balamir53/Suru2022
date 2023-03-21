@@ -12,8 +12,8 @@ red:
       x: 10
       y: 7
     - type: LightTank
-      x: 9
-      y: 7
+      x: 10
+      y: 6
     - type: Truck
       x: 11
       y: 6
@@ -29,8 +29,8 @@ blue:
       x: 1
       y: 0
     - type: LightTank
-      x: 2
-      y: 0
+      x: 1
+      y: 3
     - type: Truck
       x: 0
       y: 1

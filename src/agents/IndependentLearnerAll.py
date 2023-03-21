@@ -17,7 +17,7 @@ def read_hypers(map):
         return hyperparams_dict
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
 RESOURCE_PADDING = 50*2 # parameter * (y and x)
-TERRAIN_PADDING = 7*7 # parameter
+TERRAIN_PADDING = 11*11 # parameter
 # update this in init function for smaller maps
 MAX_DISTANCE = 30
 class IndependentLearnerAll(MultiAgentEnv):
@@ -130,7 +130,8 @@ class IndependentLearnerAll(MultiAgentEnv):
             "observations": spaces.Box(
             low=-40,
             high=401,
-            shape=(302,),
+            # shape=(302,),
+            shape=(374,),
             dtype=np.int16
         ),
             "action_mask": spaces.Box(0, 1, shape=(7,), dtype=np.int8)
@@ -264,8 +265,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         # check maps
         # self.game.config["map"]["terrain"] = self.custommap(self.maplist[5])
 
-        self.game.config["map"]["terrain"] = self.custommap(random.choice(self.maplist))
+        self.game.config["map"]["terrain"] = self.custommap(random.choice(self.maplist[str(self.height)]))
         self.terrain = self.terrain_locs()
+        self.myStar.terrain = self.terrain
         
         if(episode%self.mapChangeFrequency==0):
             # random base on the most left tile column
@@ -790,7 +792,8 @@ class IndependentLearnerAll(MultiAgentEnv):
             # dist_to_base = np.linalg.norm(np.array(self.my_base)- np.array(my_pos))
             dist_to_base = MAX_DISTANCE
             if x[:5] == 'truck':
-                dist_to_base = len(list(self.myStar.astar(my_pos,self.my_base)))-1
+                # changed position
+                # dist_to_base = len(list(self.myStar.astar(my_pos,self.my_base)))-1
                 # if loaded truck is on the base force it to unload
                 if my_pos == self.my_base and self.loads[x] > 0:
                     self.action_masks[x][1:] = 0
@@ -799,6 +802,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                  
                 # comment it for now
                 if self.loads[x] > 2:
+                    dist_to_base = len(list(self.myStar.astar(my_pos,self.my_base)))-1
                     if dist_to_base >= self.old_base_distance[x]:
                         self.rewards[x]+= self.neg_partial
                     else:
