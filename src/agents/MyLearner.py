@@ -7,7 +7,7 @@ from gym import spaces
 import numpy as np
 import yaml
 from game import Game
-from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy, nearest_enemy_selective, truck_locs, getMovement
+from utilities import multi_forced_anchor, necessary_obs, decode_location, multi_reward_shape, enemy_locs, ally_locs, getDistance, nearest_enemy, truck_locs, getMovement, nearest_enemy_selective
 
 
 def read_hypers():
@@ -38,8 +38,8 @@ class MyLearner(BaseLearningAgentGym):
         # self.manipulateMap(self.game.config)
         self.mapChangeFrequency = 1000
         # original map size
-        self.gameAreaX = 6
-        self.gameAreaY = 4
+        self.gameAreaX = 24
+        self.gameAreaY = 18
         self.train = 0
 
         self.team = team
