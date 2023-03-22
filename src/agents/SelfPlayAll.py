@@ -16,7 +16,7 @@ import pickle
 import yaml
 
 map="RiskyValley-all"
-AGENTRED = "SimpleAgent"
+AGENTRED = "RandomAgent"
 
 def read_hypers():
     with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
@@ -76,10 +76,10 @@ class SelfPlayAll:
             }
             
         # self.env = my_env_creator(args, self.agents)
-        register_env("ray", lambda config : IndependentLearnerAll(args, self.agents))
+        register_env("ray", lambda config : IndependentLearnerAll(args, self.agents,mapChange=args.mapChange))
 
         ppo_agent = PPOTrainer(config=config, env="ray")
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_001750/checkpoint-1750")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/models/checkpoint_001300/checkpoint-1300")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')

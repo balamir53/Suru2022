@@ -4,6 +4,9 @@ from yaml import load
 import numpy as np
 import copy
 import time
+from astar import AStar
+from typing import TypeVar
+import math
 
 tagToString = {
     1: "Truck",
@@ -21,7 +24,37 @@ stringToTag = {
 movement_grid = [[(0, 0), (-1, 0), (0, -1), (1, 0), (1, 1), (0, 1), (-1, 1)],
 [(0, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 1), (-1, 0)]]
 
-
+# introduce generic type
+T = TypeVar("T")
+class myStar(AStar):
+    def __init__(self, y_max, x_max):
+        self.actions = [1,2,3,4,5,6]
+        self.height = y_max
+        self.width = x_max
+        pass
+    def neighbors(self, position):
+        # calculate all the neighbours
+        neighbors = []
+        for x in self.actions:
+            new_pos = position + getMovement(position,x)
+            if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
+                continue
+            neighbors.append(position + getMovement(position,x))
+        return neighbors
+    
+    def heuristic_cost_estimate(self, fromN, toN):
+        """computes the 'direct' distance between two (x,y) tuples"""
+        return math.hypot(toN[1] - fromN[1], toN[0] - fromN[0])
+    
+    def distance_between(self, terrain, fromN, toN ) :
+        coor = toN[1]*self.width+toN[0]
+        if terrain.get(coor) != 1:
+            return 200
+        else:
+            return 1
+    def is_goal_reached(self, current, goal):
+        return current == goal
+    
 def getMovement(unit_position, action):
     return movement_grid[unit_position[1] % 2][action]
 
