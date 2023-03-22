@@ -12,7 +12,7 @@ import random
 from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter, myStar
 from custommap import maps
 def read_hypers(map):
-    with open(f"/workspaces/Suru2022/data/config/{map}.yaml", "r") as f:   
+    with open(f"data/config/{map}.yaml", "r") as f:   
         hyperparams_dict = yaml.safe_load(f)
         return hyperparams_dict
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
