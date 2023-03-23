@@ -28,7 +28,16 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["RiskyValley-all","SelfPlayAll","RandomAgent", "--numOfMatch","10"]
+            "args": ["RiskyValley-all","SelfPlayAll","SimpleAgent", "--numOfMatch","10"]
+       },
+       {
+        "name": "test",
+        "type": "python",
+        "request": "launch",
+        "program": "upload/test.py",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "args": []
        },
        {
            "name": "train",
@@ -55,7 +64,7 @@
      "program": "src/my_trainer-all.py",
     "console": "integratedTerminal",
     "justMyCode": false,
-    "args": ["RiskyValley-all","RandomAgent", "--render"]
+     "args": ["RiskyValley-all","SimpleAgent","--render"]
 },
    {
      "name": "multitraincadet",
@@ -73,7 +82,7 @@
   "program": "src/multitraincadet-all.py",
   "console": "integratedTerminal",
   "justMyCode": false,
-  "args": ["RiskyValley-all","SimpleAgent"]
+  "args": ["TrainSingleMixedSmall","RandomAgent"]
       }
     ]
 }

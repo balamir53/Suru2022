@@ -4,9 +4,9 @@ from yaml import load
 import numpy as np
 import copy
 import time
+import math
 from astar import AStar
 from typing import TypeVar
-import math
 
 tagToString = {
     1: "Truck",
@@ -24,40 +24,57 @@ stringToTag = {
 movement_grid = [[(0, 0), (-1, 0), (0, -1), (1, 0), (1, 1), (0, 1), (-1, 1)],
 [(0, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 1), (-1, 0)]]
 
+# DIST_PARAMETER = 8 # for 6*4 map
+DIST_PARAMETER = 24 # for 24*18 map
 # introduce generic type
 T = TypeVar("T")
 class myStar(AStar):
-    def __init__(self, y_max, x_max):
+    def __init__(self, y_max, x_max, terrain):
         self.actions = [1,2,3,4,5,6]
         self.height = y_max
         self.width = x_max
-        pass
+        self.terrain = terrain
     def neighbors(self, position):
         # calculate all the neighbours
         neighbors = []
         for x in self.actions:
-            new_pos = position + getMovement(position,x)
+            move_x, move_y = getMovement(position,x)
+            # new_pos = (position[1]+move_y, position[0]+move_x)
+            new_pos = tuple(map(lambda i, j: i + j, position, (move_y, move_x)))
             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
                 continue
-            neighbors.append(position + getMovement(position,x))
+            neighbors.append(new_pos)
         return neighbors
     
     def heuristic_cost_estimate(self, fromN, toN):
         """computes the 'direct' distance between two (x,y) tuples"""
         return math.hypot(toN[1] - fromN[1], toN[0] - fromN[0])
     
-    def distance_between(self, terrain, fromN, toN ) :
-        coor = toN[1]*self.width+toN[0]
-        if terrain.get(coor) != 1:
+    def distance_between(self, fromN, toN ) :
+        coor = toN[0]*self.width+toN[1]
+        lookat = self.terrain.get(coor)
+        if lookat and lookat != 1:
             return 200
         else:
             return 1
     def is_goal_reached(self, current, goal):
         return current == goal
+def getDirection(pos_x, x, y):
+    try:
+        return movement_grid[pos_x % 2].index((x, y))
+    except:
+        return 7
     
 def getMovement(unit_position, action):
     return movement_grid[unit_position[1] % 2][action]
 
+def tagConverter(x):
+    if x[:5] == "tankh":
+        return "HeavyTank"
+    elif x[:5] == "tankl":
+        return "LightTank"
+    elif x[:5] == "drone":
+        return "Drone"
 
 def decodeState(state):
     # score = state['score']
@@ -109,10 +126,11 @@ def decodeState(state):
 
 
 def getDistance(pos_1, pos_2):
-    if pos_1 == None or pos_2 == None:
+    ##changed by luchy: to be able use if statement all enemy and ally locs must be in list format.
+    if list(pos_1) == None or list(pos_2) == None:
         return 999
-    pos1 = copy.copy(pos_1)
-    pos2 = copy.copy(pos_2)
+    pos1 = copy.copy(list(pos_1))
+    pos2 = copy.copy(list(pos_2))
     shift1 = (pos1[1]+1)//2
     shift2 = (pos2[1]+1)//2
     pos1[0] -= shift1
@@ -152,8 +170,9 @@ def truck_locs(obs, team):
     hps = np.array(obs['hps'][team])
     ally_units = np.array(obs['units'][team])
     ally_units[hps<1] = 0
+    # it is getting units with tag number one = trucks
     ally_list = np.argwhere(ally_units == 1)
-    ally_list = ally_list.squeeze()
+    # ally_list = ally_list.squeeze()
 
     return ally_list
 
@@ -165,7 +184,76 @@ def nearest_enemy(allied_unit_loc, enemy_locs):
 
     return enemy_locs[nearest_enemy_loc]
 
+def nearest_enemy_selective(allied_unit, enemies):
+    distances = []
+    #get all enemy types.
+    enemy_types = [enemy["tag"] for enemy in enemies]
+    #get distances of all enemies according to ally unit.
+    for enemy in enemies:
+        # if enemy["tag"] in ["Dead", "Base", "Resource"]:
+        #     continue
+        distances.append(getDistance(allied_unit["location"], enemy["location"]))
+    #define a high dummy distance to be able to compare. 
+    temp = 1000
+    selected_enemy = None
+    for i in range(len(enemies)):
+        #check for unshootable enemy type.
+        #enemy_types[i] == "Base" or enemy_types[i] == "Dead" or enemy_types[i] == "Resource"
+        if enemy_types[i] in ["Dead", "Base", "Resource"]:
+            continue
+        #check if ally unit is heavyTank or not. if the enemy being compared is drone, since HeavyTruck cannot fire to Drone just continue. 
+        if allied_unit["tag"] == "HeavyTank" and enemy_types[i] == "Drone":
+            continue
+        #if ally distance to enemy unit is less than temp, set new temp as distance between them and selected enemy accordingly.
+        if distances[i] < temp:
+            temp = distances[i]
+            selected_enemy = enemies[i]
+        #if distance is same with temp, consider new enemy as a better target. if so set it as new selected enemy. 
+        elif distances[i] == temp:
+            if (allied_unit["tag"] == "HeavyTank"):
+                if (enemies[i]["tag"] == "HeavyTank"):
+                    #if allied unit is heavytank and the new enemy with same distance is heavy tank, check selected enemy. if it is one of the following, update it with a better enemy.
+                        if(selected_enemy["tag"] == "LightTank" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                        if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+            
+            elif (allied_unit["tag"] == "LightTank"):
+                if (enemies[i]["tag"] == "HeavyTank"):
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Drone" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                        #prioritize enemy LightTank over Drone if allied unit is LightTank
+                        if(selected_enemy["tag"] == "Drone" or selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "Drone"):
+                    if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+            # allied unit type is drone.
+            else:
+                if (enemies[i]["tag"] == "HeavyTank"):
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Drone" or  selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "Drone"):
+                        #prioritize enemy Drone over LightTank if allied unit is Drone
+                        if(selected_enemy["tag"] == "LightTank" or selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+                elif (enemies[i]["tag"] == "LightTank"):
+                    if(selected_enemy["tag"] == "Truck"):
+                            selected_enemy = enemies[i]
+    return selected_enemy
+
+# def nearest_enemy(allied_unit_loc, enemy_locs):
+#     distances = []
+#     for enemy in enemy_locs:
+#         distances.append(getDistance(allied_unit_loc, enemy))
+#     nearest_enemy_loc = np.argmin(distances)
+
+#     return enemy_locs[nearest_enemy_loc], distances[nearest_enemy_loc]
+
 def multi_forced_anchor(movement, obs, team): # birden fazla truck için
+    # we have excluded this function
     bases = obs['bases'][team]
     units = obs['units'][team]
     loads = obs['loads'][team]
@@ -187,8 +275,14 @@ def multi_forced_anchor(movement, obs, team): # birden fazla truck için
             break
         if isinstance(trucks[0], np.int64):
             trucks = np.expand_dims(trucks, axis=0)
+        # ya arkadas sen modeli neden manupile ediyorsun ya
+        # kafayi ye
+        # al kirdin kirdin
+        # burda da action masking yapmak gerekiyor
         for truck in trucks:
             if (ally == truck).all():
+                # hele hele hem de her seferinde tum resourcelar icin check ediliyor
+                # olme essegim olme
                 for reso in resource_loc:
                     if loads[truck[0], truck[1]].max() != 3 and (reso == truck).all():
                         movement[i] = 0
@@ -276,11 +370,12 @@ def reward_shape(obs, team):
 
     return load_reward + unload_reward
 
-def multi_reward_shape(obs, team): # Birden fazla truck için
+def multi_reward_shape(obs, team, action): # Birden fazla truck için
     load_reward = 0
     unload_reward = 0
     enemy_load_reward = 0
     enemy_unload_reward = 0
+    partial_reward = 0
     bases = obs['bases'][team]
     units = obs['units'][team]
     enemy_bases = obs['bases'][(team+1) % 2]
@@ -299,32 +394,49 @@ def multi_reward_shape(obs, team): # Birden fazla truck için
     resource_loc = np.argwhere(resources == 1)
     enemy = enemy_locs(obs, team)
     ally = ally_locs(obs, team)
-    for truck in unit_loc:
-        for reso in resource_loc:
-            print(truck)
-            exit()
-            if loads[truck].max() != 3 and (reso == truck).all() and not isinstance(truck, np.int64):
-                load_reward += 10
-            else:
-                continue
-            if loads[truck].max() != 0 and (truck == base_loc).all() and not isinstance(truck, np.int64):
-                unload_reward += 20
+    trucks = truck_locs(obs, team)
 
-    harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward
+    counter = 0
+    for truck in trucks:
+        counter+=1
+        if counter>7:
+            break
+        my_action = None
+        to_break = False
+
+        # get the closest source and apply a partial reward
+        # depending on its distance to it
+        # _, closest_distance = nearest_enemy(truck,resource_loc)
+        current_load = loads[truck[0], truck[1]]
+        # this doesnt help loaded trucks learn to return back to base
+        # rather than this develop a partial reward that encourages only when the truck get closer to the base
+        # if(current_load>1):
+        #     partial_reward += math.pow(DIST_PARAMETER - getDistance(truck, base_loc),2)/1000*math.pow(current_load,3)
+
+        for i,x in enumerate(action[0]):
+            if (x == truck).all():
+                # check for its action
+                my_action = action[1][i]
+
+        for reso in resource_loc:            
+            if not isinstance(truck, np.int64) and truck[1]!=None:
+                if (reso == truck).all() and my_action == 0:
+                    if current_load < 3:
+                        load_reward += 1
+                if current_load != 0 and (truck == base_loc).all() and my_action == 0:
+                    unload_reward += 1*current_load
+                if  current_load >2 and my_action != None:
+                    before = getDistance(base_loc, truck)
+                    move = getMovement(truck,my_action)
+                    # if (move == None ):
+                    #    break
+                    new_pos = [truck[0]+ move[1], truck[1]+move[0]]
+                    after = getDistance(base_loc, new_pos)
+                    if after<before:
+                        partial_reward += 0.05
+                    else:
+                        partial_reward -= 0.01
+
+    harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)
-
-'''
-def astar(start, target, state):
-    y_max, x_max = state['resources'].shape
-    costmap = state['units'][0] + state['units'][1]
-    costmap = np.minimum(costmap, np.ones(state['resources'].shape))
-    y_start,x_start = start
-    y_target,x_target = target
-    costmap[x_start][y_start] = -1
-    costmap[x_target][y_target] = -2
-    a = [state['terrain'] == 'd']
-    print(costmap)
-    print(a)
-    print("-----")
-'''
 
