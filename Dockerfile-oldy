@@ -9,11 +9,9 @@ RUN apt-get update && apt-get install -y \
     bzip2 \
     libx11-6 \
  && rm -rf /vasr/lib/apt/lists/*
-RUN apt-get update
 
 RUN mkdir /app
 # Create a non-root user and switch to it
-# chown?
 RUN adduser --disabled-password --gecos '' --shell /bin/bash user \
  && chown -R user:user /app
 RUN echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-user
@@ -35,11 +33,9 @@ RUN curl -sLo ~/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-4.7.
 RUN conda install pytorch==1.12 cudatoolkit=10.2 -c pytorch -y
 RUN pip install tensorflow==2.8.0
 
-COPY requirements.txt requirements.txt
+WORKDIR /app
+
+COPY .  /app
 RUN pip install -r requirements.txt
 
-# COPY data/inputs /data/inputs
-COPY data /data
-WORKDIR /data
 
-ENTRYPOINT ["python3", "test.py"]

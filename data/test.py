@@ -11,9 +11,9 @@ import sys
 inputDirectory = '/data/inputs'
 outputDirectory = '/data/outputs'
 sys.path.append(inputDirectory)
-sys.path.append('/workspaces/Suru2022')
 
-from data.inputs.agent import EvaluationAgent
+
+from inputs.agent import EvaluationAgent
 
 
 class Evaluator():
