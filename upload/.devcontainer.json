@@ -1,6 +1,0 @@
-{
-    "image":"registry.ssyz.org.tr/osmaniye/suru_varsayilan:1",
-    // "image":"suru",
-    "runArgs": ["--add-host=host.docker.internal:172.19.176.1","--net=host","--shm-size=6gb","--gpus=all"]
-    // "runArgs": ["--add-host=host.docker.internal:172.19.176.1","--net=host"]
-}
