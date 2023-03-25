@@ -9,7 +9,7 @@ import numpy as np
 import sys
 
 inputDirectory = '/data/inputs'
-outputDirectory = '/data/outputs'
+outputDirectory = '/data/output'
 sys.path.append(inputDirectory)
 
 from data.inputs.agent import EvaluationAgent
@@ -66,8 +66,7 @@ data = {
 scores = []
 
 
-# for index, (map, agent) in enumerate([("RiskyValley", "RiskyValleyBot"),("RiskyValleyNoDesert", "RiskyValleyNoDesert"),("RiskyWaters", "RiskyWaters")]):
-for index, (map, agent) in enumerate([("RiskyValley", "RandomAgent")]):    
+for index, (map, agent) in enumerate([("RiskyValley", "RiskyValleyBot"),("RiskyValleyNoDesert", "RiskyValleyNoDesert"),("RiskyWaters", "RiskyWaters")]):
     agents = [None, agent]
     args.map = map
     score = Evaluator(args, agents).evaluate(30)
