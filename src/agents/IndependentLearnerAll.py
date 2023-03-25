@@ -17,7 +17,8 @@ def read_hypers(map):
         return hyperparams_dict
 UNITS_PADDING = 50*3 # parameter * (y,x and type)
 RESOURCE_PADDING = 50*2 # parameter * (y and x)
-TERRAIN_PADDING = 11*11 # parameter
+# TERRAIN_PADDING = 11*11 # parameter
+TERRAIN_PADDING = 7*7 # parameter
 # update this in init function for smaller maps
 MAX_DISTANCE = 30
 class IndependentLearnerAll(MultiAgentEnv):
@@ -130,8 +131,8 @@ class IndependentLearnerAll(MultiAgentEnv):
             "observations": spaces.Box(
             low=-40,
             high=401,
-            # shape=(302,),
-            shape=(374,),
+            shape=(302,),
+            # shape=(374,),
             dtype=np.int16
         ),
             "action_mask": spaces.Box(0, 1, shape=(7,), dtype=np.int8)
