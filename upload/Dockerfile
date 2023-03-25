@@ -29,7 +29,7 @@ RUN curl -sLo ~/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-4.7.
 
 
 RUN conda install pytorch==1.12 cudatoolkit=10.2 -c pytorch -y
-RUN pip install tensorflow==2.8.0
+# RUN pip install tensorflow==2.8.0
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
@@ -43,6 +43,8 @@ COPY HumanInterface.py .
 COPY maps.py .
 COPY test.py .
 COPY units.py .
-
+USER root
+RUN chown -R user:user /data
+USER user
 
 ENTRYPOINT ["python3", "test.py"]

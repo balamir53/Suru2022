@@ -28,7 +28,7 @@
             "program": "src/agentsofglory.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["RiskyValley-all","SelfPlayAll","SimpleAgent", "--numOfMatch","10"]
+            "args": ["RiskyValley","SelfPlayAll","SimpleAgent", "--numOfMatch","5"]
        },
        {
         "name": "test",
