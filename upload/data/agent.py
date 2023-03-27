@@ -1,3 +1,17 @@
+# import subprocess
+# import sys
+
+# def install(package):
+#     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+#     print("done")
+
+# install('gym==0.21.0')
+# install('astar')
+from pip._internal.operations import freeze
+pkgs = freeze.freeze()
+for pkg in pkgs: print(pkg)
+
+from astar import AStar
 from action_mask_model import TorchActionMaskModel
 from IndependentLearnerAll import IndependentLearnerAll
 from ray.tune import register_env

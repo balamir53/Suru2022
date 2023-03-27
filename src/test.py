@@ -38,7 +38,7 @@ class Evaluator():
             rewards = []
             while not done:
                 action = self.agent.act(state)
-                state, reward, done, _ = self.game.step(action)
+                state, reward, done = self.game.step(action)
                 rewards.append(reward)
 
             eps_rewards.append(sum(rewards)) 
@@ -68,11 +68,11 @@ scores = []
 
 
 # for index, (map, agent) in enumerate([("RiskyValley", "RandomAgent"),("RiskyValleyNoDesert", "RiskyValleyNoDesert"),("RiskyWaters", "RiskyWaters")]):
-for index, (map, agent) in enumerate([("RiskyValley", "RandomAgent")]):
+for index, (map, agent) in enumerate([("RiskyValley-all", "RandomAgent")]):
     
     agents = [None, agent]
     args.map = map
-    score = Evaluator(args, agents).evaluate(30)
+    score = Evaluator(args, agents).evaluate(2)
 
     name = "RiskyValley" if index == 0 else f"SecretMap_{index}"
     score_name = f"{name}_score"
