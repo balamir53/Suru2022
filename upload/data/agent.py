@@ -1,5 +1,5 @@
-from upload.data.action_mask_model import TorchActionMaskModel
-from upload.data.IndependentLearnerAll import IndependentLearnerAll
+from action_mask_model import TorchActionMaskModel
+from IndependentLearnerAll import IndependentLearnerAll
 from ray.tune import register_env
 from argparse import Namespace
 from ray.rllib.agents.ppo import PPOTrainer

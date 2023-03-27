@@ -439,3 +439,4 @@ def multi_reward_shape(obs, team, action): # Birden fazla truck için
 
     harvest_reward = load_reward + unload_reward + enemy_load_reward + enemy_unload_reward + partial_reward
     return harvest_reward, len(enemy), len(ally)
+
