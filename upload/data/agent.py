@@ -11,14 +11,41 @@
 # from pip._internal.operations import freeze
 # pkgs = freeze.freeze()
 # for pkg in pkgs: print(pkg)
+import sys
 
-# from astar import AStar
+modules = sys.modules.keys()
+gym_modules = []
+for x in modules:
+    if 'gym' in x:
+        gym_modules.append(x)
+        # del sys.modules[x]
+del sys.modules['gym.core']
+gym_modules.remove('gym.core')
+
+inputDirectory = '/data/input'
+sys.path.insert(0, inputDirectory)
+
+import importlib
+for i in range(len(gym_modules)):
+    del sys.modules[gym_modules[i]]
+    # importlib.import_module(gym_modules[i])
+import gym
+# del sys.modules['gym']
+# del sys.modules['gym.wrappers']
+
+
+# print(sys.path)
+# from os import listdir
+# print(listdir(inputDirectory))
+# import gym
+# print(gym.__file__)
 from action_mask_model import TorchActionMaskModel
 from IndependentLearnerAll import IndependentLearnerAll
 from ray.tune import register_env
 from argparse import Namespace
 from ray.rllib.agents.ppo import PPOTrainer
 import numpy as np
+from ray.tune.logger import UnifiedLogger 
 class EvaluationAgent():
 
     def __init__(self, observation_space, action_space):
@@ -70,9 +97,13 @@ class EvaluationAgent():
             }
         args = Namespace(map=map, render=False, gif=False, img=False, mapChange=False)
         register_env("ray", lambda config : IndependentLearnerAll(args, self.agents,mapChange=args.mapChange))
-        ppo_agent = PPOTrainer(config=config, env="ray")
+        def custom_log_creator(config):
+            def logger_creator(config):
+                return UnifiedLogger(config, '/data/input', loggers=None)
+            return logger_creator
+        ppo_agent = PPOTrainer(config=config, env="ray",logger_creator=custom_log_creator(config))
         # TODO :change this to relative path
-        ppo_agent.restore(checkpoint_path="model/checkpoint_002250/checkpoint-2250")
+        ppo_agent.restore(checkpoint_path="/data/input/model/checkpoint_002250/checkpoint-2250")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')

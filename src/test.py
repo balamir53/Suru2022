@@ -1,4 +1,7 @@
-
+import sys
+# inputDirectory = '/workspaces/Suru2022/data/inputs'
+# outputDirectory = '/data/outputs'
+# sys.path.insert(0, inputDirectory)
 from cgi import print_arguments
 import os
 import json
@@ -6,11 +9,12 @@ from game import Game
 from gym import spaces
 import argparse
 import numpy as np
-import sys
+# import sys
 
-inputDirectory = '/data/inputs'
+inputDirectory = '/workspaces/Suru2022/data/inputs'
 outputDirectory = '/data/outputs'
-sys.path.append(inputDirectory)
+# sys.path.insert(0, inputDirectory)
+# sys.path.append(inputDirectory)
 sys.path.append('/workspaces/Suru2022')
 
 from data.inputs.agent import EvaluationAgent

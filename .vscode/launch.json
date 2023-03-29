@@ -34,7 +34,7 @@
         "name": "test",
         "type": "python",
         "request": "launch",
-        "program": "data/test.py",
+        "program": "src/test.py",
         "console": "integratedTerminal",
         "justMyCode": false,
         "args": []

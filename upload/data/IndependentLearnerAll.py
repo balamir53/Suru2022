@@ -1257,7 +1257,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                     self.train = random.randint(2,4)
         else:
             self.train = 0
-        
+        self.train=0
         # TODO delete this
         # for debug purposes
         # self.train = 1
