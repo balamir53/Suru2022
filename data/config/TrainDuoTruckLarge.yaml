@@ -18,11 +18,11 @@ red:
     y: 7
   units:
     - type: Truck
-      x: 11
+      x: 10
       y: 7
     - type: Truck
-      x: 11
-      y: 5
+      x: 8
+      y: 7
 blue:
   base:
     x: 0
