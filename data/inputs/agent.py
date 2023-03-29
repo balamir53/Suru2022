@@ -57,7 +57,7 @@ class EvaluationAgent():
         register_env("ray", lambda config : IndependentLearnerAll(args, self.agents,mapChange=args.mapChange))
         ppo_agent = PPOTrainer(config=config, env="ray")
         # TODO :change this to relative path
-        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_002250/checkpoint-2250")
+        ppo_agent.restore(checkpoint_path="/workspaces/Suru2022/data/inputs/model/checkpoint_004050/checkpoint-4050")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')

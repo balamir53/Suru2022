@@ -40,7 +40,6 @@ class Evaluator():
                 action = self.agent.act(state)
                 state, reward, done = self.game.step(action)
                 rewards.append(reward)
-            print(f"score of {_}: {reward}")
             eps_rewards.append(sum(rewards)) 
             
         return np.mean(eps_rewards).item()
@@ -69,11 +68,11 @@ scores = []
 
 
 # for index, (map, agent) in enumerate([("RiskyValley", "RandomAgent"),("RiskyValleyNoDesert", "RiskyValleyNoDesert"),("RiskyWaters", "RiskyWaters")]):
-for index, (map, agent) in enumerate([("RiskyValley-all", "RandomAgent")]):
+for index, (map, agent) in enumerate([("RiskyValley-all", "SimpleAgent")]):
     
     agents = [None, agent]
     args.map = map
-    score = Evaluator(args, agents).evaluate(30)
+    score = Evaluator(args, agents).evaluate(2)
 
     name = "RiskyValley-all" if index == 0 else f"SecretMap_{index}"
     score_name = f"{name}_score"
@@ -87,6 +86,6 @@ for index, (map, agent) in enumerate([("RiskyValley-all", "RandomAgent")]):
     data["results"][0][score_name] = score
     scores.append(score)
 data["total_score"] = sum(scores)
-
+print(sum(scores))
 with open(os.path.join(outputDirectory,"output.json"), 'w') as outfile:
     json.dump(data, outfile)

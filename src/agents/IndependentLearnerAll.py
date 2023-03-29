@@ -270,32 +270,32 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.terrain = self.terrain_locs()
         self.myStar.terrain = self.terrain
         
-        if(episode%self.mapChangeFrequency==0):
-            # random base on the most left tile column
-            new_base_y = random.randint(0,self.height-1)
-            mapDict['blue']['base']['y'] = new_base_y
-            self.my_base = (new_base_y, 0)
-            # find out already occupied tiles
-            occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
-            for x in mapDict['blue']['units']:
-                occupiedTiles.add(self.getCoordinate(x))
-            for x in mapDict['red']['units']:
-                occupiedTiles.add(self.getCoordinate(x))
+        # if(episode%self.mapChangeFrequency==0):
+        #     # random base on the most left tile column
+        #     new_base_y = random.randint(0,self.height-1)
+        #     mapDict['blue']['base']['y'] = new_base_y
+        #     self.my_base = (new_base_y, 0)
+        #     # find out already occupied tiles
+        #     occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
+        #     for x in mapDict['blue']['units']:
+        #         occupiedTiles.add(self.getCoordinate(x))
+        #     for x in mapDict['red']['units']:
+        #         occupiedTiles.add(self.getCoordinate(x))
 
-            if self.terrain:
-                for ter in self.terrain.keys():
-                   occupiedTiles.add(ter)
+        #     if self.terrain:
+        #         for ter in self.terrain.keys():
+        #            occupiedTiles.add(ter)
                 
-            # randomize resource positions
-            for x in mapDict['resources']:
-                a = random.randint(0, self.width-1)+xOffSet
-                b = random.randint(0, self.height-1)+yOffSet
-                while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
-                    a = random.randint(0, self.width-1)+xOffSet
-                    b = random.randint(0, self.height-1)+yOffSet
-                occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
-                x['x'] = a
-                x['y'] = b
+        #     # randomize resource positions
+        #     for x in mapDict['resources']:
+        #         a = random.randint(0, self.width-1)+xOffSet
+        #         b = random.randint(0, self.height-1)+yOffSet
+        #         while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
+        #             a = random.randint(0, self.width-1)+xOffSet
+        #             b = random.randint(0, self.height-1)+yOffSet
+        #         occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
+        #         x['x'] = a
+        #         x['y'] = b
 
     # is this even called?
     def setup(self, obs_spec, action_spec):
