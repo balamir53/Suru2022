@@ -6,7 +6,7 @@ import copy
 import time
 import math
 # from astar import AStar
-from typing import TypeVar
+# from typing import TypeVar
 
 tagToString = {
     1: "Truck",
