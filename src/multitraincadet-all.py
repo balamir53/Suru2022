@@ -37,6 +37,7 @@ args = parser.parse_args()
 
 def main():
     ray.init()
+    # ray.init(num_gpus=1, log_to_driver=True)
     
     # agents are derived from map in learner class
     # hand over an empty list for now
@@ -58,7 +59,7 @@ def main():
     config= {
             "use_critic": True,
             "log_level": "WARN",
-             "num_workers": 14,
+             "num_workers": 11,
             #  "num_gpus":1,
              "use_gae": True,
              "lambda": 1.0,
@@ -99,7 +100,7 @@ def main():
             },
             "config": config,
             "checkpoint_freq": 50,
-            "restore": "models/checkpoint_000550/checkpoint-550",
+            "restore": "models/checkpoint_000800/checkpoint-800",
         },
     #  },resume=True)
     })
