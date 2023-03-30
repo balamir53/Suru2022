@@ -1232,18 +1232,21 @@ class IndependentLearnerAll(MultiAgentEnv):
             if raw_state["turn"] > 1 and len(self.resources) / self.init_resource_num < 0.05 and blue_score > red_score+3:
                 train_truck = False
             # decide train type.
-            if not no_train:
+            if not no_train :
                 if priority == 1 and train_truck:
                     self.train = 1
-                elif priority == 2:
+                elif priority == 2 and blue_score > red_score+3:
                     self.train = random.randint(2,3)
-                elif train_truck:
+                elif train_truck and blue_score > red_score+3:
                     self.train = 1
-                elif train_military:
+                elif train_military and blue_score > red_score+3:
                     self.train = random.randint(2,4)
         else:
             self.train = 0
         
+        # opp_agent = str(self.game.agents_classes[1]).lower()
+        # if 'random' in opp_agent or 'desert' in opp_agent or 'water' in opp_agent:
+        #     self.train = 0
         # TODO delete this
         # for debug purposes
         # self.train = 1

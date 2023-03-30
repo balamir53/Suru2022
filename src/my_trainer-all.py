@@ -93,7 +93,7 @@ def main():
  
     # Create our RLlib Trainer.
     algo = ppo.PPOTrainer(config=config, env="ray")
-    algo.restore(checkpoint_path="models/checkpoint_000100/checkpoint-100")
+    # algo.restore(checkpoint_path="models/checkpoint_000100/checkpoint-100")
     
     for _ in range(3):
         print(algo.train())

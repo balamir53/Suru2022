@@ -37,6 +37,9 @@ red:
     - type: Truck
       x: 21
       y: 0
+    - type: Truck
+      x: 23
+      y: 0
     - type: LightTank
       x: 21
       y: 1
@@ -45,6 +48,9 @@ red:
       y: 2
     - type: HeavyTank
       x: 23
+      y: 2
+    - type: Drone
+      x: 22
       y: 2
 blue:
   base:
@@ -59,6 +65,9 @@ blue:
       y: 14
     - type: Truck
       x: 2
+      y: 17
+    - type: Truck
+      x: 3
       y: 17
     - type: LightTank
       x: 2
