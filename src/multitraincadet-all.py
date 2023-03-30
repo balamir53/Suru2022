@@ -99,7 +99,7 @@ def main():
             },
             "config": config,
             "checkpoint_freq": 50,
-                "restore": "/workspaces/Suru2022/data/inputs/model/checkpoint_007800/checkpoint-7800",
+                "restore": "/workspaces/Suru2022/data/inputs/model/checkpoint_008050/checkpoint-8050",
         },
     #  },resume=True)
     })
