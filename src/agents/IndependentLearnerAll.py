@@ -89,6 +89,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         # played via our agents 
 
         self.game = Game(args, [None, args.agentRed])
+        # self.game = Game(args, ['IndependentLearnerAll', args.agentRed])
 
         # parameters for our game
         self.train = 0
@@ -268,33 +269,46 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.game.config["map"]["terrain"] = self.custommap(random.choice(self.maplist[str(self.height)]))
         self.terrain = self.terrain_locs()
         self.myStar.terrain = self.terrain
-        
-        if(episode%self.mapChangeFrequency==0):
-            # random base on the most left tile column
-            new_base_y = random.randint(0,self.height-1)
-            mapDict['blue']['base']['y'] = new_base_y
-            self.my_base = (new_base_y, 0)
-            # find out already occupied tiles
-            occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
-            for x in mapDict['blue']['units']:
-                occupiedTiles.add(self.getCoordinate(x))
-            for x in mapDict['red']['units']:
-                occupiedTiles.add(self.getCoordinate(x))
 
-            if self.terrain:
-                for ter in self.terrain.keys():
-                   occupiedTiles.add(ter)
+        # assuming there are equal red and blue units
+        # for i,x in enumerate(self.game.config['blue']['units']):
+        #     redX = copy.copy(mapDict['red']['units'][i]['x'])
+        #     redY = copy.copy(mapDict['red']['units'][i]['y'])
+        #     mapDict['red']['units'][i]['x'] = x['x']
+        #     mapDict['red']['units'][i]['y'] = x['y']
+        #     mapDict['blue']['units'][i]['x'] = redX
+        #     mapDict['blue']['units'][i]['y'] = redY
+        #     self.agents_positions[self.agents[i]] = (redY, redX)
+        # pass
+
+        # self.game
+        
+        # if(episode%self.mapChangeFrequency==0):
+        #     # random base on the most left tile column
+        #     new_base_y = random.randint(0,self.height-1)
+        #     mapDict['blue']['base']['y'] = new_base_y
+        #     self.my_base = (new_base_y, 0)
+        #     # find out already occupied tiles
+        #     occupiedTiles = {self.getCoordinate(mapDict['blue']['base']), self.getCoordinate(mapDict['red']['base'])}
+        #     for x in mapDict['blue']['units']:
+        #         occupiedTiles.add(self.getCoordinate(x))
+        #     for x in mapDict['red']['units']:
+        #         occupiedTiles.add(self.getCoordinate(x))
+
+        #     if self.terrain:
+        #         for ter in self.terrain.keys():
+        #            occupiedTiles.add(ter)
                 
-            # randomize resource positions
-            for x in mapDict['resources']:
-                a = random.randint(0, self.width-1)+xOffSet
-                b = random.randint(0, self.height-1)+yOffSet
-                while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
-                    a = random.randint(0, self.width-1)+xOffSet
-                    b = random.randint(0, self.height-1)+yOffSet
-                occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
-                x['x'] = a
-                x['y'] = b
+        #     # randomize resource positions
+        #     for x in mapDict['resources']:
+        #         a = random.randint(0, self.width-1)+xOffSet
+        #         b = random.randint(0, self.height-1)+yOffSet
+        #         while self.getCoordinate({'x':a,'y':b}) in occupiedTiles:
+        #             a = random.randint(0, self.width-1)+xOffSet
+        #             b = random.randint(0, self.height-1)+yOffSet
+        #         occupiedTiles.add(self.getCoordinate({'x':a,'y':b}))
+        #         x['x'] = a
+        #         x['y'] = b
 
     # is this even called?
     def setup(self, obs_spec, action_spec):
@@ -1062,7 +1076,19 @@ class IndependentLearnerAll(MultiAgentEnv):
         blue_score = raw_state["score"][0]
         red_score = raw_state["score"][1]
         # this is specific order as in self.agents
-        movement = action[0:7]
+
+        # choose random 7 out of lenght of action
+        players = None
+        if len(action)>7:
+            players = random.sample(range(len(action)),7)
+        else:
+            players = [x for x in range(len(action))]
+
+        movement = []
+        for x in players:
+            movement.append(action[x])
+
+        # movement = action[0:7]
         # movement = movement.tolist()
         # target = action[7:14]
         # train = action[14]
@@ -1103,7 +1129,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         # required for _decode state to decide kill reward
         self.nearest_enemy_locs = []
         self.nearest_enemy_locs = copy.copy(nearest_enemy_locs)
-        
+
+        ind_enemy_order = []
+        ind_locations = []       
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError
@@ -1132,18 +1160,24 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         elif len(allies) > 7:
             ally_count = 7
-            locations = allies
+            locations = list(allies)
             if len(enemies) == 0:
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
             else:
                 enemy_order = copy.copy(nearest_enemy_locs)
             
+            # choose from  players index
+            for x in players:
+                ind_enemy_order.append(enemy_order[x])
+                ind_locations.append(locations[x])
             ##added by luchy:due to creating nearest enemy locs for each ally, if number of allies are over 7, only 7 targets must be defined.
-            enemy_order = enemy_order[:7]
-            
-            while len(locations) > 7:
-                locations = list(locations)[:7]
+            # enemy_order = enemy_order[:7]
+            enemy_order = copy.copy(ind_enemy_order)
+            locations = copy.copy(ind_locations)
+
+            # while len(locations) > 7:
+            #     locations = list(locations)[:7]
 
         # bu nedir, manuel trucklara 0 atama, yanlis
         # movement = multi_forced_anchor(movement, raw_state, team)
