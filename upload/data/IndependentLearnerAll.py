@@ -1110,7 +1110,19 @@ class IndependentLearnerAll(MultiAgentEnv):
         blue_score = raw_state["score"][0]
         red_score = raw_state["score"][1]
         # this is specific order as in self.agents
-        movement = action[0:7]
+
+        # choose random 7 out of lenght of action
+        players = None
+        if len(action)>7:
+            players = random.sample(range(len(action)),7)
+        else:
+            players = [x for x in range(len(action))]
+
+        movement = []
+        for x in players:
+            movement.append(action[x])
+
+        # movement = action[0:7]
         # movement = movement.tolist()
         # target = action[7:14]
         # train = action[14]
@@ -1151,7 +1163,9 @@ class IndependentLearnerAll(MultiAgentEnv):
         # required for _decode state to decide kill reward
         self.nearest_enemy_locs = []
         self.nearest_enemy_locs = copy.copy(nearest_enemy_locs)
-        
+
+        ind_enemy_order = []
+        ind_locations = []       
         if 0 > len(allies):
             print("Neden negatif adamların var ?")
             raise ValueError
@@ -1180,18 +1194,24 @@ class IndependentLearnerAll(MultiAgentEnv):
 
         elif len(allies) > 7:
             ally_count = 7
-            locations = allies
+            locations = list(allies)
             if len(enemies) == 0:
                     # yok artik alum
                 enemy_order = [[3, 0] for i in range(ally_count)]
             else:
                 enemy_order = copy.copy(nearest_enemy_locs)
             
+            # choose from  players index
+            for x in players:
+                ind_enemy_order.append(enemy_order[x])
+                ind_locations.append(locations[x])
             ##added by luchy:due to creating nearest enemy locs for each ally, if number of allies are over 7, only 7 targets must be defined.
-            enemy_order = enemy_order[:7]
-            
-            while len(locations) > 7:
-                locations = list(locations)[:7]
+            # enemy_order = enemy_order[:7]
+            enemy_order = copy.copy(ind_enemy_order)
+            locations = copy.copy(ind_locations)
+
+            # while len(locations) > 7:
+            #     locations = list(locations)[:7]
 
         # bu nedir, manuel trucklara 0 atama, yanlis
         # movement = multi_forced_anchor(movement, raw_state, team)
@@ -1205,11 +1225,13 @@ class IndependentLearnerAll(MultiAgentEnv):
         # TODO : delete this
         self.old_raw_state = raw_state
         
-        number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
+        number_of_light_tanks, number_of_heavy_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0, 0
         # if hasattr(self, 'my_units'): # it is undefined on the first loop
         for x in my_unit_dict:
-            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
-                number_of_tanks+=1
+            if x["tag"] == "HeavyTank":
+                number_of_heavy_tanks+=1
+            elif x["tag"] == "LightTank":
+                number_of_light_tanks+=1
             elif x["tag"] == "Drone":
                 number_of_uavs+=1
             elif x["tag"] == "Truck":
@@ -1222,7 +1244,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             elif x["tag"] == "Truck":
                 number_of_enemy_trucks+=1
         
-        number_of_our_military = number_of_tanks+number_of_uavs
+        number_of_our_military = number_of_light_tanks+number_of_heavy_tanks+number_of_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
         
         train_truck = False
@@ -1249,15 +1271,23 @@ class IndependentLearnerAll(MultiAgentEnv):
             if not no_train:
                 if priority == 1 and train_truck:
                     self.train = 1
-                elif priority == 2:
-                    self.train = random.randint(2,3)
-                elif train_truck:
+                elif priority == 2 and blue_score > red_score+1:
+                    if number_of_enemy_uavs > 0:
+                       if (number_of_uavs + number_of_light_tanks) < 1:
+                           choices = [2, 4]
+                           self.train = random.choice(choices)
+                       else:
+                        self.train = random.randint(2,3)
+                elif train_truck and blue_score > red_score+3:
                     self.train = 1
-                elif train_military:
+                elif train_military and blue_score > red_score+3:
                     self.train = random.randint(2,4)
         else:
             self.train = 0
-        self.train=0
+        
+        # opp_agent = str(self.game.agents_classes[1]).lower()
+        # if 'random' in opp_agent or 'desert' in opp_agent or 'water' in opp_agent:
+        #     self.train = 0
         # TODO delete this
         # for debug purposes
         # self.train = 1

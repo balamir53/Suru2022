@@ -1191,11 +1191,13 @@ class IndependentLearnerAll(MultiAgentEnv):
         # TODO : delete this
         self.old_raw_state = raw_state
         
-        number_of_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0
+        number_of_light_tanks, number_of_heavy_tanks, number_of_enemy_tanks, number_of_uavs, number_of_enemy_uavs, number_of_trucks, number_of_enemy_trucks = 0, 0, 0, 0, 0, 0, 0
         # if hasattr(self, 'my_units'): # it is undefined on the first loop
         for x in my_unit_dict:
-            if x["tag"] == "HeavyTank" or x["tag"] == "LightTank":
-                number_of_tanks+=1
+            if x["tag"] == "HeavyTank":
+                number_of_heavy_tanks+=1
+            elif x["tag"] == "LightTank":
+                number_of_light_tanks+=1
             elif x["tag"] == "Drone":
                 number_of_uavs+=1
             elif x["tag"] == "Truck":
@@ -1208,7 +1210,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             elif x["tag"] == "Truck":
                 number_of_enemy_trucks+=1
         
-        number_of_our_military = number_of_tanks+number_of_uavs
+        number_of_our_military = number_of_light_tanks+number_of_heavy_tanks+number_of_uavs
         number_of_enemy_military =number_of_enemy_tanks+number_of_enemy_uavs
         
         train_truck = False
@@ -1232,11 +1234,16 @@ class IndependentLearnerAll(MultiAgentEnv):
             if raw_state["turn"] > 1 and len(self.resources) / self.init_resource_num < 0.05 and blue_score > red_score+3:
                 train_truck = False
             # decide train type.
-            if not no_train :
+            if not no_train:
                 if priority == 1 and train_truck:
                     self.train = 1
-                elif priority == 2 and blue_score > red_score+3:
-                    self.train = random.randint(2,3)
+                elif priority == 2 and blue_score > red_score+1:
+                    if number_of_enemy_uavs > 0:
+                       if (number_of_uavs + number_of_light_tanks) < 1:
+                           choices = [2, 4]
+                           self.train = random.choice(choices)
+                       else:
+                        self.train = random.randint(2,3)
                 elif train_truck and blue_score > red_score+3:
                     self.train = 1
                 elif train_military and blue_score > red_score+3:
