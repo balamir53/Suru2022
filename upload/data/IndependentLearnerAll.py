@@ -880,7 +880,7 @@ class IndependentLearnerAll(MultiAgentEnv):
             sorted_dist = []
             for z,y in enumerate(self.resources):
                 # if a truck is on a resource force it to collect
-                if x[:5] == 'truck' and my_pos == y:
+                if x[:5] == 'truck' and my_pos == y and self.loads[x] < 3:
                     self.action_masks[x][1:] = 0
                 # get the distances and indexes as tuple
                 dis = int(np.linalg.norm(np.array(y)-np.array(my_pos)))
