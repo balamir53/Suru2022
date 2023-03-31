@@ -5,8 +5,8 @@ import numpy as np
 import copy
 import time
 import math
-# from astar import AStar
-# from typing import TypeVar
+from astar import AStar
+from typing import TypeVar
 
 tagToString = {
     1: "Truck",
@@ -27,38 +27,38 @@ movement_grid = [[(0, 0), (-1, 0), (0, -1), (1, 0), (1, 1), (0, 1), (-1, 1)],
 # DIST_PARAMETER = 8 # for 6*4 map
 DIST_PARAMETER = 24 # for 24*18 map
 # introduce generic type
-# T = TypeVar("T")
-# class myStar(AStar):
-#     def __init__(self, y_max, x_max, terrain):
-#         self.actions = [1,2,3,4,5,6]
-#         self.height = y_max
-#         self.width = x_max
-#         self.terrain = terrain
-#     def neighbors(self, position):
-#         # calculate all the neighbours
-#         neighbors = []
-#         for x in self.actions:
-#             move_x, move_y = getMovement(position,x)
-#             # new_pos = (position[1]+move_y, position[0]+move_x)
-#             new_pos = tuple(map(lambda i, j: i + j, position, (move_y, move_x)))
-#             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
-#                 continue
-#             neighbors.append(new_pos)
-#         return neighbors
+T = TypeVar("T")
+class myStar(AStar):
+    def __init__(self, y_max, x_max, terrain):
+        self.actions = [1,2,3,4,5,6]
+        self.height = y_max
+        self.width = x_max
+        self.terrain = terrain
+    def neighbors(self, position):
+        # calculate all the neighbours
+        neighbors = []
+        for x in self.actions:
+            move_x, move_y = getMovement(position,x)
+            # new_pos = (position[1]+move_y, position[0]+move_x)
+            new_pos = tuple(map(lambda i, j: i + j, position, (move_y, move_x)))
+            if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] >= self.height or new_pos[1] >= self.width:
+                continue
+            neighbors.append(new_pos)
+        return neighbors
     
-#     def heuristic_cost_estimate(self, fromN, toN):
-#         """computes the 'direct' distance between two (x,y) tuples"""
-#         return math.hypot(toN[1] - fromN[1], toN[0] - fromN[0])
+    def heuristic_cost_estimate(self, fromN, toN):
+        """computes the 'direct' distance between two (x,y) tuples"""
+        return math.hypot(toN[1] - fromN[1], toN[0] - fromN[0])
     
-#     def distance_between(self, fromN, toN ) :
-#         coor = toN[0]*self.width+toN[1]
-#         lookat = self.terrain.get(coor)
-#         if lookat and lookat != 1:
-#             return 200
-#         else:
-#             return 1
-#     def is_goal_reached(self, current, goal):
-#         return current == goal
+    def distance_between(self, fromN, toN ) :
+        coor = toN[0]*self.width+toN[1]
+        lookat = self.terrain.get(coor)
+        if lookat and lookat != 1:
+            return 200
+        else:
+            return 1
+    def is_goal_reached(self, current, goal):
+        return current == goal
 def getDirection(pos_x, x, y):
     try:
         return movement_grid[pos_x % 2].index((x, y))
