@@ -817,10 +817,11 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # comment it for now
                 if self.loads[x] > 2:
                     road_back = list(self.myStar.astar(my_pos,self.my_base))
-                    action_vector = tuple(map(lambda x,y: x - y, road_back[1], my_pos))
-                    action_togo = getDirection(my_pos[1],action_vector[1],action_vector[0])
-                    self.action_masks[x][:] = 0
-                    self.action_masks[x][action_togo] = 1
+                    if len(road_back)>1:
+                        action_vector = tuple(map(lambda x,y: x - y, road_back[1], my_pos))
+                        action_togo = getDirection(my_pos[1],action_vector[1],action_vector[0])
+                        self.action_masks[x][:] = 0
+                        self.action_masks[x][action_togo] = 1
                     dist_to_base = len(road_back)-1
                     if dist_to_base >= self.old_base_distance[x]:
                         self.rewards[x]+= self.neg_partial
