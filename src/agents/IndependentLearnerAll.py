@@ -815,7 +815,7 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # road = len(list(self.myStar.astar(my_pos,self.my_base)))-1
                  
                 # comment it for now
-                if self.loads[x] > 2:
+                if (my_base[1]>15 or procOrUpdate==0) and self.loads[x] > 2:
                     road_back = list(self.myStar.astar(my_pos,self.my_base))
                     if len(road_back)>1:
                         action_vector = tuple(map(lambda x,y: x - y, road_back[1], my_pos))

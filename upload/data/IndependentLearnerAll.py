@@ -8,7 +8,7 @@ from gym import spaces
 import yaml
 import numpy as np
 import random
-from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter
+from utilities import ally_locs, enemy_locs, nearest_enemy_selective, getMovement, getDirection, getDistance, tagConverter, myStar
 # from custommap import maps
 def read_hypers(map):
     with open(f"data/config/{map}.yaml", "r") as f:   
@@ -254,7 +254,7 @@ class IndependentLearnerAll(MultiAgentEnv):
         self.my_base = my_base
         self.terrain = self.terrain_locs(terrain)
         self.init_resource_num = np.count_nonzero(res == 1)
-        # self.myStar = myStar(y_max, x_max, self.terrain)
+        self.myStar = myStar(y_max, x_max, self.terrain)
         
 
     def getCoordinate(self, dict):
@@ -848,8 +848,14 @@ class IndependentLearnerAll(MultiAgentEnv):
                 # road = len(list(self.myStar.astar(my_pos,self.my_base)))-1
                  
                 # comment it for now
-                if procOrUpdate==0 and self.loads[x] > 2:
-                    dist_to_base = len(list(self.myStar.astar(my_pos,self.my_base)))-1
+                if (my_base[1]>15 or procOrUpdate==0) and self.loads[x] > 2:
+                    road_back = list(self.myStar.astar(my_pos,self.my_base))
+                    if len(road_back)>1:
+                        action_vector = tuple(map(lambda x,y: x - y, road_back[1], my_pos))
+                        action_togo = getDirection(my_pos[1],action_vector[1],action_vector[0])
+                        self.action_masks[x][:] = 0
+                        self.action_masks[x][action_togo] = 1
+                    dist_to_base = len(road_back)-1
                     if dist_to_base >= self.old_base_distance[x]:
                         self.rewards[x]+= self.neg_partial
                     else:
