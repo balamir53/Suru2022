@@ -103,7 +103,7 @@ class EvaluationAgent():
             return logger_creator
         ppo_agent = PPOTrainer(config=config, env="ray",logger_creator=custom_log_creator(config))
         # TODO :change this to relative path
-        ppo_agent.restore(checkpoint_path="/data/input/model/checkpoint_010150/checkpoint-10150")
+        ppo_agent.restore(checkpoint_path="/data/input/model/checkpoint_010700/checkpoint-10700")
        
         self.truck_pol = ppo_agent.get_policy('truck')
         self.tankl_pol = ppo_agent.get_policy('tankl')
