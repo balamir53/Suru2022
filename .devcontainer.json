@@ -1,6 +1,7 @@
-{
-    "image":"vsc-suru2022-96816e25154916f368e0084eae3073c1-features-uid",
+{   
+    "build": { "dockerfile": "Dockerfile" },
+    // "image":"vsc-suru2022-96816e25154916f368e0084eae3073c1-features-uid",
     // "image":"suru",
-    "runArgs": ["--add-host=host.docker.internal:172.19.176.1","--net=host","--shm-size=2gb","--gpus=all"]
+    "runArgs": ["--add-host=host.docker.internal:172.21.176.1","--net=host","--shm-size=2gb","--gpus=all"]
     // "runArgs": ["--add-host=host.docker.internal:172.19.176.1","--net=host"]
 }
